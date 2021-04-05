@@ -1,0 +1,37 @@
+name: Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 12
+
+      - name: Check, build, release
+        run: |
+          if [ -f ./config/meta/ctrl.json ]; then
+              rm ./package.json
+              cp ./config/meta/ctrl.json ./package.json
+              npm config set //registry.npmjs.org/:_authToken ${NPM_TOKEN}
+              npm publish --ignore-scripts
+          else
+              yarn install --frozen-lockfile
+              yarn test
+              yarn build
+              npx semantic-release
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

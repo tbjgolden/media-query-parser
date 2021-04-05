@@ -1,0 +1,28 @@
+// This is used as part of the build process
+// It is overridden for linting
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "declaration": true,
+    "declarationDir": "dist",
+    "downlevelIteration": true,
+    "esModuleInterop": true,
+    "importHelpers": true,
+    "jsx": "react",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "outDir": "compiled",
+    "pretty": true,
+    "removeComments": true,
+    "resolveJsonModule": true,
+    "sourceMap": true,
+    "strict": true,
+    "target": "es5"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["src/**/*.stories.*"]
+}

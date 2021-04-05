@@ -1,0 +1,13 @@
+// This is used by anything that looks for a "tsconfig.json" file
+{
+  "extends": "./tsconfig.build.json",
+  "exclude": ["node_modules"],
+  "include": ["config", "src", "scripts"],
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": false,
+    "declaration": false,
+    "declarationDir": null,
+    "module": "commonjs"
+  }
+}

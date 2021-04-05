@@ -1,0 +1,44 @@
+name: Generate Docs
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/docs.yml'
+      - 'src/**'
+
+jobs:
+  site:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+
+      - run: yarn install --frozen-lockfile
+
+      - run:
+          npx typedoc --out docs/api --theme markdown --readme none
+          --entryPoints "src/index.ts*"
+
+      - name: Commit files
+        run: |
+          git pull
+          git add docs/api
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git commit -m "ci: Autogenerate API Docs"
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${'${{ secrets.GITHUB_TOKEN }}'}
+          branch: ${{ github.ref }}
