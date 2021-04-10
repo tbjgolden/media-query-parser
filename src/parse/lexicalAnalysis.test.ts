@@ -69,20 +69,28 @@ test('consumeString', () => {
   expect(consumeString(`"\\\\\\\\"`, 0)).toEqual([5, '\\\\'])
 })
 
-test.only('consumeNumber', () => {
+test('consumeNumber', () => {
   expect(consumeNumber('', 0)).toEqual(null)
   expect(consumeNumber('-', 0)).toEqual(null)
   expect(consumeNumber('+', 0)).toEqual(null)
   expect(consumeNumber('.', 0)).toEqual(null)
-  expect(consumeNumber('.5', 0)).toEqual(null)
-  expect(consumeNumber('1', 0)).toEqual(null)
-  expect(consumeNumber('-1', 0)).toEqual(null)
-  expect(consumeNumber('-.5', 0)).toEqual(null)
-  expect(consumeNumber('8181818', 0)).toEqual(null)
-  expect(consumeNumber('-302.1010', 0)).toEqual(null)
+  expect(consumeNumber('.5', 0)).toEqual([1, 0.5, 'number'])
+  expect(consumeNumber('1', 0)).toEqual([0, 1, 'integer'])
+  expect(consumeNumber('+3', 0)).toEqual([1, 3, 'integer'])
+  expect(consumeNumber('-1', 0)).toEqual([1, -1, 'integer'])
+  expect(consumeNumber('-.5', 0)).toEqual([2, -0.5, 'number'])
+  expect(consumeNumber('1e-1', 0)).toEqual([3, 1e-1, 'number'])
+  expect(consumeNumber('3e+1', 0)).toEqual([3, 3e1, 'number'])
+  expect(consumeNumber('.5e3', 0)).toEqual([3, 0.5e3, 'number'])
+  expect(consumeNumber('2e10', 0)).toEqual([3, 2e10, 'number'])
+  expect(consumeNumber('-10e+20', 0)).toEqual([6, -10e20, 'number'])
+  expect(consumeNumber('8181818', 0)).toEqual([6, 8181818, 'integer'])
+  expect(consumeNumber('-302.1010', 0)).toEqual([8, -302.101, 'number'])
+  expect(consumeNumber(' -302.1010', 1)).toEqual([9, -302.101, 'number'])
+  expect(consumeNumber(' -302.1010', 0)).toEqual(null)
 })
 
-test('consumeIdent', () => {
+test.only('consumeIdent', () => {
   expect(consumeIdent('', 0)).toEqual([1, ''])
   expect(consumeIdent('alpha', 0)).toEqual([22, 'typical string really'])
   expect(consumeIdent('alpha', 0)).toEqual([29, 'allow stuff like "escapes"'])

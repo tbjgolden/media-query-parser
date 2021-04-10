@@ -69,11 +69,11 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
         if (nextCode >= 0x0030 && nextCode <= 0x0039) {
           const result = consumeNumber(str, index)
           if (result === null) return null
-          const [lastIndex, value, isInteger] = result
+          const [lastIndex, value, flag] = result
           tokens.push({
             type: '<number-token>',
             value,
-            isInteger
+            flag
           })
           index = lastIndex
           continue
@@ -93,11 +93,11 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
         if (nextCode >= 0x0030 && nextCode <= 0x0039) {
           const result = consumeNumber(str, index)
           if (result === null) return null
-          const [lastIndex, value, isInteger] = result
+          const [lastIndex, value, flag] = result
           tokens.push({
             type: '<number-token>',
             value,
-            isInteger
+            flag
           })
           index = lastIndex
           continue
@@ -138,11 +138,11 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
         if (nextCode >= 0x0030 && nextCode <= 0x0039) {
           const result = consumeNumber(str, index)
           if (result === null) return null
-          const [lastIndex, value, isInteger] = result
+          const [lastIndex, value, flag] = result
           tokens.push({
             type: '<number-token>',
             value,
-            isInteger
+            flag
           })
           index = lastIndex
           continue
@@ -213,11 +213,11 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
     } else if (code >= 0x0030 && code <= 0x0039) {
       const result = consumeNumber(str, index)
       if (result === null) return null
-      const [lastIndex, value, isInteger] = result
+      const [lastIndex, value, flag] = result
       tokens.push({
         type: '<number-token>',
         value,
-        flag: isInteger ? 'integer' : 'number'
+        flag
       })
       index = lastIndex
     } else if (
@@ -246,7 +246,7 @@ export const consumeString = (
   str: string,
   index: number
 ): [number, string] | null => {
-  if (index + 2 > str.length) return null
+  if (str.length <= index + 1) return null
   const firstCode = str.charCodeAt(index)
   const charCodes: number[] = []
   for (let i = index + 1; i < str.length; i += 1) {
@@ -276,7 +276,7 @@ export const consumeEscape = (
   str: string,
   index: number
 ): [number, number] | null => {
-  if (index + 2 > str.length) return null
+  if (str.length <= index + 1) return null
   if (str.charCodeAt(index) !== 0x005c) return null
 
   const code = str.charCodeAt(index + 1)
@@ -317,9 +317,93 @@ export const consumeEscape = (
 export const consumeNumber = (
   str: string,
   index: number
-): [number, number, boolean] | null => {
-  if (Math.random() < -1) console.log(str)
-  return [index, 0, true]
+): [number, number, 'integer' | 'number'] | null => {
+  if (str.length <= index) return null
+
+  let flag: 'integer' | 'number' = 'integer'
+
+  const numberChars: number[] = []
+  const firstCode = str.charCodeAt(index)
+  if (firstCode === 0x002b || firstCode === 0x002d) {
+    index += 1
+    if (firstCode === 0x002d) numberChars.push(0x002d)
+  }
+  while (index < str.length) {
+    const code = str.charCodeAt(index)
+    if (code >= 0x0030 && code <= 0x0039) {
+      numberChars.push(code)
+      index += 1
+    } else {
+      break
+    }
+  }
+
+  if (index + 1 < str.length) {
+    const nextCode = str.charCodeAt(index)
+    const nextNextCode = str.charCodeAt(index + 1)
+    if (
+      nextCode === 0x002e ||
+      (nextNextCode >= 0x0030 && nextNextCode <= 0x0039)
+    ) {
+      numberChars.push(nextCode, nextNextCode)
+      flag = 'number'
+      index += 2
+
+      while (index < str.length) {
+        const code = str.charCodeAt(index)
+        if (code >= 0x0030 && code <= 0x0039) {
+          numberChars.push(code)
+          index += 1
+        } else {
+          break
+        }
+      }
+    }
+  }
+
+  if (index + 1 < str.length) {
+    const nextCode = str.charCodeAt(index)
+    const nextNextCode = str.charCodeAt(index + 1)
+    const nextNextNextCode = str.charCodeAt(index + 2)
+    if (nextCode === 0x0045 || nextCode === 0x0065) {
+      const nextNextIsDigit = nextNextCode >= 0x0030 && nextNextCode <= 0x0039
+      if (
+        nextNextIsDigit ||
+        ((nextNextCode === 0x002b || nextNextCode === 0x002d) &&
+          nextNextNextCode >= 0x0030 &&
+          nextNextNextCode <= 0x0039)
+      ) {
+        flag = 'number'
+        if (nextNextIsDigit) {
+          numberChars.push(0x0045, nextNextCode)
+          index += 2
+        } else if (nextNextCode === 0x002d) {
+          numberChars.push(0x0045, 0x002d, nextNextNextCode)
+          index += 3
+        } else {
+          numberChars.push(0x0045, nextNextNextCode)
+          index += 3
+        }
+
+        while (index < str.length) {
+          const code = str.charCodeAt(index)
+          if (code >= 0x0030 && code <= 0x0039) {
+            numberChars.push(code)
+            index += 1
+          } else {
+            break
+          }
+        }
+      }
+    }
+  }
+
+  const numberString = String.fromCharCode(...numberChars)
+  let value =
+    flag === 'number' ? parseFloat(numberString) : parseInt(numberString)
+  if (value === -0) value = 0
+
+  return Number.isNaN(value) ? null : [index - 1, value, flag]
 }
 
 export const consumeIdent = (
