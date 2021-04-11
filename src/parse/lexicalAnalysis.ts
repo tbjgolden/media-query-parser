@@ -34,17 +34,37 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
       index = lastIndex
     } else if (code === 0x0023) {
       // if hash
-      if (index + 1 < str.length) {
-        const result = consumeIdent(str, index + 1)
-        if (result !== null) {
-          const [lastIndex, value] = result
-          tokens.push({
-            type: '<hash-token>',
-            value,
-            flag: result[0] >= index + 3 ? 'id' : 'unrestricted'
-          })
-          index = lastIndex
-          continue
+
+      if (index + 2 < str.length) {
+        const nextCode = str.charCodeAt(index + 1)
+        const nextNextCode = str.charCodeAt(index + 2)
+        console.log('!', nextCode.toString(16), nextNextCode.toString(16))
+
+        if (
+          nextCode === 0x005f ||
+          (nextCode >= 0x0041 && nextCode <= 0x005a) ||
+          (nextCode >= 0x0061 && nextCode <= 0x007a) ||
+          nextCode >= 0x0080 ||
+          (nextCode === 0x005c && nextNextCode !== 0x000a)
+        ) {
+          const flag: 'id' | 'unrestricted' = wouldStartIdentifier(
+            str,
+            index + 1
+          )
+            ? 'id'
+            : 'unrestricted'
+
+          const result = consumeIdent(str, index + 1)
+          if (result !== null) {
+            const [lastIndex, value] = result
+            tokens.push({
+              type: '<hash-token>',
+              value,
+              flag
+            })
+            index = lastIndex
+            continue
+          }
         }
       }
 
@@ -116,11 +136,11 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
         }
       }
       // try parse as ident
-      const result = consumeIdent(str, index)
+      const result = consumeIdentLike(str, index)
       if (result !== null) {
-        const [lastIndex, value] = result
+        const [lastIndex, value, type] = result
         tokens.push({
-          type: '<ident-token>',
+          type,
           value
         })
         index = lastIndex
@@ -182,17 +202,15 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
       })
     } else if (code === 0x0040) {
       // if at keyword
-      if (index + 3 < str.length) {
-        const result = consumeIdent(str, index + 1)
-        if (result !== null && result[0] >= index + 3) {
-          const [lastIndex, value] = result
-          tokens.push({
-            type: '<at-keyword-token>',
-            value
-          })
-          index = lastIndex
-          continue
-        }
+      const result = consumeIdent(str, index + 1)
+      if (result !== null) {
+        const [lastIndex, value] = result
+        tokens.push({
+          type: '<at-keyword-token>',
+          value
+        })
+        index = lastIndex
+        continue
       }
 
       tokens.push({ type: '<delim-token>', value: code })
@@ -226,11 +244,11 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
       (code >= 0x0061 && code <= 0x007a) ||
       code >= 0x0080
     ) {
-      const result = consumeIdent(str, index)
+      const result = consumeIdentLike(str, index)
       if (result === null) return null
-      const [lastIndex, value] = result
+      const [lastIndex, value, type] = result
       tokens.push({
-        type: '<ident-token>',
+        type,
         value
       })
       index = lastIndex
@@ -270,6 +288,47 @@ export const consumeString = (
   }
 
   return null
+}
+
+export const wouldStartIdentifier = (str: string, index: number): boolean => {
+  if (str.length <= index) return false
+  const code = str.charCodeAt(index)
+  if (code === 0x002d) {
+    // -
+    if (str.length <= index + 1) return false
+
+    const nextCode = str.charCodeAt(index + 1)
+    if (
+      nextCode === 0x002d ||
+      nextCode === 0x005f ||
+      (nextCode >= 0x0041 && nextCode <= 0x005a) ||
+      (nextCode >= 0x0061 && nextCode <= 0x007a) ||
+      nextCode >= 0x0080
+    ) {
+      return true
+    } else if (nextCode === 0x005c) {
+      if (str.length <= index + 2) return false
+      const nextNextCode = str.charCodeAt(index + 2)
+      return nextNextCode !== 0x000a
+    } else {
+      return false
+    }
+  } else if (
+    // identifier-start code point
+    code === 0x005f ||
+    (code >= 0x0041 && code <= 0x005a) ||
+    (code >= 0x0061 && code <= 0x007a) ||
+    code >= 0x0080
+  ) {
+    return true
+  } else if (code === 0x005c) {
+    // \
+    if (str.length <= index + 1) return false
+    const nextCode = str.charCodeAt(index + 1)
+    return nextCode !== 0x000a
+  } else {
+    return false
+  }
 }
 
 export const consumeEscape = (
@@ -410,6 +469,112 @@ export const consumeIdent = (
   str: string,
   index: number
 ): [number, string] | null => {
-  if (Math.random() < -1) console.log(str)
-  return [index, 'lorem']
+  if (str.length <= index || !wouldStartIdentifier(str, index)) {
+    return null
+  }
+
+  const identChars: number[] = []
+  for (
+    let code = str.charCodeAt(index);
+    index < str.length;
+    code = str.charCodeAt(++index)
+  ) {
+    if (
+      code === 0x002d ||
+      code === 0x005f ||
+      (code >= 0x0041 && code <= 0x005a) ||
+      (code >= 0x0061 && code <= 0x007a) ||
+      code >= 0x0080 ||
+      (code >= 0x0030 && code <= 0x0039)
+    ) {
+      identChars.push(code)
+      continue
+    } else {
+      const result = consumeEscape(str, index)
+      if (result !== null) {
+        const [lastIndex, code] = result
+        identChars.push(code)
+        index = lastIndex
+        continue
+      }
+    }
+    break
+  }
+
+  return [index - 1, String.fromCharCode(...identChars)]
+}
+
+export const consumeUrl = (
+  str: string,
+  index: number
+): [number, string] | null => {
+  let code = str.charCodeAt(index)
+  while (code === 0x0009 || code === 0x0020 || code === 0x000a) {
+    code = str.charCodeAt(++index)
+  }
+
+  const urlChars: number[] = []
+  let hasFinishedWord = false
+  while (index < str.length) {
+    if (code === 0x0029) {
+      return [index, String.fromCharCode(...urlChars)]
+    } else if (code === 0x0022 || code === 0x0027 || code === 0x0028) {
+      return null
+    } else if (code === 0x0009 || code === 0x0020 || code === 0x000a) {
+      if (!hasFinishedWord && urlChars.length !== 0) hasFinishedWord = true
+    } else if (code === 0x005c) {
+      const result = consumeEscape(str, index)
+      if (result === null || hasFinishedWord) return null
+      const [lastIndex, value] = result
+      urlChars.push(value)
+      index = lastIndex
+    } else {
+      if (hasFinishedWord) return null
+      urlChars.push(code)
+    }
+    code = str.charCodeAt(++index)
+  }
+  return null
+}
+
+export const consumeIdentLike = (
+  str: string,
+  index: number
+):
+  | [number, string, '<ident-token>' | '<function-token>' | '<url-token>']
+  | null => {
+  const result = consumeIdent(str, index)
+  if (result === null) return null
+
+  const [lastIndex, value] = result
+  if (value.toLowerCase() === 'url') {
+    if (str.length > lastIndex + 1) {
+      const nextCode = str.charCodeAt(lastIndex + 1)
+      if (nextCode === 0x0028) {
+        for (let offset = 2; lastIndex + offset < str.length; offset += 1) {
+          const nextNextCode = str.charCodeAt(lastIndex + offset)
+          if (nextNextCode === 0x0022 || nextNextCode === 0x0027) {
+            return [lastIndex, value, '<function-token>']
+          } else if (
+            nextNextCode !== 0x0009 &&
+            nextNextCode !== 0x0020 &&
+            nextNextCode !== 0x000a
+          ) {
+            const result = consumeUrl(str, lastIndex + offset)
+            if (result === null) return null
+            const [lastUrlIndex, value] = result
+            return [lastUrlIndex, value, '<url-token>']
+          }
+        }
+        return [lastIndex, value, '<function-token>']
+      }
+    }
+  } else if (str.length > lastIndex + 1) {
+    const nextCode = str.charCodeAt(lastIndex + 1)
+    if (nextCode === 0x0028) {
+      return [lastIndex + 1, value, '<function-token>']
+    }
+  }
+
+  return [lastIndex, value, '<ident-token>']
 }

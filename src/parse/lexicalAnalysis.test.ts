@@ -1,9 +1,14 @@
 import {
   consumeEscape,
   consumeIdent,
+  consumeIdentLike,
   consumeNumber,
-  consumeString
+  consumeString,
+  consumeUrl,
+  lexicalAnalysis
 } from './lexicalAnalysis'
+import fs from 'fs'
+import path from 'path'
 
 test('consumeEscape', () => {
   expect(consumeEscape('', 0)).toBe(null)
@@ -90,15 +95,165 @@ test('consumeNumber', () => {
   expect(consumeNumber(' -302.1010', 0)).toEqual(null)
 })
 
-test.only('consumeIdent', () => {
-  expect(consumeIdent('', 0)).toEqual([1, ''])
-  expect(consumeIdent('alpha', 0)).toEqual([22, 'typical string really'])
-  expect(consumeIdent('alpha', 0)).toEqual([29, 'allow stuff like "escapes"'])
-  expect(consumeIdent('alpha', 0)).toEqual([23, 'Single quotes work too'])
-  expect(consumeIdent('alpha', 0)).toBe(null)
-  expect(consumeIdent('alpha', 0)).toEqual([4, '©'])
-  expect(consumeIdent('alpha', 0)).toBe(null)
-  expect(consumeIdent('alpha', 0)).toEqual([3, '\\'])
-  expect(consumeIdent('alpha', 0)).toBe(null)
-  expect(consumeIdent('alpha', 0)).toEqual([5, '\\\\'])
+test('consumeIdent', () => {
+  expect(consumeIdent('', 0)).toEqual(null)
+  expect(consumeIdent('-', 0)).toEqual(null)
+  expect(consumeIdent('-0', 0)).toEqual(null)
+  expect(consumeIdent('-a', 0)).toEqual([1, '-a'])
+  expect(consumeIdent('--', 0)).toEqual([1, '--'])
+  expect(consumeIdent('-\\41', 0)).toEqual([3, '-A'])
+  expect(consumeIdent('_', 0)).toEqual([0, '_'])
+
+  expect(consumeIdent('\\31 a2b3c', 0)).toEqual([8, '1a2b3c'])
+  expect(consumeIdent('\\#fake-id', 0)).toEqual([8, '#fake-id'])
+  expect(consumeIdent('-a-b-c-', 0)).toEqual([6, '-a-b-c-'])
+
+  expect(consumeIdent('0', 0)).toEqual(null)
+  expect(consumeIdent('_a', 0)).toEqual([1, '_a'])
+  expect(consumeIdent(' abc', 0)).toEqual(null)
+  expect(consumeIdent(' abc', 1)).toEqual([3, 'abc'])
+  expect(consumeIdent('url', 0)).toEqual([2, 'url'])
+  expect(consumeIdent('url(http://something.com)', 0)).toEqual([2, 'url'])
+})
+
+test('consumeUrl', () => {
+  expect(consumeUrl('url()', 4)).toEqual([4, ''])
+  expect(consumeUrl('url(-)', 4)).toEqual([5, '-'])
+  expect(consumeUrl('url(-0)', 4)).toEqual([6, '-0'])
+  expect(consumeUrl('url(-a)', 4)).toEqual([6, '-a'])
+  expect(consumeUrl('url( --)', 4)).toEqual([7, '--'])
+  expect(consumeUrl('url(-\\41 )', 4)).toEqual([9, '-A'])
+  expect(consumeUrl('url(_  )', 4)).toEqual([7, '_'])
+  expect(consumeUrl('url(\\31 a2b3c)', 4)).toEqual([13, '1a2b3c'])
+  expect(consumeUrl('url(\\#fake-id)', 4)).toEqual([13, '#fake-id'])
+  expect(consumeUrl('url(-a-b -c-)', 4)).toEqual(null)
+  expect(consumeUrl('url(0)', 4)).toEqual([5, '0'])
+  expect(consumeUrl('url(_a)', 4)).toEqual([6, '_a'])
+  expect(consumeUrl('url( abc)', 4)).toEqual([8, 'abc'])
+  expect(consumeUrl('url(abc)', 3)).toEqual(null)
+  expect(consumeUrl('url( url )', 4)).toEqual([9, 'url'])
+})
+
+test('consumeIdentLike', () => {
+  expect(consumeIdentLike('', 0)).toEqual(null)
+  expect(consumeIdentLike('-', 0)).toEqual(null)
+  expect(consumeIdentLike('-0', 0)).toEqual(null)
+  expect(consumeIdentLike('-a', 0)).toEqual([1, '-a', '<ident-token>'])
+  expect(consumeIdentLike('--', 0)).toEqual([1, '--', '<ident-token>'])
+  expect(consumeIdentLike('-\\41', 0)).toEqual([3, '-A', '<ident-token>'])
+  expect(consumeIdentLike('_', 0)).toEqual([0, '_', '<ident-token>'])
+
+  expect(consumeIdentLike('\\31 a2b3c', 0)).toEqual([
+    8,
+    '1a2b3c',
+    '<ident-token>'
+  ])
+  expect(consumeIdentLike('\\#fake-id', 0)).toEqual([
+    8,
+    '#fake-id',
+    '<ident-token>'
+  ])
+  expect(consumeIdentLike('-a-b-c-', 0)).toEqual([
+    6,
+    '-a-b-c-',
+    '<ident-token>'
+  ])
+
+  expect(consumeIdentLike('0', 0)).toEqual(null)
+  expect(consumeIdentLike('_a', 0)).toEqual([1, '_a', '<ident-token>'])
+  expect(consumeIdentLike(' abc', 0)).toEqual(null)
+  expect(consumeIdentLike(' abc', 1)).toEqual([3, 'abc', '<ident-token>'])
+
+  expect(consumeIdentLike('0', 0)).toEqual(null)
+  expect(consumeIdentLike('_a', 0)).toEqual([1, '_a', '<ident-token>'])
+  expect(consumeIdentLike(' abc', 0)).toEqual(null)
+  expect(consumeIdentLike(' abc', 1)).toEqual([3, 'abc', '<ident-token>'])
+  expect(consumeIdentLike('url(http://something.com)', 0)).toEqual([
+    24,
+    'http://something.com',
+    '<url-token>'
+  ])
+  expect(consumeIdentLike('Url(http://google.com/logo.png)', 0)).toEqual([
+    30,
+    'http://google.com/logo.png',
+    '<url-token>'
+  ])
+})
+
+test.only('misc', () => {
+  expect(
+    lexicalAnalysis(
+      '.dropdown-item:hover{color:#1e2125;background-color:#e9ecef}'
+    )
+  ).not.toEqual([
+    {
+      type: '<delim-token>',
+      value: 46
+    },
+    {
+      type: '<ident-token>',
+      value: 'dropdown-item'
+    },
+    {
+      type: '<colon-token>'
+    },
+    {
+      type: '<ident-token>',
+      value: 'hover'
+    },
+    {
+      type: '<{-token>'
+    },
+    {
+      type: '<ident-token>',
+      value: 'color'
+    },
+    {
+      type: '<colon-token>'
+    },
+    {
+      type: '<delim-token>',
+      value: 35
+    },
+    {
+      flag: 'number',
+      type: '<number-token>',
+      value: Infinity
+    },
+    {
+      type: '<semicolon-token>'
+    },
+    {
+      type: '<ident-token>',
+      value: 'background-color'
+    },
+    {
+      type: '<colon-token>'
+    },
+    {
+      flag: 'id',
+      type: '<hash-token>',
+      value: 'e9ecef'
+    },
+    {
+      type: '<}-token>'
+    },
+    {
+      type: '<EOF-token>'
+    }
+  ])
+})
+
+test('lexicalAnalysis', () => {
+  const input = fs.readFileSync(
+    path.join(__dirname, '__fixtures__', 'bootstrap.css'),
+    'utf8'
+  )
+  const output = JSON.parse(
+    fs.readFileSync(
+      path.join(__dirname, '__fixtures__', 'bootstrap.json'),
+      'utf8'
+    )
+  )
+  expect(lexicalAnalysis(input)).toEqual(output)
 })
