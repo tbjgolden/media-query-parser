@@ -34,18 +34,18 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
       index = lastIndex
     } else if (code === 0x0023) {
       // if hash
-
-      if (index + 2 < str.length) {
+      if (index + 1 < str.length) {
         const nextCode = str.charCodeAt(index + 1)
-        const nextNextCode = str.charCodeAt(index + 2)
-        console.log('!', nextCode.toString(16), nextNextCode.toString(16))
 
         if (
           nextCode === 0x005f ||
           (nextCode >= 0x0041 && nextCode <= 0x005a) ||
           (nextCode >= 0x0061 && nextCode <= 0x007a) ||
           nextCode >= 0x0080 ||
-          (nextCode === 0x005c && nextNextCode !== 0x000a)
+          (nextCode >= 0x0030 && nextCode <= 0x0039) ||
+          (nextCode === 0x005c &&
+            index + 2 < str.length &&
+            str.charCodeAt(index + 2) !== 0x000a)
         ) {
           const flag: 'id' | 'unrestricted' = wouldStartIdentifier(
             str,
@@ -54,7 +54,7 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
             ? 'id'
             : 'unrestricted'
 
-          const result = consumeIdent(str, index + 1)
+          const result = consumeIdentUnsafe(str, index + 1)
           if (result !== null) {
             const [lastIndex, value] = result
             tokens.push({
@@ -87,14 +87,24 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
       if (index + 1 < str.length) {
         const nextCode = str.charCodeAt(index + 1)
         if (nextCode >= 0x0030 && nextCode <= 0x0039) {
-          const result = consumeNumber(str, index)
+          const result = consumeNumeric(str, index + 1)
           if (result === null) return null
-          const [lastIndex, value, flag] = result
-          tokens.push({
-            type: '<number-token>',
-            value,
-            flag
-          })
+          const [lastIndex, tokenTuple] = result
+          if (tokenTuple[0] === '<dimension-token>') {
+            tokens.push({
+              type: '<dimension-token>',
+              value: tokenTuple[1],
+              unit: tokenTuple[2],
+              flag: 'number'
+            })
+          } else {
+            tokens.push({
+              type: tokenTuple[0],
+              value: tokenTuple[1],
+              flag: 'number'
+            })
+          }
+
           index = lastIndex
           continue
         }
@@ -110,15 +120,26 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
       // if number
       if (index + 1 < str.length) {
         const nextCode = str.charCodeAt(index + 1)
+
         if (nextCode >= 0x0030 && nextCode <= 0x0039) {
-          const result = consumeNumber(str, index)
+          const result = consumeNumeric(str, index + 1)
           if (result === null) return null
-          const [lastIndex, value, flag] = result
-          tokens.push({
-            type: '<number-token>',
-            value,
-            flag
-          })
+          const [lastIndex, tokenTuple] = result
+          if (tokenTuple[0] === '<dimension-token>') {
+            tokens.push({
+              type: '<dimension-token>',
+              value: tokenTuple[1],
+              unit: tokenTuple[2],
+              flag: 'number'
+            })
+          } else {
+            tokens.push({
+              type: tokenTuple[0],
+              value: tokenTuple[1],
+              flag: 'number'
+            })
+          }
+
           index = lastIndex
           continue
         }
@@ -155,15 +176,26 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
       // if number
       if (index + 1 < str.length) {
         const nextCode = str.charCodeAt(index + 1)
+
         if (nextCode >= 0x0030 && nextCode <= 0x0039) {
-          const result = consumeNumber(str, index)
+          const result = consumeNumeric(str, index + 1)
           if (result === null) return null
-          const [lastIndex, value, flag] = result
-          tokens.push({
-            type: '<number-token>',
-            value,
-            flag
-          })
+          const [lastIndex, tokenTuple] = result
+          if (tokenTuple[0] === '<dimension-token>') {
+            tokens.push({
+              type: '<dimension-token>',
+              value: tokenTuple[1],
+              unit: tokenTuple[2],
+              flag: 'number'
+            })
+          } else {
+            tokens.push({
+              type: tokenTuple[0],
+              value: tokenTuple[1],
+              flag: 'number'
+            })
+          }
+
           index = lastIndex
           continue
         }
@@ -229,14 +261,24 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
     } else if (code === 0x007d) {
       tokens.push({ type: '<}-token>' })
     } else if (code >= 0x0030 && code <= 0x0039) {
-      const result = consumeNumber(str, index)
+      const result = consumeNumeric(str, index)
       if (result === null) return null
-      const [lastIndex, value, flag] = result
-      tokens.push({
-        type: '<number-token>',
-        value,
-        flag
-      })
+      const [lastIndex, tokenTuple] = result
+      if (tokenTuple[0] === '<dimension-token>') {
+        tokens.push({
+          type: '<dimension-token>',
+          value: tokenTuple[1],
+          unit: tokenTuple[2],
+          flag: 'number'
+        })
+      } else {
+        tokens.push({
+          type: tokenTuple[0],
+          value: tokenTuple[1],
+          flag: 'number'
+        })
+      }
+
       index = lastIndex
     } else if (
       code === 0x005f ||
@@ -373,6 +415,39 @@ export const consumeEscape = (
   }
 }
 
+export const consumeNumeric = (
+  str: string,
+  index: number
+):
+  | [
+      number,
+      (
+        | ['<number-token>', number]
+        | ['<percentage-token>', number]
+        | ['<dimension-token>', number, string]
+      )
+    ]
+  | null => {
+  const numberResult = consumeNumber(str, index)
+  if (numberResult === null) return null
+  const [numberEndIndex, numberValue] = numberResult
+
+  const identResult = consumeIdent(str, numberEndIndex + 1)
+  if (identResult !== null) {
+    const [identEndIndex, identValue] = identResult
+    return [identEndIndex, ['<dimension-token>', numberValue, identValue]]
+  }
+
+  if (
+    numberEndIndex + 1 < str.length &&
+    str.charCodeAt(numberEndIndex + 1) === 0x0025
+  ) {
+    return [numberEndIndex + 1, ['<percentage-token>', numberValue]]
+  }
+
+  return [numberEndIndex, ['<number-token>', numberValue]]
+}
+
 export const consumeNumber = (
   str: string,
   index: number
@@ -463,6 +538,46 @@ export const consumeNumber = (
   if (value === -0) value = 0
 
   return Number.isNaN(value) ? null : [index - 1, value, flag]
+}
+
+// deliberately does not check if it starts with an identifier start code point
+export const consumeIdentUnsafe = (
+  str: string,
+  index: number
+): [number, string] | null => {
+  if (str.length <= index) {
+    return null
+  }
+
+  const identChars: number[] = []
+  for (
+    let code = str.charCodeAt(index);
+    index < str.length;
+    code = str.charCodeAt(++index)
+  ) {
+    if (
+      code === 0x002d ||
+      code === 0x005f ||
+      (code >= 0x0041 && code <= 0x005a) ||
+      (code >= 0x0061 && code <= 0x007a) ||
+      code >= 0x0080 ||
+      (code >= 0x0030 && code <= 0x0039)
+    ) {
+      identChars.push(code)
+      continue
+    } else {
+      const result = consumeEscape(str, index)
+      if (result !== null) {
+        const [lastIndex, code] = result
+        identChars.push(code)
+        index = lastIndex
+        continue
+      }
+    }
+    break
+  }
+
+  return [index - 1, String.fromCharCode(...identChars)]
 }
 
 export const consumeIdent = (

@@ -3,6 +3,7 @@ import {
   consumeIdent,
   consumeIdentLike,
   consumeNumber,
+  consumeNumeric,
   consumeString,
   consumeUrl,
   lexicalAnalysis
@@ -72,6 +73,35 @@ test('consumeString', () => {
   expect(consumeString(`"\\\\"`, 0)).toEqual([3, '\\'])
   expect(consumeString(`"\\\\\\"`, 0)).toBe(null)
   expect(consumeString(`"\\\\\\\\"`, 0)).toEqual([5, '\\\\'])
+})
+
+test('consumeNumeric', () => {
+  expect(consumeNumeric('', 0)).toEqual(null)
+  expect(consumeNumeric('-', 0)).toEqual(null)
+  expect(consumeNumeric('+', 0)).toEqual(null)
+  expect(consumeNumeric('.', 0)).toEqual(null)
+  expect(consumeNumeric('.5', 0)).toEqual([1, ['<number-token>', 0.5]])
+  expect(consumeNumeric('1', 0)).toEqual([0, ['<number-token>', 1]])
+  expect(consumeNumeric('+3rem', 0)).toEqual([
+    4,
+    ['<dimension-token>', 3, 'rem']
+  ])
+  expect(consumeNumeric('-1ch', 0)).toEqual([
+    3,
+    ['<dimension-token>', -1, 'ch']
+  ])
+  expect(consumeNumeric(' -.5', 1)).toEqual([3, ['<number-token>', -0.5]])
+  expect(consumeNumeric('  1e-1wow', 2)).toEqual([
+    8,
+    ['<dimension-token>', 1e-1, 'wow']
+  ])
+  expect(consumeNumeric('  1e-1wow', 0)).toEqual(null)
+  expect(consumeNumeric('3e+1', 0)).toEqual([3, ['<number-token>', 3e1]])
+  expect(consumeNumeric('.5e3% ', 0)).toEqual([
+    4,
+    ['<percentage-token>', 0.5e3]
+  ])
+  expect(consumeNumeric('2e10', 0)).toEqual([3, ['<number-token>', 2e10]])
 })
 
 test('consumeNumber', () => {
@@ -180,12 +210,12 @@ test('consumeIdentLike', () => {
   ])
 })
 
-test.only('misc', () => {
+test('misc', () => {
   expect(
     lexicalAnalysis(
       '.dropdown-item:hover{color:#1e2125;background-color:#e9ecef}'
     )
-  ).not.toEqual([
+  ).toEqual([
     {
       type: '<delim-token>',
       value: 46
@@ -212,13 +242,9 @@ test.only('misc', () => {
       type: '<colon-token>'
     },
     {
-      type: '<delim-token>',
-      value: 35
-    },
-    {
-      flag: 'number',
-      type: '<number-token>',
-      value: Infinity
+      flag: 'unrestricted',
+      type: '<hash-token>',
+      value: '1e2125'
     },
     {
       type: '<semicolon-token>'
