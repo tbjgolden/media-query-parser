@@ -80,8 +80,11 @@ test('consumeNumeric', () => {
   expect(consumeNumeric('-', 0)).toEqual(null)
   expect(consumeNumeric('+', 0)).toEqual(null)
   expect(consumeNumeric('.', 0)).toEqual(null)
-  expect(consumeNumeric('.5', 0)).toEqual([1, ['<number-token>', 0.5]])
-  expect(consumeNumeric('1', 0)).toEqual([0, ['<number-token>', 1]])
+  expect(consumeNumeric('.5', 0)).toEqual([
+    1,
+    ['<number-token>', 0.5, 'number']
+  ])
+  expect(consumeNumeric('1', 0)).toEqual([0, ['<number-token>', 1, 'integer']])
   expect(consumeNumeric('+3rem', 0)).toEqual([
     4,
     ['<dimension-token>', 3, 'rem']
@@ -90,18 +93,27 @@ test('consumeNumeric', () => {
     3,
     ['<dimension-token>', -1, 'ch']
   ])
-  expect(consumeNumeric(' -.5', 1)).toEqual([3, ['<number-token>', -0.5]])
+  expect(consumeNumeric(' -.5', 1)).toEqual([
+    3,
+    ['<number-token>', -0.5, 'number']
+  ])
   expect(consumeNumeric('  1e-1wow', 2)).toEqual([
     8,
     ['<dimension-token>', 1e-1, 'wow']
   ])
   expect(consumeNumeric('  1e-1wow', 0)).toEqual(null)
-  expect(consumeNumeric('3e+1', 0)).toEqual([3, ['<number-token>', 3e1]])
+  expect(consumeNumeric('3e+1', 0)).toEqual([
+    3,
+    ['<number-token>', 3e1, 'number']
+  ])
   expect(consumeNumeric('.5e3% ', 0)).toEqual([
     4,
     ['<percentage-token>', 0.5e3]
   ])
-  expect(consumeNumeric('2e10', 0)).toEqual([3, ['<number-token>', 2e10]])
+  expect(consumeNumeric('2e10', 0)).toEqual([
+    3,
+    ['<number-token>', 2e10, 'number']
+  ])
 })
 
 test('consumeNumber', () => {

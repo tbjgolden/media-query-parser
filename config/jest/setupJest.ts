@@ -1,5 +1,3 @@
-import '@testing-library/jest-dom/extend-expect'
-
 const ogConsoleError = console.error
 console.error = (...args: unknown[]) => {
   if (args.length > 0) {

@@ -1,6 +1,44 @@
-export const tokenize = (str: string): MediaQueryListToken | null => {
-  str = str.trim()
-  return tokenizeMediaQueryList(str)
+import { lexicalAnalysis, Token } from './lexicalAnalysis'
+
+export const tokenize = (
+  str: string,
+  index: number
+): MediaQueryListToken | null => {
+  let tokenList = lexicalAnalysis(str.trim())
+
+  // failed tokenizing
+  if (tokenList === null) return null
+
+  // trim the @media and { where applicable
+  let startIndex = 0
+  let endIndex = tokenList.length - 1
+  if (
+    tokenList[0].type === '<at-keyword-token>' &&
+    tokenList[0].value === 'media'
+  ) {
+    if (tokenList[1].type !== '<whitespace-token>') return null
+
+    startIndex = 2
+    for (let i = 2; i < tokenList.length - 1; i++) {
+      const token = tokenList[i]
+      if (token.type === '<{-token>') {
+        endIndex = i
+        break
+      } else if (token.type === '<semicolon-token>') {
+        return null
+      }
+    }
+  }
+
+  tokenList = tokenList.slice(startIndex, endIndex)
+
+  return syntacticAnalysis(tokenList)
+}
+
+export const syntacticAnalysis = (
+  tokenList: Token[]
+): MediaQueryListToken | null => {
+  return tokenizeMediaQueryList(tokenList, 0)
 }
 
 export type UnknownToken =
@@ -13,7 +51,7 @@ export type UnknownToken =
   | MediaOrToken
   | MediaInParensToken
   | MediaFeatureToken
-  | MfPlainToken
+  | MFPlainToken
   | MFBooleanToken
   | MFRangeToken
   | MFNameToken
@@ -34,9 +72,7 @@ export type MediaQueryListToken = {
 }
 export type MediaQueryToken = {
   type: 'MediaQuery'
-  data?: {
-    modifier: 'not' | 'only' | null
-  }
+  data?: { [k: string]: any }
   children?: UnknownToken[]
 }
 export type MediaTypeToken = {
@@ -79,7 +115,7 @@ export type MediaFeatureToken = {
   data?: { [k: string]: any }
   children?: UnknownToken[]
 }
-export type MfPlainToken = {
+export type MFPlainToken = {
   type: 'MfPlain'
   data?: { [k: string]: any }
   children?: UnknownToken[]
@@ -131,24 +167,19 @@ export type GeneralEnclosedToken = {
 }
 export type IdentToken = {
   type: 'Ident'
-  data: {
-    value: string
-  }
+  data?: { [k: string]: any }
 }
 export type NumberToken = {
   type: 'Number'
   data?: { [k: string]: any }
-  children?: UnknownToken[]
 }
 export type DimensionToken = {
   type: 'Dimension'
   data?: { [k: string]: any }
-  children?: UnknownToken[]
 }
 export type RatioToken = {
   type: 'Ratio'
   data?: { [k: string]: any }
-  children?: UnknownToken[]
 }
 
 const toFragments = (str: string): string[] => {
@@ -175,15 +206,21 @@ const map = <
   }, [])
 }
 
-const tokenizeMediaQueryList = (str: string): MediaQueryListToken | null => {
-  str = str.trim()
-  const mediaQueries = str
-    .split(',')
-    .map((str) => str.trim())
-    .filter(Boolean)
+const tokenizeMediaQueryList = (
+  tokens: Token[],
+  index: number
+): MediaQueryListToken | null => {
+  // const mediaQueries = str
+  //   .split(',')
+  //   .map((str) => str.trim())
+  //   .filter(Boolean)
   return {
     type: 'MediaQueryList',
-    children: map(mediaQueries, tokenizeMediaQuery)
+    data: {
+      tokens,
+      index
+    }
+    // children: map(mediaQueries, tokenizeMediaQuery)
   }
 }
 
@@ -199,56 +236,15 @@ not | only | <ident> | (
 >> <media-in-parens> = '(' | [<ident> '(']
 >> <ident> = tokenizeIdent and not other
 */
-export const tokenizeMediaQuery = (str: string): MediaQueryToken | null => {
-  try {
-    const fragments = toFragments(str.trim())
-
-    const first = fragments[0]
-    if (first.startsWith('(')) {
-      // <media-condition> => <media-in-parens> [ <media-and>* | <media-or>* ]
-      // where <media-in-parens> => ( <media-condition> ) | <media-feature> | <general-enclosed>
-      // where <general-enclosed> => ( <ident> <any-value> )
-      return {
-        type: 'MediaQuery',
-        children: map([str], tokenizeMediaCondition)
-      }
-    }
-
-    const firstFrags = first.split('(')
-    if (firstFrags.length > 0 && tokenizeIdent(firstFrags[0]) !== null) {
-      // <media-condition> => <media-in-parens> [ <media-and>* | <media-or>* ]
-      // where <media-in-parens> => <general-enclosed> => <function-token> <any-value> )
-      return {
-        type: 'MediaQuery',
-        children: map([str], tokenizeMediaCondition)
-      }
-    }
-
-    // must start with an ident
-    const ident = tokenizeIdent(first)
-    if (ident === null) throw new Error('Expected identifier')
-
-    const identValue = ident.data.value
-    if (identValue === 'only') {
-      // only <media-type> [ and <media-condition-without-or> ]?
-    } else if (identValue === 'not') {
-      // not <media-type> [ and <media-condition-without-or> ]?
-      // <media-not> = not <media-in-parens> = not <media-in-parens>
-    } else {
-      // <media-type>
-    }
-
-    return {
-      type: 'MediaQuery',
-      children: map([str], tokenizeMediaCondition)
-    }
-  } catch (err) {
-    return {
-      type: 'MediaQuery',
-      data: {
-        modifier: 'not'
-      },
-      children: []
+export const tokenizeMediaQuery = (
+  tokens: Token[],
+  index: number
+): MediaQueryToken | null => {
+  return {
+    type: 'MediaQuery',
+    data: {
+      tokens,
+      index
     }
   }
 }
@@ -256,12 +252,15 @@ export const tokenizeMediaQuery = (str: string): MediaQueryToken | null => {
 /*
 <media-type> = <ident>
 */
-export const tokenizeMediaType = (str: string): MediaTypeToken | null => {
-  str = str.trim()
+export const tokenizeMediaType = (
+  tokens: Token[],
+  index: number
+): MediaTypeToken | null => {
   return {
     type: 'MediaType',
     data: {
-      str
+      tokens,
+      index
     }
   }
 }
@@ -270,13 +269,14 @@ export const tokenizeMediaType = (str: string): MediaTypeToken | null => {
 <media-condition> = <media-not> | <media-in-parens> [ <media-and>* | <media-or>* ]
 */
 export const tokenizeMediaCondition = (
-  str: string
+  tokens: Token[],
+  index: number
 ): MediaConditionToken | null => {
-  str = str.trim()
   return {
     type: 'MediaCondition',
     data: {
-      str
+      tokens,
+      index
     }
   }
 }
@@ -285,13 +285,14 @@ export const tokenizeMediaCondition = (
 <media-condition-without-or> = <media-not> | <media-in-parens> <media-and>*
 */
 export const tokenizeMediaConditionWithoutOr = (
-  str: string
+  tokens: Token[],
+  index: number
 ): MediaConditionWithoutOrToken | null => {
-  str = str.trim()
   return {
     type: 'MediaConditionWithoutOr',
     data: {
-      str
+      tokens,
+      index
     }
   }
 }
@@ -299,12 +300,15 @@ export const tokenizeMediaConditionWithoutOr = (
 /*
 <media-not> = not <media-in-parens>
 */
-export const tokenizeMediaNot = (str: string): MediaNotToken | null => {
-  str = str.trim()
+export const tokenizeMediaNot = (
+  tokens: Token[],
+  index: number
+): MediaNotToken | null => {
   return {
     type: 'MediaNot',
     data: {
-      str
+      tokens,
+      index
     }
   }
 }
@@ -312,12 +316,15 @@ export const tokenizeMediaNot = (str: string): MediaNotToken | null => {
 /*
 <media-and> = and <media-in-parens>
 */
-export const tokenizeMediaAnd = (str: string): MediaAndToken | null => {
-  str = str.trim()
+export const tokenizeMediaAnd = (
+  tokens: Token[],
+  index: number
+): MediaAndToken | null => {
   return {
     type: 'MediaAnd',
     data: {
-      str
+      tokens,
+      index
     }
   }
 }
@@ -325,12 +332,15 @@ export const tokenizeMediaAnd = (str: string): MediaAndToken | null => {
 /*
 <media-or> = or <media-in-parens>
 */
-export const tokenizeMediaOr = (str: string): MediaOrToken | null => {
-  str = str.trim()
+export const tokenizeMediaOr = (
+  tokens: Token[],
+  index: number
+): MediaOrToken | null => {
   return {
     type: 'MediaOr',
     data: {
-      str
+      tokens,
+      index
     }
   }
 }
@@ -339,13 +349,14 @@ export const tokenizeMediaOr = (str: string): MediaOrToken | null => {
 <media-in-parens> = ( <media-condition> ) | <media-feature> | <general-enclosed>
 */
 export const tokenizeMediaInParens = (
-  str: string
+  tokens: Token[],
+  index: number
 ): MediaInParensToken | null => {
-  str = str.trim()
   return {
     type: 'MediaInParens',
     data: {
-      str
+      tokens,
+      index
     }
   }
 }
@@ -353,12 +364,15 @@ export const tokenizeMediaInParens = (
 /*
 <media-feature> = ( [ <mf-plain> | <mf-boolean> | <mf-range> ] )
 */
-export const tokenizeMediaFeature = (str: string): MediaFeatureToken | null => {
-  str = str.trim()
+export const tokenizeMediaFeature = (
+  tokens: Token[],
+  index: number
+): MediaFeatureToken | null => {
   return {
     type: 'MediaFeature',
     data: {
-      str
+      tokens,
+      index
     }
   }
 }
@@ -366,12 +380,15 @@ export const tokenizeMediaFeature = (str: string): MediaFeatureToken | null => {
 /*
 <mf-plain> = <mf-name> : <mf-value>
 */
-export const tokenizeMfPlain = (str: string): MfPlainToken | null => {
-  str = str.trim()
+export const tokenizeMfPlain = (
+  tokens: Token[],
+  index: number
+): MFPlainToken | null => {
   return {
     type: 'MfPlain',
     data: {
-      str
+      tokens,
+      index
     }
   }
 }
@@ -379,12 +396,15 @@ export const tokenizeMfPlain = (str: string): MfPlainToken | null => {
 /*
 <mf-boolean> = <mf-name>
 */
-export const tokenizeMFBoolean = (str: string): MFBooleanToken | null => {
-  str = str.trim()
+export const tokenizeMFBoolean = (
+  tokens: Token[],
+  index: number
+): MFBooleanToken | null => {
   return {
     type: 'MFBoolean',
     data: {
-      str
+      tokens,
+      index
     }
   }
 }
@@ -395,12 +415,15 @@ export const tokenizeMFBoolean = (str: string): MFBooleanToken | null => {
            | <mf-value> <mf-lt> <mf-name> <mf-lt> <mf-value>
            | <mf-value> <mf-gt> <mf-name> <mf-gt> <mf-value>
 */
-export const tokenizeMFRange = (str: string): MFRangeToken | null => {
-  str = str.trim()
+export const tokenizeMFRange = (
+  tokens: Token[],
+  index: number
+): MFRangeToken | null => {
   return {
     type: 'MFRange',
     data: {
-      str
+      tokens,
+      index
     }
   }
 }
@@ -408,12 +431,15 @@ export const tokenizeMFRange = (str: string): MFRangeToken | null => {
 /*
 <mf-name> = <ident>
 */
-export const tokenizeMFName = (str: string): MFNameToken | null => {
-  str = str.trim()
+export const tokenizeMFName = (
+  tokens: Token[],
+  index: number
+): MFNameToken | null => {
   return {
     type: 'MFName',
     data: {
-      str
+      tokens,
+      index
     }
   }
 }
@@ -421,12 +447,15 @@ export const tokenizeMFName = (str: string): MFNameToken | null => {
 /*
 <mf-value> = <number> | <dimension> | <ident> | <ratio>
 */
-export const tokenizeMFValue = (str: string): MFValueToken | null => {
-  str = str.trim()
+export const tokenizeMFValue = (
+  tokens: Token[],
+  index: number
+): MFValueToken | null => {
   return {
     type: 'MFValue',
     data: {
-      str
+      tokens,
+      index
     }
   }
 }
@@ -434,12 +463,15 @@ export const tokenizeMFValue = (str: string): MFValueToken | null => {
 /*
 <mf-lt> = '<' '='?
 */
-export const tokenizeMFLT = (str: string): MFLTToken | null => {
-  str = str.trim()
+export const tokenizeMFLT = (
+  tokens: Token[],
+  index: number
+): MFLTToken | null => {
   return {
     type: 'MFLT',
     data: {
-      str
+      tokens,
+      index
     }
   }
 }
@@ -447,12 +479,15 @@ export const tokenizeMFLT = (str: string): MFLTToken | null => {
 /*
 <mf-gt> = '>' '='?
 */
-export const tokenizeMFGT = (str: string): MFGTToken | null => {
-  str = str.trim()
+export const tokenizeMFGT = (
+  tokens: Token[],
+  index: number
+): MFGTToken | null => {
   return {
     type: 'MFGT',
     data: {
-      str
+      tokens,
+      index
     }
   }
 }
@@ -460,12 +495,15 @@ export const tokenizeMFGT = (str: string): MFGTToken | null => {
 /*
 <mf-eq> = '='
 */
-export const tokenizeMFEq = (str: string): MFEqToken | null => {
-  str = str.trim()
+export const tokenizeMFEq = (
+  tokens: Token[],
+  index: number
+): MFEqToken | null => {
   return {
     type: 'MFEq',
     data: {
-      str
+      tokens,
+      index
     }
   }
 }
@@ -473,12 +511,15 @@ export const tokenizeMFEq = (str: string): MFEqToken | null => {
 /*
 <mf-comparison> = <mf-lt> | <mf-gt> | <mf-eq>
 */
-export const tokenizeMFComparison = (str: string): MFComparisonToken | null => {
-  str = str.trim()
+export const tokenizeMFComparison = (
+  tokens: Token[],
+  index: number
+): MFComparisonToken | null => {
   return {
     type: 'MFComparison',
     data: {
-      str
+      tokens,
+      index
     }
   }
 }
@@ -487,42 +528,46 @@ export const tokenizeMFComparison = (str: string): MFComparisonToken | null => {
 <general-enclosed> = [ <function-token> <any-value> ) ] | ( <ident> <any-value> )
 */
 export const tokenizeGeneralEnclosed = (
-  str: string
+  tokens: Token[],
+  index: number
 ): GeneralEnclosedToken | null => {
-  str = str.trim()
   return {
     type: 'GeneralEnclosed',
     data: {
-      str
+      tokens,
+      index
     }
   }
 }
 
-const identRegex = /^-?([a-zA-Z_]|[^\u0000-\u007F]|\\([^0-9a-f\n]|[0-9a-f]{1,6}\s?))([a-zA-Z0-9_\-]|[^\u0000-\u007F]|\\([^0-9a-f\n]|[0-9a-f]{1,6}\s?))*$/u
 /*
 Excluding --custom-variables from this definition
 */
-export const tokenizeIdent = (str: string): IdentToken | null => {
-  str = str.trim()
-  return identRegex.test(str)
-    ? {
-        type: 'Ident',
-        data: {
-          value: str
-        }
-      }
-    : null
+export const tokenizeIdent = (
+  tokens: Token[],
+  index: number
+): IdentToken | null => {
+  return {
+    type: 'Ident',
+    data: {
+      tokens,
+      index
+    }
+  }
 }
 
 /*
 
 */
-export const tokenizeNumber = (str: string): NumberToken | null => {
-  str = str.trim()
+export const tokenizeNumber = (
+  tokens: Token[],
+  index: number
+): NumberToken | null => {
   return {
     type: 'Number',
     data: {
-      str
+      tokens,
+      index
     }
   }
 }
@@ -530,12 +575,15 @@ export const tokenizeNumber = (str: string): NumberToken | null => {
 /*
 
 */
-export const tokenizeDimension = (str: string): DimensionToken | null => {
-  str = str.trim()
+export const tokenizeDimension = (
+  tokens: Token[],
+  index: number
+): DimensionToken | null => {
   return {
     type: 'Dimension',
     data: {
-      str
+      tokens,
+      index
     }
   }
 }
@@ -543,12 +591,15 @@ export const tokenizeDimension = (str: string): DimensionToken | null => {
 /*
 
 */
-export const tokenizeRatio = (str: string): RatioToken | null => {
-  str = str.trim()
+export const tokenizeRatio = (
+  tokens: Token[],
+  index: number
+): RatioToken | null => {
   return {
     type: 'Ratio',
     data: {
-      str
+      tokens,
+      index
     }
   }
 }

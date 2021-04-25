@@ -1,4 +1,112 @@
-type Token = any
+export type Token =
+  | WhitespaceToken
+  | StringToken
+  | HashToken
+  | DelimToken
+  | CommaToken
+  | LeftParenToken
+  | RightParenToken
+  | DimensionToken
+  | NumberToken
+  | PercentageToken
+  | IdentToken
+  | FunctionToken
+  | UrlToken
+  | CDCToken
+  | ColonToken
+  | SemicolonToken
+  | CDOToken
+  | AtKeywordToken
+  | LeftBracketToken
+  | RightBracketToken
+  | LeftCurlyToken
+  | RightCurlyToken
+  | EOFToken
+
+export type WhitespaceToken = {
+  type: '<whitespace-token>'
+}
+export type StringToken = {
+  type: '<string-token>'
+  value: string
+}
+export type HashToken = {
+  type: '<hash-token>'
+  value: string
+  flag: 'id' | 'unrestricted'
+}
+export type DelimToken = {
+  type: '<delim-token>'
+  value: number
+}
+export type CommaToken = {
+  type: '<comma-token>'
+}
+export type LeftParenToken = {
+  type: '<(-token>'
+}
+export type RightParenToken = {
+  type: '<)-token>'
+}
+export type DimensionToken = {
+  type: '<dimension-token>'
+  value: number
+  unit: string
+  flag: 'number'
+}
+export type NumberToken = {
+  type: '<number-token>'
+  value: number
+  flag: 'number' | 'integer'
+}
+export type PercentageToken = {
+  type: '<percentage-token>'
+  value: number
+  flag: 'number'
+}
+export type CDCToken = {
+  type: '<CDC-token>'
+}
+export type ColonToken = {
+  type: '<colon-token>'
+}
+export type SemicolonToken = {
+  type: '<semicolon-token>'
+}
+export type CDOToken = {
+  type: '<CDO-token>'
+}
+export type AtKeywordToken = {
+  type: '<at-keyword-token>'
+  value: string
+}
+export type LeftBracketToken = {
+  type: '<[-token>'
+}
+export type RightBracketToken = {
+  type: '<]-token>'
+}
+export type LeftCurlyToken = {
+  type: '<{-token>'
+}
+export type RightCurlyToken = {
+  type: '<}-token>'
+}
+export type EOFToken = {
+  type: '<EOF-token>'
+}
+export type IdentToken = {
+  type: '<ident-token>'
+  value: string
+}
+export type FunctionToken = {
+  type: '<function-token>'
+  value: string
+}
+export type UrlToken = {
+  type: '<url-token>'
+  value: string
+}
 
 const weirdNewlines = /(\u000D|\u000C|\u000D\u000A)/g
 const nullOrSurrogates = /[\u0000\uD800-\uDFFF]/g
@@ -96,6 +204,12 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
               value: tokenTuple[1],
               unit: tokenTuple[2],
               flag: 'number'
+            })
+          } else if (tokenTuple[0] === '<number-token>') {
+            tokens.push({
+              type: tokenTuple[0],
+              value: tokenTuple[1],
+              flag: tokenTuple[2]
             })
           } else {
             tokens.push({
@@ -422,7 +536,7 @@ export const consumeNumeric = (
   | [
       number,
       (
-        | ['<number-token>', number]
+        | ['<number-token>', number, 'number' | 'integer']
         | ['<percentage-token>', number]
         | ['<dimension-token>', number, string]
       )
@@ -430,7 +544,7 @@ export const consumeNumeric = (
   | null => {
   const numberResult = consumeNumber(str, index)
   if (numberResult === null) return null
-  const [numberEndIndex, numberValue] = numberResult
+  const [numberEndIndex, numberValue, numberFlag] = numberResult
 
   const identResult = consumeIdent(str, numberEndIndex + 1)
   if (identResult !== null) {
@@ -445,7 +559,7 @@ export const consumeNumeric = (
     return [numberEndIndex + 1, ['<percentage-token>', numberValue]]
   }
 
-  return [numberEndIndex, ['<number-token>', numberValue]]
+  return [numberEndIndex, ['<number-token>', numberValue, numberFlag]]
 }
 
 export const consumeNumber = (

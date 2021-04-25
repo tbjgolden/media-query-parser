@@ -1,5 +1,12 @@
 import { tokenize, tokenizeIdent } from './syntacticAnalysis'
 
+test('should skip over @media, or error if something else', async () => {
+  expect(tokenize('@media all')).toBe('')
+  expect(tokenize('@media,all;')).toBe('')
+  expect(tokenize('@media all;')).toBe('')
+  expect(tokenize('@media all { /* ... */ }')).toBe('')
+})
+
 test.skip('should tokenize media query', async () => {
   expect(tokenize('only screen and (color)')).toBe('')
   expect(tokenize('not print and (min-width: 10px)')).toBe('')
