@@ -43,6 +43,7 @@ test('removeWhitespace', async () => {
 })
 
 test('should tokenize media query', async () => {
+  expect(tokenize('(100px <= width <= 200px)')).toBe('')
   expect(tokenize('only screen and (color)')).toBe('')
   expect(tokenize('')).toBe('')
   expect(tokenize('all,')).toBe('')
@@ -83,7 +84,6 @@ test('should tokenize media query', async () => {
   expect(tokenize('(width < 600px)')).toBe('')
   expect(tokenize('(not (color)) or (hover)')).toBe('')
   expect(tokenize('screen and (not (color)) or (hover)')).toBe('')
-  expect(tokenize('(100px <= width <= 200px)')).toBe('')
   expect(tokenize('screen and (100px <= width <= 200px)')).toBe('')
   expect(tokenize('(100px <= width) and (width <= 200px)')).toBe('')
 })

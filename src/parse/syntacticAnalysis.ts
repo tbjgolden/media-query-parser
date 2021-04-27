@@ -1,5 +1,7 @@
 import { lexicalAnalysis, Token } from './lexicalAnalysis'
 
+type WToken = Token & { wsBefore: boolean; wsAfter: boolean }
+
 export const tokenize = (str: string): MediaQueryToken[] | null => {
   let tokenList = lexicalAnalysis(str.trim())
 
@@ -13,7 +15,9 @@ export const tokenize = (str: string): MediaQueryToken[] | null => {
     tokenList[0].type === '<at-keyword-token>' &&
     tokenList[0].value === 'media'
   ) {
-    if (tokenList[1].type !== '<whitespace-token>') return null
+    if (tokenList[1].type !== '<whitespace-token>') {
+      return null
+    }
 
     startIndex = 2
     for (let i = 2; i < tokenList.length - 1; i++) {
@@ -32,12 +36,22 @@ export const tokenize = (str: string): MediaQueryToken[] | null => {
   return syntacticAnalysis(tokenList)
 }
 
-export const removeWhitespace = (tokenList: Token[]): Token[] => {
-  const newTokenList: Token[] = []
+export const removeWhitespace = (tokenList: Token[]): WToken[] => {
+  const newTokenList: WToken[] = []
 
+  let before = false
   for (let i = 0; i < tokenList.length; i++) {
-    if (tokenList[i].type !== '<whitespace-token>') {
-      newTokenList.push(tokenList[i])
+    if (tokenList[i].type === '<whitespace-token>') {
+      before = true
+      if (newTokenList.length > 0) {
+        newTokenList[newTokenList.length - 1].wsAfter = true
+      }
+    } else {
+      newTokenList.push({
+        ...tokenList[i],
+        wsBefore: before,
+        wsAfter: false
+      })
     }
   }
 
@@ -62,7 +76,7 @@ export const syntacticAnalysis = (
     // '@media {' is fine, treat as all
     return [
       tokenizeMediaQuery([
-        { type: '<ident-token>', value: 'all' }
+        { type: '<ident-token>', value: 'all', wsBefore: false, wsAfter: false }
       ]) as MediaQueryToken
     ]
   } else if (mediaQueries.some((mediaQuery) => mediaQuery.length === 0)) {
@@ -87,7 +101,9 @@ export type MediaQueryToken = {
   data?: { [k: string]: any }
 }
 
-export const tokenizeMediaQuery = (tokens: Token[]): MediaQueryToken | null => {
+export const tokenizeMediaQuery = (
+  tokens: WToken[]
+): MediaQueryToken | null => {
   const firstToken = tokens[0]
   if (firstToken.type === '<(-token>') {
     tokenizeMediaCondition(tokens)
@@ -173,7 +189,7 @@ export const tokenizeMediaQuery = (tokens: Token[]): MediaQueryToken | null => {
 }
 
 export const tokenizeMediaCondition = (
-  tokens: Token[],
+  tokens: WToken[],
   previousOperator: 'and' | 'or' | 'not' | null = null
 ): any | null => {
   console.log(previousOperator, tokens)
@@ -238,7 +254,31 @@ export const tokenizeMediaCondition = (
   }
 }
 
-export const tokenizeMediaFeature = (tokens: Token[]): any | null => {
-  console.log(tokens)
+export const tokenizeMediaFeature = (tokens: WToken[]): any | null => {
+  if (
+    tokens.length < 3 ||
+    tokens[0].type !== '<(-token>' ||
+    tokens[tokens.length - 1].type !== '<)-token>'
+  )
+    return null
+
+  const nextToken = tokens[1]
+  if (nextToken.type === '<ident-token>' && tokens.length === 3) {
+    // '(' 'feature name' ')'
+    console.log(nextToken.value)
+  } else if (
+    tokens.length === 5 &&
+    tokens[2].type === '<ident-token>' &&
+    tokens[3].type === '<colon-token>'
+  ) {
+    // '(' 'feature name' ':' 'feature value' ')'
+    // } else if (tokens.length === 7) {
+    //   // range form two comparisons
+    // } else if (tokens.length === 5) {
+    //   // range form one comparisons
+  } else {
+    console.log(tokens)
+  }
+
   return null
 }
