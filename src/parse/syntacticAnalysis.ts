@@ -1,9 +1,6 @@
 import { lexicalAnalysis, Token } from './lexicalAnalysis'
 
-export const tokenize = (
-  str: string,
-  index: number
-): MediaQueryListToken | null => {
+export const tokenize = (str: string): MediaQueryToken[] | null => {
   let tokenList = lexicalAnalysis(str.trim())
 
   // failed tokenizing
@@ -35,571 +32,213 @@ export const tokenize = (
   return syntacticAnalysis(tokenList)
 }
 
-export const syntacticAnalysis = (
-  tokenList: Token[]
-): MediaQueryListToken | null => {
-  return tokenizeMediaQueryList(tokenList, 0)
+export const removeWhitespace = (tokenList: Token[]): Token[] => {
+  const newTokenList: Token[] = []
+
+  for (let i = 0; i < tokenList.length; i++) {
+    if (tokenList[i].type !== '<whitespace-token>') {
+      newTokenList.push(tokenList[i])
+    }
+  }
+
+  return newTokenList
 }
 
-export type UnknownToken =
-  | MediaQueryToken
-  | MediaTypeToken
-  | MediaConditionToken
-  | MediaConditionWithoutOrToken
-  | MediaNotToken
-  | MediaAndToken
-  | MediaOrToken
-  | MediaInParensToken
-  | MediaFeatureToken
-  | MFPlainToken
-  | MFBooleanToken
-  | MFRangeToken
-  | MFNameToken
-  | MFValueToken
-  | MFLTToken
-  | MFGTToken
-  | MFEqToken
-  | MFComparisonToken
-  | GeneralEnclosedToken
-  | IdentToken
-  | NumberToken
-  | DimensionToken
-  | RatioToken
-export type MediaQueryListToken = {
-  type: 'MediaQueryList'
-  data?: { [k: string]: any }
-  children?: UnknownToken[]
+export const syntacticAnalysis = (
+  tokenList: Token[]
+): MediaQueryToken[] | null => {
+  const mediaQueryList: Array<Array<Token>> = [[]]
+  for (let i = 0; i < tokenList.length; i++) {
+    const token = tokenList[i]
+    if (token.type === '<comma-token>') {
+      mediaQueryList.push([])
+    } else {
+      mediaQueryList[mediaQueryList.length - 1].push(token)
+    }
+  }
+
+  const mediaQueries = mediaQueryList.map(removeWhitespace)
+  if (mediaQueries.length === 1 && mediaQueries[0].length === 0) {
+    // '@media {' is fine, treat as all
+    return [
+      tokenizeMediaQuery([
+        { type: '<ident-token>', value: 'all' }
+      ]) as MediaQueryToken
+    ]
+  } else if (mediaQueries.some((mediaQuery) => mediaQuery.length === 0)) {
+    // but '@media screen, {' is not
+    return null
+  } else {
+    const mediaQueryTokens = mediaQueries.map(tokenizeMediaQuery)
+    const nonNullMediaQueryTokens: MediaQueryToken[] = []
+
+    for (const mediaQueryToken of mediaQueryTokens) {
+      if (mediaQueryToken !== null) {
+        nonNullMediaQueryTokens.push(mediaQueryToken)
+      }
+    }
+
+    return nonNullMediaQueryTokens
+  }
 }
+
 export type MediaQueryToken = {
   type: 'MediaQuery'
   data?: { [k: string]: any }
-  children?: UnknownToken[]
-}
-export type MediaTypeToken = {
-  type: 'MediaType'
-  data?: { [k: string]: any }
-  children?: UnknownToken[]
-}
-export type MediaConditionToken = {
-  type: 'MediaCondition'
-  data?: { [k: string]: any }
-  children?: UnknownToken[]
-}
-export type MediaConditionWithoutOrToken = {
-  type: 'MediaConditionWithoutOr'
-  data?: { [k: string]: any }
-  children?: UnknownToken[]
-}
-export type MediaNotToken = {
-  type: 'MediaNot'
-  data?: { [k: string]: any }
-  children?: UnknownToken[]
-}
-export type MediaAndToken = {
-  type: 'MediaAnd'
-  data?: { [k: string]: any }
-  children?: UnknownToken[]
-}
-export type MediaOrToken = {
-  type: 'MediaOr'
-  data?: { [k: string]: any }
-  children?: UnknownToken[]
-}
-export type MediaInParensToken = {
-  type: 'MediaInParens'
-  data?: { [k: string]: any }
-  children?: UnknownToken[]
-}
-export type MediaFeatureToken = {
-  type: 'MediaFeature'
-  data?: { [k: string]: any }
-  children?: UnknownToken[]
-}
-export type MFPlainToken = {
-  type: 'MfPlain'
-  data?: { [k: string]: any }
-  children?: UnknownToken[]
-}
-export type MFBooleanToken = {
-  type: 'MFBoolean'
-  data?: { [k: string]: any }
-  children?: UnknownToken[]
-}
-export type MFRangeToken = {
-  type: 'MFRange'
-  data?: { [k: string]: any }
-  children?: UnknownToken[]
-}
-export type MFNameToken = {
-  type: 'MFName'
-  data?: { [k: string]: any }
-  children?: UnknownToken[]
-}
-export type MFValueToken = {
-  type: 'MFValue'
-  data?: { [k: string]: any }
-  children?: UnknownToken[]
-}
-export type MFLTToken = {
-  type: 'MFLT'
-  data?: { [k: string]: any }
-  children?: UnknownToken[]
-}
-export type MFGTToken = {
-  type: 'MFGT'
-  data?: { [k: string]: any }
-  children?: UnknownToken[]
-}
-export type MFEqToken = {
-  type: 'MFEq'
-  data?: { [k: string]: any }
-  children?: UnknownToken[]
-}
-export type MFComparisonToken = {
-  type: 'MFComparison'
-  data?: { [k: string]: any }
-  children?: UnknownToken[]
-}
-export type GeneralEnclosedToken = {
-  type: 'GeneralEnclosed'
-  data?: { [k: string]: any }
-  children?: UnknownToken[]
-}
-export type IdentToken = {
-  type: 'Ident'
-  data?: { [k: string]: any }
-}
-export type NumberToken = {
-  type: 'Number'
-  data?: { [k: string]: any }
-}
-export type DimensionToken = {
-  type: 'Dimension'
-  data?: { [k: string]: any }
-}
-export type RatioToken = {
-  type: 'Ratio'
-  data?: { [k: string]: any }
 }
 
-const toFragments = (str: string): string[] => {
-  return str.trim().split(/\s+/g)
-}
+export const tokenizeMediaQuery = (tokens: Token[]): MediaQueryToken | null => {
+  const firstToken = tokens[0]
+  if (firstToken.type === '<(-token>') {
+    tokenizeMediaCondition(tokens)
 
-const map = <
-  T,
-  U extends
-    | string
-    | number
-    | boolean
-    | symbol
-    | bigint
-    | Record<string, unknown>
->(
-  arr: T[],
-  fn: (value: T) => U | null
-): U[] => {
-  return arr.reduce<U[]>((arr, input) => {
-    const result = fn(input)
-    if (result !== null) arr.push(result)
-    return arr
-  }, [])
-}
-
-const tokenizeMediaQueryList = (
-  tokens: Token[],
-  index: number
-): MediaQueryListToken | null => {
-  // const mediaQueries = str
-  //   .split(',')
-  //   .map((str) => str.trim())
-  //   .filter(Boolean)
-  return {
-    type: 'MediaQueryList',
-    data: {
-      tokens,
-      index
+    return {
+      type: 'MediaQuery',
+      data: {
+        tokens
+      }
     }
-    // children: map(mediaQueries, tokenizeMediaQuery)
+  } else if (firstToken.type === '<ident-token>') {
+    let unaryOperator: 'not' | 'only' | null = null
+    let mediaType: 'print' | 'screen' | boolean = true
+
+    const { value } = firstToken
+    if (value === 'only' || value === 'not') {
+      unaryOperator = value
+    }
+
+    const firstIndex = unaryOperator === null ? 0 : 1
+
+    if (tokens.length <= firstIndex) return null
+
+    const firstNonUnaryToken = tokens[firstIndex]
+
+    if (firstNonUnaryToken.type === '<ident-token>') {
+      const { value } = firstNonUnaryToken
+
+      if (value === 'all') {
+        mediaType = true
+      } else if (value === 'print' || value === 'screen') {
+        mediaType = value
+      } else if (
+        value === 'tty' ||
+        value === 'tv' ||
+        value === 'projection' ||
+        value === 'handheld' ||
+        value === 'braille' ||
+        value === 'embossed' ||
+        value === 'aural' ||
+        value === 'speech'
+      ) {
+        mediaType = false
+      } else {
+        return null
+      }
+    } else {
+      return null
+    }
+
+    if (firstIndex + 1 === tokens.length) {
+      console.log(unaryOperator, mediaType)
+
+      return {
+        type: 'MediaQuery',
+        data: {
+          tokens
+        }
+      }
+    } else if (firstIndex + 4 < tokens.length) {
+      const secondNonUnaryToken = tokens[firstIndex + 1]
+      if (
+        secondNonUnaryToken.type === '<ident-token>' &&
+        secondNonUnaryToken.value === 'and'
+      ) {
+        tokenizeMediaCondition(tokens.slice(firstIndex + 2))
+
+        return {
+          type: 'MediaQuery',
+          data: {
+            tokens
+          }
+        }
+      } else {
+        return null
+      }
+    } else {
+      return null
+    }
+  } else {
+    return null
   }
 }
 
-/*
-<media-query> = <media-condition>
-             | [ not | only ]? <media-type> [ and <media-condition-without-or> ]?
-
-// okay so what can it start with?
-not | only | <ident> | (
-> <media-condition> = <media-not> | <media-in-parens> [ <media-and>* | <media-or>* ]
-> <media-type> = <ident>
->> <media-not> = not
->> <media-in-parens> = '(' | [<ident> '(']
->> <ident> = tokenizeIdent and not other
-*/
-export const tokenizeMediaQuery = (
-  tokens: Token[],
-  index: number
-): MediaQueryToken | null => {
-  return {
-    type: 'MediaQuery',
-    data: {
-      tokens,
-      index
-    }
-  }
-}
-
-/*
-<media-type> = <ident>
-*/
-export const tokenizeMediaType = (
-  tokens: Token[],
-  index: number
-): MediaTypeToken | null => {
-  return {
-    type: 'MediaType',
-    data: {
-      tokens,
-      index
-    }
-  }
-}
-
-/*
-<media-condition> = <media-not> | <media-in-parens> [ <media-and>* | <media-or>* ]
-*/
 export const tokenizeMediaCondition = (
   tokens: Token[],
-  index: number
-): MediaConditionToken | null => {
-  return {
-    type: 'MediaCondition',
-    data: {
-      tokens,
-      index
+  previousOperator: 'and' | 'or' | 'not' | null = null
+): any | null => {
+  console.log(previousOperator, tokens)
+
+  // parse the first media feature (deeply if wrapped in parentheses)
+  // pass in "and", "not", "or", null as previously encountered boolean operators
+
+  if (
+    tokens.length < 3 ||
+    tokens[0].type !== '<(-token>' ||
+    tokens[tokens.length - 1].type !== '<)-token>'
+  ) {
+    return null
+  }
+
+  let endIndexOfFirstFeature = tokens.length - 1
+  let maxDepth = 0
+  let count = 0
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i]
+    if (token.type === '<(-token>') {
+      count += 1
+      maxDepth = Math.max(maxDepth, count)
+    } else if (token.type === '<)-token>') {
+      count -= 1
     }
+    if (count === 0) {
+      endIndexOfFirstFeature = i
+      break
+    }
+  }
+
+  let mediaFeature
+  const featureTokens = tokens.slice(0, endIndexOfFirstFeature + 1)
+  if (maxDepth === 1) {
+    mediaFeature = [tokenizeMediaFeature(featureTokens)]
+  } else {
+    mediaFeature = tokenizeMediaCondition(featureTokens)
+  }
+
+  if (endIndexOfFirstFeature === tokens.length - 1) {
+    return [mediaFeature]
+  } else {
+    // read for a boolean op "and", "not", "or"
+    const nextToken = tokens[endIndexOfFirstFeature + 1]
+    if (
+      nextToken.type !== '<ident-token>' ||
+      (nextToken.value !== 'and' &&
+        nextToken.value !== 'or' &&
+        nextToken.value !== 'not') ||
+      (previousOperator !== null && previousOperator !== nextToken.value)
+    ) {
+      return null
+    }
+    return [
+      mediaFeature,
+      ...tokenizeMediaCondition(
+        tokens.slice(endIndexOfFirstFeature + 2),
+        nextToken.value
+      )
+    ]
   }
 }
 
-/*
-<media-condition-without-or> = <media-not> | <media-in-parens> <media-and>*
-*/
-export const tokenizeMediaConditionWithoutOr = (
-  tokens: Token[],
-  index: number
-): MediaConditionWithoutOrToken | null => {
-  return {
-    type: 'MediaConditionWithoutOr',
-    data: {
-      tokens,
-      index
-    }
-  }
-}
-
-/*
-<media-not> = not <media-in-parens>
-*/
-export const tokenizeMediaNot = (
-  tokens: Token[],
-  index: number
-): MediaNotToken | null => {
-  return {
-    type: 'MediaNot',
-    data: {
-      tokens,
-      index
-    }
-  }
-}
-
-/*
-<media-and> = and <media-in-parens>
-*/
-export const tokenizeMediaAnd = (
-  tokens: Token[],
-  index: number
-): MediaAndToken | null => {
-  return {
-    type: 'MediaAnd',
-    data: {
-      tokens,
-      index
-    }
-  }
-}
-
-/*
-<media-or> = or <media-in-parens>
-*/
-export const tokenizeMediaOr = (
-  tokens: Token[],
-  index: number
-): MediaOrToken | null => {
-  return {
-    type: 'MediaOr',
-    data: {
-      tokens,
-      index
-    }
-  }
-}
-
-/*
-<media-in-parens> = ( <media-condition> ) | <media-feature> | <general-enclosed>
-*/
-export const tokenizeMediaInParens = (
-  tokens: Token[],
-  index: number
-): MediaInParensToken | null => {
-  return {
-    type: 'MediaInParens',
-    data: {
-      tokens,
-      index
-    }
-  }
-}
-
-/*
-<media-feature> = ( [ <mf-plain> | <mf-boolean> | <mf-range> ] )
-*/
-export const tokenizeMediaFeature = (
-  tokens: Token[],
-  index: number
-): MediaFeatureToken | null => {
-  return {
-    type: 'MediaFeature',
-    data: {
-      tokens,
-      index
-    }
-  }
-}
-
-/*
-<mf-plain> = <mf-name> : <mf-value>
-*/
-export const tokenizeMfPlain = (
-  tokens: Token[],
-  index: number
-): MFPlainToken | null => {
-  return {
-    type: 'MfPlain',
-    data: {
-      tokens,
-      index
-    }
-  }
-}
-
-/*
-<mf-boolean> = <mf-name>
-*/
-export const tokenizeMFBoolean = (
-  tokens: Token[],
-  index: number
-): MFBooleanToken | null => {
-  return {
-    type: 'MFBoolean',
-    data: {
-      tokens,
-      index
-    }
-  }
-}
-
-/*
-<mf-range> = <mf-name> <mf-comparison> <mf-value>
-           | <mf-value> <mf-comparison> <mf-name>
-           | <mf-value> <mf-lt> <mf-name> <mf-lt> <mf-value>
-           | <mf-value> <mf-gt> <mf-name> <mf-gt> <mf-value>
-*/
-export const tokenizeMFRange = (
-  tokens: Token[],
-  index: number
-): MFRangeToken | null => {
-  return {
-    type: 'MFRange',
-    data: {
-      tokens,
-      index
-    }
-  }
-}
-
-/*
-<mf-name> = <ident>
-*/
-export const tokenizeMFName = (
-  tokens: Token[],
-  index: number
-): MFNameToken | null => {
-  return {
-    type: 'MFName',
-    data: {
-      tokens,
-      index
-    }
-  }
-}
-
-/*
-<mf-value> = <number> | <dimension> | <ident> | <ratio>
-*/
-export const tokenizeMFValue = (
-  tokens: Token[],
-  index: number
-): MFValueToken | null => {
-  return {
-    type: 'MFValue',
-    data: {
-      tokens,
-      index
-    }
-  }
-}
-
-/*
-<mf-lt> = '<' '='?
-*/
-export const tokenizeMFLT = (
-  tokens: Token[],
-  index: number
-): MFLTToken | null => {
-  return {
-    type: 'MFLT',
-    data: {
-      tokens,
-      index
-    }
-  }
-}
-
-/*
-<mf-gt> = '>' '='?
-*/
-export const tokenizeMFGT = (
-  tokens: Token[],
-  index: number
-): MFGTToken | null => {
-  return {
-    type: 'MFGT',
-    data: {
-      tokens,
-      index
-    }
-  }
-}
-
-/*
-<mf-eq> = '='
-*/
-export const tokenizeMFEq = (
-  tokens: Token[],
-  index: number
-): MFEqToken | null => {
-  return {
-    type: 'MFEq',
-    data: {
-      tokens,
-      index
-    }
-  }
-}
-
-/*
-<mf-comparison> = <mf-lt> | <mf-gt> | <mf-eq>
-*/
-export const tokenizeMFComparison = (
-  tokens: Token[],
-  index: number
-): MFComparisonToken | null => {
-  return {
-    type: 'MFComparison',
-    data: {
-      tokens,
-      index
-    }
-  }
-}
-
-/*
-<general-enclosed> = [ <function-token> <any-value> ) ] | ( <ident> <any-value> )
-*/
-export const tokenizeGeneralEnclosed = (
-  tokens: Token[],
-  index: number
-): GeneralEnclosedToken | null => {
-  return {
-    type: 'GeneralEnclosed',
-    data: {
-      tokens,
-      index
-    }
-  }
-}
-
-/*
-Excluding --custom-variables from this definition
-*/
-export const tokenizeIdent = (
-  tokens: Token[],
-  index: number
-): IdentToken | null => {
-  return {
-    type: 'Ident',
-    data: {
-      tokens,
-      index
-    }
-  }
-}
-
-/*
-
-*/
-export const tokenizeNumber = (
-  tokens: Token[],
-  index: number
-): NumberToken | null => {
-  return {
-    type: 'Number',
-    data: {
-      tokens,
-      index
-    }
-  }
-}
-
-/*
-
-*/
-export const tokenizeDimension = (
-  tokens: Token[],
-  index: number
-): DimensionToken | null => {
-  return {
-    type: 'Dimension',
-    data: {
-      tokens,
-      index
-    }
-  }
-}
-
-/*
-
-*/
-export const tokenizeRatio = (
-  tokens: Token[],
-  index: number
-): RatioToken | null => {
-  return {
-    type: 'Ratio',
-    data: {
-      tokens,
-      index
-    }
-  }
+export const tokenizeMediaFeature = (tokens: Token[]): any | null => {
+  console.log(tokens)
+  return null
 }

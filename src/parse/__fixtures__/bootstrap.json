@@ -515,7 +515,7 @@
   },
   {
     "type": "<ident-token>",
-    "value": "Roboto"
+    "value": "roboto"
   },
   {
     "type": "<comma-token>"
@@ -535,7 +535,7 @@
   },
   {
     "type": "<ident-token>",
-    "value": "Arial"
+    "value": "arial"
   },
   {
     "type": "<comma-token>"
@@ -625,7 +625,7 @@
   },
   {
     "type": "<ident-token>",
-    "value": "SFMono-Regular"
+    "value": "sfmono-regular"
   },
   {
     "type": "<comma-token>"
@@ -635,7 +635,7 @@
   },
   {
     "type": "<ident-token>",
-    "value": "Menlo"
+    "value": "menlo"
   },
   {
     "type": "<comma-token>"
@@ -645,7 +645,7 @@
   },
   {
     "type": "<ident-token>",
-    "value": "Monaco"
+    "value": "monaco"
   },
   {
     "type": "<comma-token>"
@@ -655,7 +655,7 @@
   },
   {
     "type": "<ident-token>",
-    "value": "Consolas"
+    "value": "consolas"
   },
   {
     "type": "<comma-token>"
@@ -1280,7 +1280,7 @@
   },
   {
     "type": "<ident-token>",
-    "value": "currentColor"
+    "value": "currentcolor"
   },
   {
     "type": "<semicolon-token>"
@@ -28505,7 +28505,7 @@
   },
   {
     "type": "<ident-token>",
-    "value": "currentColor"
+    "value": "currentcolor"
   },
   {
     "type": "<semicolon-token>"
@@ -43251,7 +43251,7 @@
   },
   {
     "type": "<function-token>",
-    "value": "translateY"
+    "value": "translatey"
   },
   {
     "type": "<dimension-token>",
@@ -43267,7 +43267,7 @@
   },
   {
     "type": "<function-token>",
-    "value": "translateX"
+    "value": "translatex"
   },
   {
     "type": "<dimension-token>",
@@ -43503,7 +43503,7 @@
   },
   {
     "type": "<function-token>",
-    "value": "translateY"
+    "value": "translatey"
   },
   {
     "type": "<dimension-token>",
@@ -43519,7 +43519,7 @@
   },
   {
     "type": "<function-token>",
-    "value": "translateX"
+    "value": "translatex"
   },
   {
     "type": "<dimension-token>",
@@ -43646,7 +43646,7 @@
   },
   {
     "type": "<function-token>",
-    "value": "translateY"
+    "value": "translatey"
   },
   {
     "type": "<dimension-token>",
@@ -43662,7 +43662,7 @@
   },
   {
     "type": "<function-token>",
-    "value": "translateX"
+    "value": "translatex"
   },
   {
     "type": "<dimension-token>",
@@ -119059,7 +119059,7 @@
   },
   {
     "type": "<function-token>",
-    "value": "translateX"
+    "value": "translatex"
   },
   {
     "type": "<percentage-token>",
@@ -119150,7 +119150,7 @@
   },
   {
     "type": "<function-token>",
-    "value": "translateX"
+    "value": "translatex"
   },
   {
     "type": "<percentage-token>",
@@ -122256,7 +122256,7 @@
   },
   {
     "type": "<ident-token>",
-    "value": "currentColor"
+    "value": "currentcolor"
   },
   {
     "type": "<semicolon-token>"
@@ -122869,7 +122869,7 @@
   },
   {
     "type": "<ident-token>",
-    "value": "currentColor"
+    "value": "currentcolor"
   },
   {
     "type": "<semicolon-token>"
@@ -124086,7 +124086,7 @@
   },
   {
     "type": "<function-token>",
-    "value": "translateX"
+    "value": "translatex"
   },
   {
     "type": "<percentage-token>",
@@ -124278,7 +124278,7 @@
   },
   {
     "type": "<function-token>",
-    "value": "translateX"
+    "value": "translatex"
   },
   {
     "type": "<percentage-token>",
@@ -124491,7 +124491,7 @@
   },
   {
     "type": "<function-token>",
-    "value": "translateY"
+    "value": "translatey"
   },
   {
     "type": "<percentage-token>",
@@ -130890,7 +130890,7 @@
   },
   {
     "type": "<function-token>",
-    "value": "translateX"
+    "value": "translatex"
   },
   {
     "type": "<percentage-token>",
@@ -130952,7 +130952,7 @@
   },
   {
     "type": "<function-token>",
-    "value": "translateY"
+    "value": "translatey"
   },
   {
     "type": "<percentage-token>",

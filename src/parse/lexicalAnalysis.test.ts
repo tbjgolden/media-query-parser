@@ -182,7 +182,7 @@ test('consumeIdentLike', () => {
   expect(consumeIdentLike('-0', 0)).toEqual(null)
   expect(consumeIdentLike('-a', 0)).toEqual([1, '-a', '<ident-token>'])
   expect(consumeIdentLike('--', 0)).toEqual([1, '--', '<ident-token>'])
-  expect(consumeIdentLike('-\\41', 0)).toEqual([3, '-A', '<ident-token>'])
+  expect(consumeIdentLike('-\\41', 0)).toEqual([3, '-a', '<ident-token>'])
   expect(consumeIdentLike('_', 0)).toEqual([0, '_', '<ident-token>'])
 
   expect(consumeIdentLike('\\31 a2b3c', 0)).toEqual([

@@ -167,7 +167,7 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
             const [lastIndex, value] = result
             tokens.push({
               type: '<hash-token>',
-              value,
+              value: value.toLowerCase(),
               flag
             })
             index = lastIndex
@@ -202,7 +202,7 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
             tokens.push({
               type: '<dimension-token>',
               value: tokenTuple[1],
-              unit: tokenTuple[2],
+              unit: tokenTuple[2].toLowerCase(),
               flag: 'number'
             })
           } else if (tokenTuple[0] === '<number-token>') {
@@ -353,7 +353,7 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
         const [lastIndex, value] = result
         tokens.push({
           type: '<at-keyword-token>',
-          value
+          value: value.toLowerCase()
         })
         index = lastIndex
         continue
@@ -783,7 +783,7 @@ export const consumeIdentLike = (
         for (let offset = 2; lastIndex + offset < str.length; offset += 1) {
           const nextNextCode = str.charCodeAt(lastIndex + offset)
           if (nextNextCode === 0x0022 || nextNextCode === 0x0027) {
-            return [lastIndex, value, '<function-token>']
+            return [lastIndex, value.toLowerCase(), '<function-token>']
           } else if (
             nextNextCode !== 0x0009 &&
             nextNextCode !== 0x0020 &&
@@ -795,15 +795,15 @@ export const consumeIdentLike = (
             return [lastUrlIndex, value, '<url-token>']
           }
         }
-        return [lastIndex, value, '<function-token>']
+        return [lastIndex, value.toLowerCase(), '<function-token>']
       }
     }
   } else if (str.length > lastIndex + 1) {
     const nextCode = str.charCodeAt(lastIndex + 1)
     if (nextCode === 0x0028) {
-      return [lastIndex + 1, value, '<function-token>']
+      return [lastIndex + 1, value.toLowerCase(), '<function-token>']
     }
   }
 
-  return [lastIndex, value, '<ident-token>']
+  return [lastIndex, value.toLowerCase(), '<ident-token>']
 }

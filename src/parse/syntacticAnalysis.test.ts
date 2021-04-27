@@ -1,13 +1,52 @@
-import { tokenize, tokenizeIdent } from './syntacticAnalysis'
+import { tokenize, removeWhitespace } from './syntacticAnalysis'
 
-test('should skip over @media, or error if something else', async () => {
+test.skip('should skip over @media, or error if something else', async () => {
   expect(tokenize('@media all')).toBe('')
   expect(tokenize('@media,all;')).toBe('')
   expect(tokenize('@media all;')).toBe('')
   expect(tokenize('@media all { /* ... */ }')).toBe('')
 })
 
-test.skip('should tokenize media query', async () => {
+test('removeWhitespace', async () => {
+  expect(removeWhitespace([])).toEqual([])
+  expect(removeWhitespace([{ type: '<colon-token>' }])).toEqual([
+    { type: '<colon-token>' }
+  ])
+  expect(removeWhitespace([{ type: '<whitespace-token>' }])).toEqual([])
+  expect(
+    removeWhitespace([
+      { type: '<whitespace-token>' },
+      { type: '<whitespace-token>' }
+    ])
+  ).toEqual([])
+  expect(
+    removeWhitespace([
+      { type: '<colon-token>' },
+      { type: '<whitespace-token>' }
+    ])
+  ).toEqual([{ type: '<colon-token>' }])
+  expect(
+    removeWhitespace([
+      { type: '<whitespace-token>' },
+      { type: '<colon-token>' }
+    ])
+  ).toEqual([{ type: '<colon-token>' }])
+  expect(
+    removeWhitespace([
+      { type: '<whitespace-token>' },
+      { type: '<colon-token>' },
+      { type: '<whitespace-token>' },
+      { type: '<colon-token>' },
+      { type: '<whitespace-token>' }
+    ])
+  ).toEqual([{ type: '<colon-token>' }, { type: '<colon-token>' }])
+})
+
+test('should tokenize media query', async () => {
+  expect(tokenize('only screen and (color)')).toBe('')
+  expect(tokenize('')).toBe('')
+  expect(tokenize('all,')).toBe('')
+  expect(tokenize('all, all, all')).toBe('')
   expect(tokenize('only screen and (color)')).toBe('')
   expect(tokenize('not print and (min-width: 10px)')).toBe('')
   expect(tokenize('not print, screen, (max-width: 1000px)')).toBe('')
@@ -47,15 +86,4 @@ test.skip('should tokenize media query', async () => {
   expect(tokenize('(100px <= width <= 200px)')).toBe('')
   expect(tokenize('screen and (100px <= width <= 200px)')).toBe('')
   expect(tokenize('(100px <= width) and (width <= 200px)')).toBe('')
-})
-
-test.skip('tokenizeIdent', async () => {
-  expect(tokenizeIdent('')).toBe(null)
-  expect(tokenizeIdent('a')).not.toBe(null)
-  expect(tokenizeIdent('_')).not.toBe(null)
-  expect(tokenizeIdent('_a')).not.toBe(null)
-  expect(tokenizeIdent('0')).toBe(null)
-  expect(tokenizeIdent('_0')).not.toBe(null)
-  expect(tokenizeIdent('-')).toBe(null)
-  expect(tokenizeIdent('-a')).not.toBe(null)
 })
