@@ -243,8 +243,14 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
             tokens.push({
               type: '<dimension-token>',
               value: tokenTuple[1],
-              unit: tokenTuple[2],
+              unit: tokenTuple[2].toLowerCase(),
               flag: 'number'
+            })
+          } else if (tokenTuple[0] === '<number-token>') {
+            tokens.push({
+              type: tokenTuple[0],
+              value: tokenTuple[1],
+              flag: tokenTuple[2]
             })
           } else {
             tokens.push({
@@ -299,8 +305,14 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
             tokens.push({
               type: '<dimension-token>',
               value: tokenTuple[1],
-              unit: tokenTuple[2],
+              unit: tokenTuple[2].toLowerCase(),
               flag: 'number'
+            })
+          } else if (tokenTuple[0] === '<number-token>') {
+            tokens.push({
+              type: tokenTuple[0],
+              value: tokenTuple[1],
+              flag: tokenTuple[2]
             })
           } else {
             tokens.push({
@@ -382,8 +394,14 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
         tokens.push({
           type: '<dimension-token>',
           value: tokenTuple[1],
-          unit: tokenTuple[2],
+          unit: tokenTuple[2].toLowerCase(),
           flag: 'number'
+        })
+      } else if (tokenTuple[0] === '<number-token>') {
+        tokens.push({
+          type: tokenTuple[0],
+          value: tokenTuple[1],
+          flag: tokenTuple[2]
         })
       } else {
         tokens.push({
@@ -589,9 +607,11 @@ export const consumeNumber = (
   if (index + 1 < str.length) {
     const nextCode = str.charCodeAt(index)
     const nextNextCode = str.charCodeAt(index + 1)
+
     if (
-      nextCode === 0x002e ||
-      (nextNextCode >= 0x0030 && nextNextCode <= 0x0039)
+      nextCode === 0x002e &&
+      nextNextCode >= 0x0030 &&
+      nextNextCode <= 0x0039
     ) {
       numberChars.push(nextCode, nextNextCode)
       flag = 'number'
@@ -613,6 +633,7 @@ export const consumeNumber = (
     const nextCode = str.charCodeAt(index)
     const nextNextCode = str.charCodeAt(index + 1)
     const nextNextNextCode = str.charCodeAt(index + 2)
+
     if (nextCode === 0x0045 || nextCode === 0x0065) {
       const nextNextIsDigit = nextNextCode >= 0x0030 && nextNextCode <= 0x0039
       if (

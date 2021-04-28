@@ -42,7 +42,8 @@ test('removeWhitespace', async () => {
   ).toEqual([{ type: '<colon-token>' }, { type: '<colon-token>' }])
 })
 
-test('should tokenize media query', async () => {
+test.only('should tokenize media query', async () => {
+  expect(tokenize('(1/2 < aspect-ratio < 1/1)')).toBe('')
   expect(tokenize('(100px <= width <= 200px)')).toBe('')
   expect(tokenize('only screen and (color)')).toBe('')
   expect(tokenize('')).toBe('')

@@ -114,6 +114,10 @@ test('consumeNumeric', () => {
     3,
     ['<number-token>', 2e10, 'number']
   ])
+  expect(consumeNumeric('1/2', 0)).toEqual([
+    0,
+    ['<number-token>', 1, 'integer']
+  ])
 })
 
 test('consumeNumber', () => {
@@ -134,6 +138,7 @@ test('consumeNumber', () => {
   expect(consumeNumber('8181818', 0)).toEqual([6, 8181818, 'integer'])
   expect(consumeNumber('-302.1010', 0)).toEqual([8, -302.101, 'number'])
   expect(consumeNumber(' -302.1010', 1)).toEqual([9, -302.101, 'number'])
+  expect(consumeNumber('1/2', 0)).toEqual([0, 1, 'integer'])
   expect(consumeNumber(' -302.1010', 0)).toEqual(null)
 })
 
@@ -222,7 +227,7 @@ test('consumeIdentLike', () => {
   ])
 })
 
-test('misc', () => {
+test('old bugs', () => {
   expect(
     lexicalAnalysis(
       '.dropdown-item:hover{color:#1e2125;background-color:#e9ecef}'
@@ -272,6 +277,88 @@ test('misc', () => {
       flag: 'id',
       type: '<hash-token>',
       value: 'e9ecef'
+    },
+    {
+      type: '<}-token>'
+    },
+    {
+      type: '<EOF-token>'
+    }
+  ])
+  expect(lexicalAnalysis('@media (1/2 < aspect-ratio < 1/1) { }')).toEqual([
+    {
+      type: '<at-keyword-token>',
+      value: 'media'
+    },
+    {
+      type: '<whitespace-token>'
+    },
+    {
+      type: '<(-token>'
+    },
+    {
+      flag: 'integer',
+      type: '<number-token>',
+      value: 1
+    },
+    {
+      type: '<delim-token>',
+      value: 47
+    },
+    {
+      flag: 'integer',
+      type: '<number-token>',
+      value: 2
+    },
+    {
+      type: '<whitespace-token>'
+    },
+    {
+      type: '<delim-token>',
+      value: 60
+    },
+    {
+      type: '<whitespace-token>'
+    },
+    {
+      type: '<ident-token>',
+      value: 'aspect-ratio'
+    },
+    {
+      type: '<whitespace-token>'
+    },
+    {
+      type: '<delim-token>',
+      value: 60
+    },
+    {
+      type: '<whitespace-token>'
+    },
+    {
+      flag: 'integer',
+      type: '<number-token>',
+      value: 1
+    },
+    {
+      type: '<delim-token>',
+      value: 47
+    },
+    {
+      flag: 'integer',
+      type: '<number-token>',
+      value: 1
+    },
+    {
+      type: '<)-token>'
+    },
+    {
+      type: '<whitespace-token>'
+    },
+    {
+      type: '<{-token>'
+    },
+    {
+      type: '<whitespace-token>'
     },
     {
       type: '<}-token>'

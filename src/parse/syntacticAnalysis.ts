@@ -1,4 +1,9 @@
-import { lexicalAnalysis, Token } from './lexicalAnalysis'
+import {
+  DimensionToken,
+  lexicalAnalysis,
+  NumberToken,
+  Token
+} from './lexicalAnalysis'
 
 type WToken = Token & { wsBefore: boolean; wsAfter: boolean }
 
@@ -52,6 +57,7 @@ export const removeWhitespace = (tokenList: Token[]): WToken[] => {
         wsBefore: before,
         wsAfter: false
       })
+      before = false
     }
   }
 
@@ -154,9 +160,9 @@ export const tokenizeMediaQuery = (
       return null
     }
 
-    if (firstIndex + 1 === tokens.length) {
-      console.log(unaryOperator, mediaType)
+    console.log(mediaType)
 
+    if (firstIndex + 1 === tokens.length) {
       return {
         type: 'MediaQuery',
         data: {
@@ -192,8 +198,6 @@ export const tokenizeMediaCondition = (
   tokens: WToken[],
   previousOperator: 'and' | 'or' | 'not' | null = null
 ): any | null => {
-  console.log(previousOperator, tokens)
-
   // parse the first media feature (deeply if wrapped in parentheses)
   // pass in "and", "not", "or", null as previously encountered boolean operators
 
@@ -265,20 +269,294 @@ export const tokenizeMediaFeature = (tokens: WToken[]): any | null => {
   const nextToken = tokens[1]
   if (nextToken.type === '<ident-token>' && tokens.length === 3) {
     // '(' 'feature name' ')'
-    console.log(nextToken.value)
+    // console.log(nextToken.value)
   } else if (
     tokens.length === 5 &&
     tokens[2].type === '<ident-token>' &&
     tokens[3].type === '<colon-token>'
   ) {
     // '(' 'feature name' ':' 'feature value' ')'
-    // } else if (tokens.length === 7) {
-    //   // range form two comparisons
-    // } else if (tokens.length === 5) {
-    //   // range form one comparisons
-  } else {
-    console.log(tokens)
+  } else if (tokens.length >= 5) {
+    // console.log(tokenizeRange(tokens))
   }
 
   return null
+}
+
+type RatioToken = {
+  type: '<ratio-token>'
+  numerator: number
+  denominator: number
+  wsBefore: boolean
+  wsAfter: boolean
+}
+type ValidRangeToken = (
+  | NumberToken
+  | DimensionToken
+  | RatioToken
+  | {
+      type: '<ident-token>'
+      value: 'infinite'
+    }
+) & { wsBefore: boolean; wsAfter: boolean }
+
+type ConvenientToken = WToken | RatioToken
+
+type UncheckedRange = {
+  leftToken: ConvenientToken | null
+  leftOp: '>=' | '<=' | '>' | '<' | '=' | null
+  featureName: string
+  rightOp: '>=' | '<=' | '>' | '<' | '=' | null
+  rightToken: ConvenientToken | null
+}
+
+type ValidRange =
+  | {
+      leftToken: ValidRangeToken
+      leftOp: '<' | '<='
+      featureName: string
+      rightOp: '<' | '<='
+      rightToken: ValidRangeToken
+    }
+  | {
+      leftToken: ValidRangeToken
+      leftOp: '>' | '>='
+      featureName: string
+      rightOp: '>' | '>='
+      rightToken: ValidRangeToken
+    }
+  | {
+      leftToken: ValidRangeToken
+      leftOp: '>' | '>=' | '<' | '<=' | '='
+      featureName: string
+      rightOp: null
+      rightToken: null
+    }
+  | {
+      leftToken: null
+      leftOp: null
+      featureName: string
+      rightOp: '>' | '>=' | '<' | '<=' | '='
+      rightToken: ValidRangeToken
+    }
+
+export const tokenizeRange = (rawTokens: WToken[]): ValidRange | null => {
+  if (rawTokens.length <= 5) return null
+  if (rawTokens[0].type !== '<(-token>') return null
+
+  const tokens: ConvenientToken[] = [rawTokens[0]]
+
+  for (let i = 1; i < rawTokens.length; i++) {
+    if (i < rawTokens.length - 2) {
+      const a = rawTokens[i]
+      const b = rawTokens[i + 1]
+      const c = rawTokens[i + 2]
+      if (
+        a.type === '<number-token>' &&
+        a.flag === 'integer' &&
+        a.value > 0 &&
+        b.type === '<delim-token>' &&
+        b.value === 0x002f &&
+        c.type === '<number-token>' &&
+        c.flag === 'integer' &&
+        c.value > 0
+      ) {
+        tokens.push({
+          type: '<ratio-token>',
+          numerator: a.value,
+          denominator: c.value,
+          wsBefore: a.wsBefore,
+          wsAfter: c.wsAfter
+        })
+        i += 2
+        continue
+      }
+    }
+    tokens.push(rawTokens[i])
+  }
+
+  // range form
+  const range: UncheckedRange = {
+    leftToken: null,
+    leftOp: null,
+    featureName: '',
+    rightOp: null,
+    rightToken: null
+  }
+
+  const hasLeft =
+    tokens[1].type === '<number-token>' ||
+    tokens[1].type === '<dimension-token>' ||
+    tokens[1].type === '<ratio-token>' ||
+    (tokens[1].type === '<ident-token>' && tokens[1].value === 'infinite')
+  if (tokens[2].type === '<delim-token>') {
+    if (tokens[2].value === 0x003c) {
+      if (
+        tokens[3].type === '<delim-token>' &&
+        tokens[3].value === 0x003d &&
+        !tokens[3].wsBefore
+      ) {
+        range[hasLeft ? 'leftOp' : 'rightOp'] = '<='
+      } else {
+        range[hasLeft ? 'leftOp' : 'rightOp'] = '<'
+      }
+    } else if (tokens[2].value === 0x003e) {
+      if (
+        tokens[3].type === '<delim-token>' &&
+        tokens[3].value === 0x003d &&
+        !tokens[3].wsBefore
+      ) {
+        range[hasLeft ? 'leftOp' : 'rightOp'] = '>='
+      } else {
+        range[hasLeft ? 'leftOp' : 'rightOp'] = '>'
+      }
+    } else if (tokens[2].value === 0x003d) {
+      range[hasLeft ? 'leftOp' : 'rightOp'] = '='
+    } else {
+      return null
+    }
+
+    if (hasLeft) {
+      range.leftToken = tokens[1]
+    } else if (tokens[1].type === '<ident-token>') {
+      range.featureName = tokens[1].value
+    } else {
+      return null
+    }
+
+    const tokenIndexAfterFirstOp =
+      2 + (range[hasLeft ? 'leftOp' : 'rightOp']?.length ?? 0)
+    const tokenAfterFirstOp = tokens[tokenIndexAfterFirstOp]
+
+    if (hasLeft) {
+      if (tokenAfterFirstOp.type === '<ident-token>') {
+        range.featureName = tokenAfterFirstOp.value
+
+        if (tokens.length >= 7) {
+          // check for right side
+          const secondOpToken = tokens[tokenIndexAfterFirstOp + 1]
+          const followingToken = tokens[tokenIndexAfterFirstOp + 2]
+          if (secondOpToken.type === '<delim-token>') {
+            const charCode = secondOpToken.value
+            if (charCode === 0x003c) {
+              if (
+                followingToken.type === '<delim-token>' &&
+                followingToken.value === 0x003d &&
+                !followingToken.wsBefore
+              ) {
+                range.rightOp = '<='
+              } else {
+                range.rightOp = '<'
+              }
+            } else if (charCode === 0x003e) {
+              if (
+                followingToken.type === '<delim-token>' &&
+                followingToken.value === 0x003d &&
+                !followingToken.wsBefore
+              ) {
+                range.rightOp = '>='
+              } else {
+                range.rightOp = '>'
+              }
+            } else if (charCode === 0x003d) {
+              range.rightOp = '='
+            } else {
+              return null
+            }
+
+            const tokenAfterSecondOp =
+              tokens[tokenIndexAfterFirstOp + 1 + (range.rightOp?.length ?? 0)]
+
+            range.rightToken = tokenAfterSecondOp
+          } else {
+            return null
+          }
+        } else if (tokenIndexAfterFirstOp + 2 !== tokens.length) {
+          return null
+        }
+      } else {
+        return null
+      }
+    } else {
+      range.rightToken = tokenAfterFirstOp
+    }
+
+    let validRange: ValidRange
+
+    const {
+      leftToken: lt,
+      leftOp,
+      featureName,
+      rightOp,
+      rightToken: rt
+    } = range
+
+    let leftToken: ValidRangeToken | null = null
+    if (lt !== null) {
+      if (lt.type === '<ident-token>') {
+        const { type, value, ...rest } = lt
+        if (value === 'infinite') {
+          leftToken = { type, value, ...rest }
+        }
+      } else if (
+        lt.type === '<number-token>' ||
+        lt.type === '<dimension-token>' ||
+        lt.type === '<ratio-token>'
+      ) {
+        leftToken = lt
+      }
+    }
+    let rightToken: ValidRangeToken | null = null
+    if (rt !== null) {
+      if (rt.type === '<ident-token>') {
+        const { type, value, ...rest } = rt
+        if (value === 'infinite') {
+          rightToken = { type, value, ...rest }
+        }
+      } else if (
+        rt.type === '<number-token>' ||
+        rt.type === '<dimension-token>' ||
+        rt.type === '<ratio-token>'
+      ) {
+        rightToken = rt
+      }
+    }
+
+    if (leftToken !== null && rightToken !== null) {
+      if (
+        (leftOp === '<' || leftOp === '<=') &&
+        (rightOp === '<' || rightOp === '<=')
+      ) {
+        validRange = { leftToken, leftOp, featureName, rightOp, rightToken }
+      } else if (
+        (leftOp === '>' || leftOp === '>=') &&
+        (rightOp === '>' || rightOp === '>=')
+      ) {
+        validRange = { leftToken, leftOp, featureName, rightOp, rightToken }
+      } else {
+        return null
+      }
+    } else if (
+      leftToken === null &&
+      leftOp === null &&
+      rightOp !== null &&
+      rightToken !== null
+    ) {
+      validRange = { leftToken, leftOp, featureName, rightOp, rightToken }
+    } else if (
+      leftToken !== null &&
+      leftOp !== null &&
+      rightOp === null &&
+      rightToken === null
+    ) {
+      validRange = { leftToken, leftOp, featureName, rightOp, rightToken }
+    } else {
+      return null
+    }
+
+    // validate operations
+    return validRange
+  } else {
+    return null
+  }
 }
