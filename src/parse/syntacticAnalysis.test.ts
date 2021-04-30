@@ -861,3 +861,40 @@ test('should tokenize media query', async () => {
     }
   ])
 })
+
+test('tokenize flattens valueless layers', () => {
+  expect(tokenize('(((((hover)) and (((color))))))')).toEqual(
+    tokenize('((hover)) and ((color))')
+  )
+  expect(tokenize('((hover)) and ((color))')).toEqual(
+    tokenize('(hover) and (color)')
+  )
+  expect(tokenize('((((hover)))) and ((color))')).toEqual(
+    tokenize('((hover)) and ((color))')
+  )
+  expect(tokenize('((hover)) and (color)')).toEqual(
+    tokenize('(hover) and (color)')
+  )
+  expect(tokenize('((hover) and (color))')).toEqual(
+    tokenize('(hover) and (color)')
+  )
+  expect(tokenize('(not (hover))')).toEqual(tokenize('not (hover)'))
+})
+
+test('tokenize does not flatten useful layers', () => {
+  expect(tokenize('(not (hover)) and (color)')).not.toEqual(
+    tokenize('not (hover) and (color)')
+  )
+  expect(tokenize('((hover) and (color)) or (aspect-ratio > 2/1)')).not.toEqual(
+    tokenize('(hover) and (color) or (aspect-ratio > 2/1)')
+  )
+  expect(tokenize('((hover) and (not (color)))')).toEqual(
+    tokenize('(hover) and (not (color))')
+  )
+  expect(tokenize('((hover) and (not (color)))')).not.toEqual(
+    tokenize('(hover) and not (color)')
+  )
+  expect(tokenize('screen and (not (not (color)))')).not.toEqual(
+    tokenize('screen and (not (color))')
+  )
+})

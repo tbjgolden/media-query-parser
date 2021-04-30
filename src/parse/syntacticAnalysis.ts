@@ -248,9 +248,15 @@ export const tokenizeMediaCondition = (
   }
 
   if (endIndexOfFirstFeature === tokens.length - 1) {
-    return {
-      operator: previousOperator,
-      children: [child]
+    // if the child is already a condition and this wrapper condition wouldn't add any
+    // extra information, don't have a wrapper
+    if (previousOperator === null && child !== null && 'children' in child) {
+      return child
+    } else {
+      return {
+        operator: previousOperator,
+        children: [child]
+      }
     }
   } else {
     // read for a boolean op "and", "not", "or"
