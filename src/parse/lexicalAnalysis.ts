@@ -133,7 +133,9 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
       })
     } else if (code === 0x0022) {
       const result = consumeString(str, index)
-      if (result === null) return null
+      if (result === null) {
+        return null
+      }
       const [lastIndex, value] = result
       tokens.push({
         type: '<string-token>',
@@ -179,7 +181,9 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
       tokens.push({ type: '<delim-token>', value: code })
     } else if (code === 0x0027) {
       const result = consumeString(str, index)
-      if (result === null) return null
+      if (result === null) {
+        return null
+      }
       const [lastIndex, value] = result
       tokens.push({
         type: '<string-token>',
@@ -196,7 +200,9 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
         const nextCode = str.charCodeAt(index + 1)
         if (nextCode >= 0x0030 && nextCode <= 0x0039) {
           const result = consumeNumeric(str, index + 1)
-          if (result === null) return null
+          if (result === null) {
+            return null
+          }
           const [lastIndex, tokenTuple] = result
           if (tokenTuple[0] === '<dimension-token>') {
             tokens.push({
@@ -237,7 +243,9 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
 
         if (nextCode >= 0x0030 && nextCode <= 0x0039) {
           const result = consumeNumeric(str, index + 1)
-          if (result === null) return null
+          if (result === null) {
+            return null
+          }
           const [lastIndex, tokenTuple] = result
           if (tokenTuple[0] === '<dimension-token>') {
             tokens.push({
@@ -299,7 +307,9 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
 
         if (nextCode >= 0x0030 && nextCode <= 0x0039) {
           const result = consumeNumeric(str, index + 1)
-          if (result === null) return null
+          if (result === null) {
+            return null
+          }
           const [lastIndex, tokenTuple] = result
           if (tokenTuple[0] === '<dimension-token>') {
             tokens.push({
@@ -376,7 +386,9 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
       tokens.push({ type: '<[-token>' })
     } else if (code === 0x005c) {
       const result = consumeEscape(str, index)
-      if (result === null) return null
+      if (result === null) {
+        return null
+      }
       const [lastIndex, value] = result
       str = str.slice(0, index) + value + str.slice(lastIndex + 1)
       index -= 1
@@ -388,7 +400,9 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
       tokens.push({ type: '<}-token>' })
     } else if (code >= 0x0030 && code <= 0x0039) {
       const result = consumeNumeric(str, index)
-      if (result === null) return null
+      if (result === null) {
+        return null
+      }
       const [lastIndex, tokenTuple] = result
       if (tokenTuple[0] === '<dimension-token>') {
         tokens.push({
@@ -419,7 +433,9 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
       code >= 0x0080
     ) {
       const result = consumeIdentLike(str, index)
-      if (result === null) return null
+      if (result === null) {
+        return null
+      }
       const [lastIndex, value, type] = result
       tokens.push({
         type,

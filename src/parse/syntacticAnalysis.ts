@@ -79,27 +79,30 @@ export const syntacticAnalysis = (tokenList: Token[]): MediaQuery[] | null => {
   const mediaQueries = mediaQueryList.map(removeWhitespace)
   if (mediaQueries.length === 1 && mediaQueries[0].length === 0) {
     // '@media {' is fine, treat as all
-    return []
-  } else if (mediaQueries.some((mediaQuery) => mediaQuery.length === 0)) {
-    // but '@media screen, {' is not
-    return null
+    return [{ mediaCondition: null, mediaPrefix: null, mediaType: 'all' }]
   } else {
-    const mediaQueryTokens = mediaQueries.map(tokenizeMediaQuery)
-    const nonNullMediaQueryTokens: MediaQuery[] = []
+    const mediaQueryTokens = mediaQueries.map((mediaQueryTokens) => {
+      if (mediaQueryTokens.length === 0) {
+        return null
+      } else {
+        return tokenizeMediaQuery(mediaQueryTokens)
+      }
+    })
 
+    const nonNullMediaQueryTokens: MediaQuery[] = []
     for (const mediaQueryToken of mediaQueryTokens) {
       if (mediaQueryToken !== null) {
         nonNullMediaQueryTokens.push(mediaQueryToken)
       }
     }
 
-    return nonNullMediaQueryTokens
+    return nonNullMediaQueryTokens.length === 0 ? null : nonNullMediaQueryTokens
   }
 }
 
 export type MediaQuery = {
   mediaPrefix: 'not' | 'only' | null
-  mediaType: boolean | 'screen' | 'print'
+  mediaType: 'all' | 'screen' | 'print'
   mediaCondition: MediaCondition | null
 }
 
@@ -107,16 +110,17 @@ export const tokenizeMediaQuery = (tokens: WToken[]): MediaQuery | null => {
   const firstToken = tokens[0]
   if (firstToken.type === '<(-token>') {
     const mediaCondition = tokenizeMediaCondition(tokens)
+
     return mediaCondition === null
       ? null
       : {
           mediaPrefix: null,
-          mediaType: true,
+          mediaType: 'all',
           mediaCondition
         }
   } else if (firstToken.type === '<ident-token>') {
     let mediaPrefix: 'not' | 'only' | null = null
-    let mediaType: 'print' | 'screen' | boolean = true
+    let mediaType: 'all' | 'print' | 'screen'
 
     const { value } = firstToken
     if (value === 'only' || value === 'not') {
@@ -133,7 +137,7 @@ export const tokenizeMediaQuery = (tokens: WToken[]): MediaQuery | null => {
       const { value } = firstNonUnaryToken
 
       if (value === 'all') {
-        mediaType = true
+        mediaType = 'all'
       } else if (value === 'print' || value === 'screen') {
         mediaType = value
       } else if (
@@ -146,7 +150,9 @@ export const tokenizeMediaQuery = (tokens: WToken[]): MediaQuery | null => {
         value === 'aural' ||
         value === 'speech'
       ) {
-        mediaType = false
+        // these are treated as equivalent to 'not all'
+        mediaPrefix = mediaPrefix === 'not' ? 'only' : 'not'
+        mediaType = 'all'
       } else {
         return null
       }
@@ -222,12 +228,23 @@ export const tokenizeMediaCondition = (
     }
   }
 
+  if (count !== 0) {
+    return null
+  }
+
   let child: MediaCondition | MediaFeature | null
   const featureTokens = tokens.slice(0, endIndexOfFirstFeature + 1)
   if (maxDepth === 1) {
     child = tokenizeMediaFeature(featureTokens)
   } else {
-    child = tokenizeMediaCondition(featureTokens)
+    if (
+      featureTokens[1].type === '<ident-token>' &&
+      featureTokens[1].value === 'not'
+    ) {
+      child = tokenizeMediaCondition(featureTokens.slice(2, -1), 'not')
+    } else {
+      child = tokenizeMediaCondition(featureTokens.slice(1, -1))
+    }
   }
 
   if (endIndexOfFirstFeature === tokens.length - 1) {
@@ -256,7 +273,7 @@ export const tokenizeMediaCondition = (
     if (siblings === null) return null
 
     return {
-      operator: previousOperator,
+      operator: nextToken.value,
       children: [child, ...siblings.children]
     }
   }
@@ -329,17 +346,18 @@ export const tokenizeMediaFeature = (
     }
   } else if (
     tokens.length === 5 &&
-    tokens[2].type === '<ident-token>' &&
-    tokens[3].type === '<colon-token>'
+    tokens[1].type === '<ident-token>' &&
+    tokens[2].type === '<colon-token>'
   ) {
-    const valueToken = tokens[4]
+    const valueToken = tokens[3]
     if (
       valueToken.type === '<number-token>' ||
       valueToken.type === '<dimension-token>' ||
       valueToken.type === '<ratio-token>' ||
       valueToken.type === '<ident-token>'
     ) {
-      let feature = tokens[2].value
+      let feature = tokens[1].value
+
       let prefix: 'min' | 'max' | null = null
 
       const slice = feature.slice(0, 4)
@@ -362,7 +380,10 @@ export const tokenizeMediaFeature = (
     }
   } else if (tokens.length >= 5) {
     const range = tokenizeRange(tokens)
-    if (range === null) return null
+
+    if (range === null) {
+      return null
+    }
 
     return {
       context: 'range',
@@ -432,11 +453,12 @@ type ValidRange =
 
 export const tokenizeRange = (tokens: ConvenientToken[]): ValidRange | null => {
   if (
-    tokens.length <= 5 ||
+    tokens.length < 5 ||
     tokens[0].type !== '<(-token>' ||
     tokens[tokens.length - 1].type !== '<)-token>'
-  )
+  ) {
     return null
+  }
 
   // range form
   const range: UncheckedRange = {
