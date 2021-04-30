@@ -1,5 +1,6 @@
 import {
   DimensionToken,
+  IdentToken,
   lexicalAnalysis,
   NumberToken,
   Token
@@ -7,7 +8,7 @@ import {
 
 type WToken = Token & { wsBefore: boolean; wsAfter: boolean }
 
-export const tokenize = (str: string): MediaQueryToken[] | null => {
+export const tokenize = (str: string): MediaQuery[] | null => {
   let tokenList = lexicalAnalysis(str.trim())
 
   // failed tokenizing
@@ -64,9 +65,7 @@ export const removeWhitespace = (tokenList: Token[]): WToken[] => {
   return newTokenList
 }
 
-export const syntacticAnalysis = (
-  tokenList: Token[]
-): MediaQueryToken[] | null => {
+export const syntacticAnalysis = (tokenList: Token[]): MediaQuery[] | null => {
   const mediaQueryList: Array<Array<Token>> = [[]]
   for (let i = 0; i < tokenList.length; i++) {
     const token = tokenList[i]
@@ -80,17 +79,13 @@ export const syntacticAnalysis = (
   const mediaQueries = mediaQueryList.map(removeWhitespace)
   if (mediaQueries.length === 1 && mediaQueries[0].length === 0) {
     // '@media {' is fine, treat as all
-    return [
-      tokenizeMediaQuery([
-        { type: '<ident-token>', value: 'all', wsBefore: false, wsAfter: false }
-      ]) as MediaQueryToken
-    ]
+    return []
   } else if (mediaQueries.some((mediaQuery) => mediaQuery.length === 0)) {
     // but '@media screen, {' is not
     return null
   } else {
     const mediaQueryTokens = mediaQueries.map(tokenizeMediaQuery)
-    const nonNullMediaQueryTokens: MediaQueryToken[] = []
+    const nonNullMediaQueryTokens: MediaQuery[] = []
 
     for (const mediaQueryToken of mediaQueryTokens) {
       if (mediaQueryToken !== null) {
@@ -102,34 +97,33 @@ export const syntacticAnalysis = (
   }
 }
 
-export type MediaQueryToken = {
-  type: 'MediaQuery'
-  data?: { [k: string]: any }
+export type MediaQuery = {
+  mediaPrefix: 'not' | 'only' | null
+  mediaType: boolean | 'screen' | 'print'
+  mediaCondition: MediaCondition | null
 }
 
-export const tokenizeMediaQuery = (
-  tokens: WToken[]
-): MediaQueryToken | null => {
+export const tokenizeMediaQuery = (tokens: WToken[]): MediaQuery | null => {
   const firstToken = tokens[0]
   if (firstToken.type === '<(-token>') {
-    tokenizeMediaCondition(tokens)
-
-    return {
-      type: 'MediaQuery',
-      data: {
-        tokens
-      }
-    }
+    const mediaCondition = tokenizeMediaCondition(tokens)
+    return mediaCondition === null
+      ? null
+      : {
+          mediaPrefix: null,
+          mediaType: true,
+          mediaCondition
+        }
   } else if (firstToken.type === '<ident-token>') {
-    let unaryOperator: 'not' | 'only' | null = null
+    let mediaPrefix: 'not' | 'only' | null = null
     let mediaType: 'print' | 'screen' | boolean = true
 
     const { value } = firstToken
     if (value === 'only' || value === 'not') {
-      unaryOperator = value
+      mediaPrefix = value
     }
 
-    const firstIndex = unaryOperator === null ? 0 : 1
+    const firstIndex = mediaPrefix === null ? 0 : 1
 
     if (tokens.length <= firstIndex) return null
 
@@ -160,14 +154,11 @@ export const tokenizeMediaQuery = (
       return null
     }
 
-    console.log(mediaType)
-
     if (firstIndex + 1 === tokens.length) {
       return {
-        type: 'MediaQuery',
-        data: {
-          tokens
-        }
+        mediaPrefix,
+        mediaType,
+        mediaCondition: null
       }
     } else if (firstIndex + 4 < tokens.length) {
       const secondNonUnaryToken = tokens[firstIndex + 1]
@@ -175,14 +166,17 @@ export const tokenizeMediaQuery = (
         secondNonUnaryToken.type === '<ident-token>' &&
         secondNonUnaryToken.value === 'and'
       ) {
-        tokenizeMediaCondition(tokens.slice(firstIndex + 2))
-
-        return {
-          type: 'MediaQuery',
-          data: {
-            tokens
-          }
-        }
+        const mediaCondition = tokenizeMediaCondition(
+          tokens.slice(firstIndex + 2)
+        )
+        // should probably check here for correct operator
+        return mediaCondition === null
+          ? null
+          : {
+              mediaPrefix,
+              mediaType,
+              mediaCondition
+            }
       } else {
         return null
       }
@@ -194,13 +188,15 @@ export const tokenizeMediaQuery = (
   }
 }
 
+type MediaCondition = {
+  operator: 'and' | 'or' | 'not' | null
+  children: Array<MediaCondition | MediaFeature | null>
+}
+
 export const tokenizeMediaCondition = (
   tokens: WToken[],
   previousOperator: 'and' | 'or' | 'not' | null = null
-): any | null => {
-  // parse the first media feature (deeply if wrapped in parentheses)
-  // pass in "and", "not", "or", null as previously encountered boolean operators
-
+): MediaCondition | null => {
   if (
     tokens.length < 3 ||
     tokens[0].type !== '<(-token>' ||
@@ -226,16 +222,19 @@ export const tokenizeMediaCondition = (
     }
   }
 
-  let mediaFeature
+  let child: MediaCondition | MediaFeature | null
   const featureTokens = tokens.slice(0, endIndexOfFirstFeature + 1)
   if (maxDepth === 1) {
-    mediaFeature = [tokenizeMediaFeature(featureTokens)]
+    child = tokenizeMediaFeature(featureTokens)
   } else {
-    mediaFeature = tokenizeMediaCondition(featureTokens)
+    child = tokenizeMediaCondition(featureTokens)
   }
 
   if (endIndexOfFirstFeature === tokens.length - 1) {
-    return [mediaFeature]
+    return {
+      operator: previousOperator,
+      children: [child]
+    }
   } else {
     // read for a boolean op "and", "not", "or"
     const nextToken = tokens[endIndexOfFirstFeature + 1]
@@ -248,36 +247,128 @@ export const tokenizeMediaCondition = (
     ) {
       return null
     }
-    return [
-      mediaFeature,
-      ...tokenizeMediaCondition(
-        tokens.slice(endIndexOfFirstFeature + 2),
-        nextToken.value
-      )
-    ]
+
+    const siblings = tokenizeMediaCondition(
+      tokens.slice(endIndexOfFirstFeature + 2),
+      nextToken.value
+    )
+
+    if (siblings === null) return null
+
+    return {
+      operator: previousOperator,
+      children: [child, ...siblings.children]
+    }
   }
 }
 
-export const tokenizeMediaFeature = (tokens: WToken[]): any | null => {
+type MediaFeature = MediaFeatureBoolean | MediaFeatureValue | MediaFeatureRange
+type MediaFeatureBoolean = {
+  context: 'boolean'
+  feature: string
+}
+type MediaFeatureValue = {
+  context: 'value'
+  prefix: 'min' | 'max' | null
+  feature: string
+  value: ValidValueToken
+}
+type MediaFeatureRange = {
+  context: 'range'
+  feature: string
+  range: ValidRange
+}
+type ValidValueToken = NumberToken | DimensionToken | RatioToken | IdentToken
+
+export const tokenizeMediaFeature = (
+  rawTokens: WToken[]
+): MediaFeature | null => {
   if (
-    tokens.length < 3 ||
-    tokens[0].type !== '<(-token>' ||
-    tokens[tokens.length - 1].type !== '<)-token>'
+    rawTokens.length < 3 ||
+    rawTokens[0].type !== '<(-token>' ||
+    rawTokens[rawTokens.length - 1].type !== '<)-token>'
   )
     return null
 
+  const tokens: ConvenientToken[] = [rawTokens[0]]
+
+  for (let i = 1; i < rawTokens.length; i++) {
+    if (i < rawTokens.length - 2) {
+      const a = rawTokens[i]
+      const b = rawTokens[i + 1]
+      const c = rawTokens[i + 2]
+      if (
+        a.type === '<number-token>' &&
+        a.flag === 'integer' &&
+        a.value > 0 &&
+        b.type === '<delim-token>' &&
+        b.value === 0x002f &&
+        c.type === '<number-token>' &&
+        c.flag === 'integer' &&
+        c.value > 0
+      ) {
+        tokens.push({
+          type: '<ratio-token>',
+          numerator: a.value,
+          denominator: c.value,
+          wsBefore: a.wsBefore,
+          wsAfter: c.wsAfter
+        })
+        i += 2
+        continue
+      }
+    }
+    tokens.push(rawTokens[i])
+  }
+
   const nextToken = tokens[1]
   if (nextToken.type === '<ident-token>' && tokens.length === 3) {
-    // '(' 'feature name' ')'
-    // console.log(nextToken.value)
+    return {
+      context: 'boolean',
+      feature: nextToken.value
+    }
   } else if (
     tokens.length === 5 &&
     tokens[2].type === '<ident-token>' &&
     tokens[3].type === '<colon-token>'
   ) {
-    // '(' 'feature name' ':' 'feature value' ')'
+    const valueToken = tokens[4]
+    if (
+      valueToken.type === '<number-token>' ||
+      valueToken.type === '<dimension-token>' ||
+      valueToken.type === '<ratio-token>' ||
+      valueToken.type === '<ident-token>'
+    ) {
+      let feature = tokens[2].value
+      let prefix: 'min' | 'max' | null = null
+
+      const slice = feature.slice(0, 4)
+      if (slice === 'min-') {
+        prefix = 'min'
+        feature = feature.slice(4)
+      } else if (slice === 'max-') {
+        prefix = 'max'
+        feature = feature.slice(4)
+      }
+
+      const { wsBefore: _0, wsAfter: _1, ...value } = valueToken
+
+      return {
+        context: 'value',
+        prefix,
+        feature,
+        value
+      }
+    }
   } else if (tokens.length >= 5) {
-    // console.log(tokenizeRange(tokens))
+    const range = tokenizeRange(tokens)
+    if (range === null) return null
+
+    return {
+      context: 'range',
+      feature: range.featureName,
+      range
+    }
   }
 
   return null
@@ -287,10 +378,8 @@ type RatioToken = {
   type: '<ratio-token>'
   numerator: number
   denominator: number
-  wsBefore: boolean
-  wsAfter: boolean
 }
-type ValidRangeToken = (
+type ValidRangeToken =
   | NumberToken
   | DimensionToken
   | RatioToken
@@ -298,9 +387,10 @@ type ValidRangeToken = (
       type: '<ident-token>'
       value: 'infinite'
     }
-) & { wsBefore: boolean; wsAfter: boolean }
 
-type ConvenientToken = WToken | RatioToken
+type ConvenientToken =
+  | WToken
+  | (RatioToken & { wsBefore: boolean; wsAfter: boolean })
 
 type UncheckedRange = {
   leftToken: ConvenientToken | null
@@ -340,40 +430,13 @@ type ValidRange =
       rightToken: ValidRangeToken
     }
 
-export const tokenizeRange = (rawTokens: WToken[]): ValidRange | null => {
-  if (rawTokens.length <= 5) return null
-  if (rawTokens[0].type !== '<(-token>') return null
-
-  const tokens: ConvenientToken[] = [rawTokens[0]]
-
-  for (let i = 1; i < rawTokens.length; i++) {
-    if (i < rawTokens.length - 2) {
-      const a = rawTokens[i]
-      const b = rawTokens[i + 1]
-      const c = rawTokens[i + 2]
-      if (
-        a.type === '<number-token>' &&
-        a.flag === 'integer' &&
-        a.value > 0 &&
-        b.type === '<delim-token>' &&
-        b.value === 0x002f &&
-        c.type === '<number-token>' &&
-        c.flag === 'integer' &&
-        c.value > 0
-      ) {
-        tokens.push({
-          type: '<ratio-token>',
-          numerator: a.value,
-          denominator: c.value,
-          wsBefore: a.wsBefore,
-          wsAfter: c.wsAfter
-        })
-        i += 2
-        continue
-      }
-    }
-    tokens.push(rawTokens[i])
-  }
+export const tokenizeRange = (tokens: ConvenientToken[]): ValidRange | null => {
+  if (
+    tokens.length <= 5 ||
+    tokens[0].type !== '<(-token>' ||
+    tokens[tokens.length - 1].type !== '<)-token>'
+  )
+    return null
 
   // range form
   const range: UncheckedRange = {
@@ -494,31 +557,33 @@ export const tokenizeRange = (rawTokens: WToken[]): ValidRange | null => {
     let leftToken: ValidRangeToken | null = null
     if (lt !== null) {
       if (lt.type === '<ident-token>') {
-        const { type, value, ...rest } = lt
+        const { type, value } = lt
         if (value === 'infinite') {
-          leftToken = { type, value, ...rest }
+          leftToken = { type, value }
         }
       } else if (
         lt.type === '<number-token>' ||
         lt.type === '<dimension-token>' ||
         lt.type === '<ratio-token>'
       ) {
-        leftToken = lt
+        const { wsBefore: _0, wsAfter: _1, ...ltNoWS } = lt
+        leftToken = ltNoWS
       }
     }
     let rightToken: ValidRangeToken | null = null
     if (rt !== null) {
       if (rt.type === '<ident-token>') {
-        const { type, value, ...rest } = rt
+        const { type, value } = rt
         if (value === 'infinite') {
-          rightToken = { type, value, ...rest }
+          rightToken = { type, value }
         }
       } else if (
         rt.type === '<number-token>' ||
         rt.type === '<dimension-token>' ||
         rt.type === '<ratio-token>'
       ) {
-        rightToken = rt
+        const { wsBefore: _0, wsAfter: _1, ...rtNoWS } = rt
+        rightToken = rtNoWS
       }
     }
 
@@ -554,7 +619,6 @@ export const tokenizeRange = (rawTokens: WToken[]): ValidRange | null => {
       return null
     }
 
-    // validate operations
     return validRange
   } else {
     return null
