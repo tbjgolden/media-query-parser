@@ -1,12 +1,12 @@
-import { tokenize, removeWhitespace } from './syntacticAnalysis'
+import { toAST, removeWhitespace } from './syntacticAnalysis'
 
 test('should skip over @media, or error if something else', async () => {
-  expect(tokenize('@media all')).toEqual([
+  expect(toAST('@media all')).toEqual([
     { mediaCondition: null, mediaPrefix: null, mediaType: 'all' }
   ])
-  expect(tokenize('@media,all;')).toEqual(null)
-  expect(tokenize('@media all;')).toEqual(null)
-  expect(tokenize('@media all { /* ... */ }')).toEqual([
+  expect(toAST('@media,all;')).toEqual(null)
+  expect(toAST('@media all;')).toEqual(null)
+  expect(toAST('@media all { /* ... */ }')).toEqual([
     { mediaCondition: null, mediaPrefix: null, mediaType: 'all' }
   ])
 })
@@ -100,20 +100,20 @@ test('removeWhitespace', async () => {
   ])
 })
 
-test('should tokenize media query', async () => {
-  expect(tokenize('')).toEqual([
+test('should toAST media query', async () => {
+  expect(toAST('')).toEqual([
     { mediaCondition: null, mediaPrefix: null, mediaType: 'all' }
   ])
-  expect(tokenize(',')).toEqual(null)
-  expect(tokenize('all,')).toEqual([
+  expect(toAST(',')).toEqual(null)
+  expect(toAST('all,')).toEqual([
     { mediaCondition: null, mediaPrefix: null, mediaType: 'all' }
   ])
-  expect(tokenize('all, all, all')).toEqual([
+  expect(toAST('all, all, all')).toEqual([
     { mediaCondition: null, mediaPrefix: null, mediaType: 'all' },
     { mediaCondition: null, mediaPrefix: null, mediaType: 'all' },
     { mediaCondition: null, mediaPrefix: null, mediaType: 'all' }
   ])
-  expect(tokenize('only screen and (color)')).toEqual([
+  expect(toAST('only screen and (color)')).toEqual([
     {
       mediaCondition: {
         children: [{ context: 'boolean', feature: 'color' }],
@@ -123,7 +123,7 @@ test('should tokenize media query', async () => {
       mediaType: 'screen'
     }
   ])
-  expect(tokenize('not print and (min-width: 10px)')).toEqual([
+  expect(toAST('not print and (min-width: 10px)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -145,7 +145,7 @@ test('should tokenize media query', async () => {
       mediaType: 'print'
     }
   ])
-  expect(tokenize('not print, screen, (max-width: 1000px)')).toEqual([
+  expect(toAST('not print, screen, (max-width: 1000px)')).toEqual([
     { mediaCondition: null, mediaPrefix: 'not', mediaType: 'print' },
     { mediaCondition: null, mediaPrefix: null, mediaType: 'screen' },
     {
@@ -171,22 +171,22 @@ test('should tokenize media query', async () => {
   ])
   // as url( ) cannot contain a ), so it's a lexer error even before the list is separated by commas
   expect(
-    tokenize('url(fun()) screen and (color), projection and (color)')
+    toAST('url(fun()) screen and (color), projection and (color)')
   ).toEqual(null)
-  expect(tokenize('all,, all')).toEqual([
+  expect(toAST('all,, all')).toEqual([
     { mediaCondition: null, mediaPrefix: null, mediaType: 'all' },
     { mediaCondition: null, mediaPrefix: null, mediaType: 'all' }
   ])
-  expect(tokenize(',all, all')).toEqual([
+  expect(toAST(',all, all')).toEqual([
     { mediaCondition: null, mediaPrefix: null, mediaType: 'all' },
     { mediaCondition: null, mediaPrefix: null, mediaType: 'all' }
   ])
-  expect(tokenize('(all, all), all')).toEqual([
+  expect(toAST('(all, all), all')).toEqual([
     { mediaCondition: null, mediaPrefix: null, mediaType: 'all' }
   ])
-  expect(tokenize('((min-width: -100px)')).toEqual(null)
+  expect(toAST('((min-width: -100px)')).toEqual(null)
 
-  expect(tokenize('(min-width: -100px)')).toEqual([
+  expect(toAST('(min-width: -100px)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -208,7 +208,7 @@ test('should tokenize media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(tokenize('(max-width:1199.98px)')).toEqual([
+  expect(toAST('(max-width:1199.98px)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -230,7 +230,7 @@ test('should tokenize media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(tokenize('(max-width:1399.98px)')).toEqual([
+  expect(toAST('(max-width:1399.98px)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -252,7 +252,7 @@ test('should tokenize media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(tokenize('(max-width:575.98px)')).toEqual([
+  expect(toAST('(max-width:575.98px)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -274,7 +274,7 @@ test('should tokenize media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(tokenize('(max-width:767.98px)')).toEqual([
+  expect(toAST('(max-width:767.98px)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -296,7 +296,7 @@ test('should tokenize media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(tokenize('(max-width:991.98px)')).toEqual([
+  expect(toAST('(max-width:991.98px)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -318,7 +318,7 @@ test('should tokenize media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(tokenize('(min-width:1200px)')).toEqual([
+  expect(toAST('(min-width:1200px)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -340,7 +340,7 @@ test('should tokenize media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(tokenize('(min-width:1400px)')).toEqual([
+  expect(toAST('(min-width:1400px)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -362,7 +362,7 @@ test('should tokenize media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(tokenize('(min-width:576px)')).toEqual([
+  expect(toAST('(min-width:576px)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -384,7 +384,7 @@ test('should tokenize media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(tokenize('(min-width:768px)')).toEqual([
+  expect(toAST('(min-width:768px)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -406,7 +406,7 @@ test('should tokenize media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(tokenize('(min-width:992px)')).toEqual([
+  expect(toAST('(min-width:992px)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -428,7 +428,7 @@ test('should tokenize media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(tokenize('(prefers-reduced-motion:no-preference)')).toEqual([
+  expect(toAST('(prefers-reduced-motion:no-preference)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -448,7 +448,7 @@ test('should tokenize media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(tokenize('(any-hover:hover)')).toEqual([
+  expect(toAST('(any-hover:hover)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -468,7 +468,7 @@ test('should tokenize media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(tokenize('(any-hover:none)')).toEqual([
+  expect(toAST('(any-hover:none)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -488,7 +488,7 @@ test('should tokenize media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(tokenize('(any-hover:anything)')).toEqual([
+  expect(toAST('(any-hover:anything)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -508,7 +508,7 @@ test('should tokenize media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(tokenize('(grid:0)')).toEqual([
+  expect(toAST('(grid:0)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -529,7 +529,7 @@ test('should tokenize media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(tokenize('(aspect-ratio:16/9)')).toEqual([
+  expect(toAST('(aspect-ratio:16/9)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -546,7 +546,7 @@ test('should tokenize media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(tokenize('(prefers-reduced-motion:reduce)')).toEqual([
+  expect(toAST('(prefers-reduced-motion:reduce)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -566,14 +566,14 @@ test('should tokenize media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(tokenize('print')).toEqual([
+  expect(toAST('print')).toEqual([
     {
       mediaCondition: null,
       mediaPrefix: null,
       mediaType: 'print'
     }
   ])
-  expect(tokenize('(height > 600px)')).toEqual([
+  expect(toAST('(height > 600px)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -600,7 +600,7 @@ test('should tokenize media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(tokenize('(600px < height)')).toEqual([
+  expect(toAST('(600px < height)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -627,7 +627,7 @@ test('should tokenize media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(tokenize('(600px > width)')).toEqual([
+  expect(toAST('(600px > width)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -654,7 +654,7 @@ test('should tokenize media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(tokenize('(width < 600px)')).toEqual([
+  expect(toAST('(width < 600px)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -681,7 +681,7 @@ test('should tokenize media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(tokenize('(not (color)) or (hover)')).toEqual([
+  expect(toAST('((not (color))) or (hover)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -697,7 +697,7 @@ test('should tokenize media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(tokenize('screen and (not (color)) or (hover)')).toEqual([
+  expect(toAST('screen and (not (color)) or (hover)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -713,7 +713,7 @@ test('should tokenize media query', async () => {
       mediaType: 'screen'
     }
   ])
-  expect(tokenize('screen and (100px <= width <= 200px)')).toEqual([
+  expect(toAST('screen and (100px <= width <= 200px)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -745,7 +745,7 @@ test('should tokenize media query', async () => {
       mediaType: 'screen'
     }
   ])
-  expect(tokenize('(100px <= width) and (width <= 200px)')).toEqual([
+  expect(toAST('(100px <= width) and (width <= 200px)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -788,7 +788,7 @@ test('should tokenize media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(tokenize('(1/2 < aspect-ratio < 1/1)')).toEqual([
+  expect(toAST('(1/2 < aspect-ratio < 1/1)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -818,7 +818,7 @@ test('should tokenize media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(tokenize('(100px <= width <= 200px)')).toEqual([
+  expect(toAST('(100px <= width <= 200px)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -850,7 +850,7 @@ test('should tokenize media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(tokenize('only screen and (color)')).toEqual([
+  expect(toAST('only screen and (color)')).toEqual([
     {
       mediaCondition: {
         children: [{ context: 'boolean', feature: 'color' }],
@@ -860,41 +860,4 @@ test('should tokenize media query', async () => {
       mediaType: 'screen'
     }
   ])
-})
-
-test('tokenize flattens valueless layers', () => {
-  expect(tokenize('(((((hover)) and (((color))))))')).toEqual(
-    tokenize('((hover)) and ((color))')
-  )
-  expect(tokenize('((hover)) and ((color))')).toEqual(
-    tokenize('(hover) and (color)')
-  )
-  expect(tokenize('((((hover)))) and ((color))')).toEqual(
-    tokenize('((hover)) and ((color))')
-  )
-  expect(tokenize('((hover)) and (color)')).toEqual(
-    tokenize('(hover) and (color)')
-  )
-  expect(tokenize('((hover) and (color))')).toEqual(
-    tokenize('(hover) and (color)')
-  )
-  expect(tokenize('(not (hover))')).toEqual(tokenize('not (hover)'))
-})
-
-test('tokenize does not flatten useful layers', () => {
-  expect(tokenize('(not (hover)) and (color)')).not.toEqual(
-    tokenize('not (hover) and (color)')
-  )
-  expect(tokenize('((hover) and (color)) or (aspect-ratio > 2/1)')).not.toEqual(
-    tokenize('(hover) and (color) or (aspect-ratio > 2/1)')
-  )
-  expect(tokenize('((hover) and (not (color)))')).toEqual(
-    tokenize('(hover) and (not (color))')
-  )
-  expect(tokenize('((hover) and (not (color)))')).not.toEqual(
-    tokenize('(hover) and not (color)')
-  )
-  expect(tokenize('screen and (not (not (color)))')).not.toEqual(
-    tokenize('screen and (not (color))')
-  )
 })

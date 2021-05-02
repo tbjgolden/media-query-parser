@@ -5,10 +5,24 @@ import {
   NumberToken,
   Token
 } from './lexicalAnalysis'
+import { simplifyAST } from './simplifyAST'
 
 type WToken = Token & { wsBefore: boolean; wsAfter: boolean }
 
-export const tokenize = (str: string): MediaQuery[] | null => {
+export type AST = MediaQuery[]
+
+export const toAST = (str: string): AST | null => {
+  let ast = toUnflattenedAST(str)
+
+  if (ast !== null) {
+    // flatten
+    ast = simplifyAST(ast)
+  }
+
+  return ast
+}
+
+export const toUnflattenedAST = (str: string): AST | null => {
   let tokenList = lexicalAnalysis(str.trim())
 
   // failed tokenizing
@@ -194,7 +208,7 @@ export const tokenizeMediaQuery = (tokens: WToken[]): MediaQuery | null => {
   }
 }
 
-type MediaCondition = {
+export type MediaCondition = {
   operator: 'and' | 'or' | 'not' | null
   children: Array<MediaCondition | MediaFeature | null>
 }
@@ -248,15 +262,9 @@ export const tokenizeMediaCondition = (
   }
 
   if (endIndexOfFirstFeature === tokens.length - 1) {
-    // if the child is already a condition and this wrapper condition wouldn't add any
-    // extra information, don't have a wrapper
-    if (previousOperator === null && child !== null && 'children' in child) {
-      return child
-    } else {
-      return {
-        operator: previousOperator,
-        children: [child]
-      }
+    return {
+      operator: previousOperator,
+      children: [child]
     }
   } else {
     // read for a boolean op "and", "not", "or"
@@ -285,23 +293,30 @@ export const tokenizeMediaCondition = (
   }
 }
 
-type MediaFeature = MediaFeatureBoolean | MediaFeatureValue | MediaFeatureRange
-type MediaFeatureBoolean = {
+export type MediaFeature =
+  | MediaFeatureBoolean
+  | MediaFeatureValue
+  | MediaFeatureRange
+export type MediaFeatureBoolean = {
   context: 'boolean'
   feature: string
 }
-type MediaFeatureValue = {
+export type MediaFeatureValue = {
   context: 'value'
   prefix: 'min' | 'max' | null
   feature: string
   value: ValidValueToken
 }
-type MediaFeatureRange = {
+export type MediaFeatureRange = {
   context: 'range'
   feature: string
   range: ValidRange
 }
-type ValidValueToken = NumberToken | DimensionToken | RatioToken | IdentToken
+export type ValidValueToken =
+  | NumberToken
+  | DimensionToken
+  | RatioToken
+  | IdentToken
 
 export const tokenizeMediaFeature = (
   rawTokens: WToken[]
@@ -401,12 +416,12 @@ export const tokenizeMediaFeature = (
   return null
 }
 
-type RatioToken = {
+export type RatioToken = {
   type: '<ratio-token>'
   numerator: number
   denominator: number
 }
-type ValidRangeToken =
+export type ValidRangeToken =
   | NumberToken
   | DimensionToken
   | RatioToken
@@ -427,7 +442,7 @@ type UncheckedRange = {
   rightToken: ConvenientToken | null
 }
 
-type ValidRange =
+export type ValidRange =
   | {
       leftToken: ValidRangeToken
       leftOp: '<' | '<='
