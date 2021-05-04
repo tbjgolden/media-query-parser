@@ -28,6 +28,7 @@
     "lint": "eslint . --ext .ts,.tsx",
     "start": "stmux -c line -w error -e ERROR -m beep,system -M -- [ \"yarn watch\" ]",
     "test": "concurrently \"yarn:lint\" \"yarn:build\" && concurrently \"jest --config ./config/jest/config.cjs.ts\" \"jest --config ./config/jest/config.es.ts\" \"jest --config ./config/jest/config.src.ts\" \"jest --config ./config/jest/config.umd.ts\"",
+    "typedoc": "typedoc --out docs/api --theme markdown --readme none --entryPoints \"src/index.ts\"",
     "watch": "jest --config ./config/jest/config.src.ts --coverage=false --watch"
   },
   "husky": {

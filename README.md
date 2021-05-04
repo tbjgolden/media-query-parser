@@ -16,11 +16,7 @@ npm install media-query-parser --save
 
 Alternatively, there are also client web builds available:
 
-<!-- IMPORTANT: Do not delete or change the comments in the code block below -->
-
 ```html
-<!-- Dependencies -->
-
 <!-- window.MediaQueryParser -->
 <script src="https://unpkg.com/media-query-parser/dist/media-query-parser.umd.js"></script>
 ```
