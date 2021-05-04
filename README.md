@@ -10,6 +10,8 @@
 - [x] **Zero-dependencies**
 - [x] **TypeScript friendly**
 
+Next steps are to create something similar to matchMedia
+
 ## Quickfire examples
 
 ```js
@@ -40,12 +42,32 @@ console.log(toAST('print, (not (color))'))
 console.log(toAST('@media screen { body { background: #000 } }'))
 // Full support for new range syntax
 console.log(toAST('(100px < width < 200px)'))
+// ...which was no mean feat...
+console.log(toAST('(4/3 <= aspect-ratio <= 16/9)'))
 // Returns null when it is not valid media query syntax
 console.log(toAST('clearly this is not a valid media query')) // => null
 // ...even the normal looking invalid ones
-console.log(toAST('screen and not (max-width: 768px)')) // => null
+console.log(toAST('(max-width: 768px) and screen')) // => null
 console.log(toAST('screen and (max-width: 768px) or (hover)')) // => null
 ```
+
+## Considerations & Caveats
+
+This library does:
+
+- remove extra layers from unnecessary parentheses `(((((max-width: 768px)))))`
+- parses units, numbers and other values to the spec
+- handle unusual whitespace anywhere that the spec allows it
+- contain many a unit test
+
+This library does not (yet):
+
+- sanity check the actual media features or their types `(max-power: infinite)`
+  is as valid as `(hover: none)`
+- normalize the media query features (e.g. `(max-width: -100px)` is always
+  `false`)
+
+These two objectives are both on the roadmap.
 
 ## Installation
 
