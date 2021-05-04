@@ -123,7 +123,7 @@ export type MediaQuery = {
 export const tokenizeMediaQuery = (tokens: WToken[]): MediaQuery | null => {
   const firstToken = tokens[0]
   if (firstToken.type === '<(-token>') {
-    const mediaCondition = tokenizeMediaCondition(tokens)
+    const mediaCondition = tokenizeMediaCondition(tokens, true)
 
     return mediaCondition === null
       ? null
@@ -170,6 +170,18 @@ export const tokenizeMediaQuery = (tokens: WToken[]): MediaQuery | null => {
       } else {
         return null
       }
+    } else if (
+      mediaPrefix === 'not' &&
+      firstNonUnaryToken.type === '<(-token>'
+    ) {
+      const mediaCondition = tokenizeMediaCondition(tokens.slice(1), true)
+      return mediaCondition === null
+        ? null
+        : {
+            mediaPrefix: 'not',
+            mediaType: 'all',
+            mediaCondition
+          }
     } else {
       return null
     }
@@ -187,7 +199,8 @@ export const tokenizeMediaQuery = (tokens: WToken[]): MediaQuery | null => {
         secondNonUnaryToken.value === 'and'
       ) {
         const mediaCondition = tokenizeMediaCondition(
-          tokens.slice(firstIndex + 2)
+          tokens.slice(firstIndex + 2),
+          false
         )
         // should probably check here for correct operator
         return mediaCondition === null
@@ -210,11 +223,12 @@ export const tokenizeMediaQuery = (tokens: WToken[]): MediaQuery | null => {
 
 export type MediaCondition = {
   operator: 'and' | 'or' | 'not' | null
-  children: Array<MediaCondition | MediaFeature | null>
+  children: Array<MediaCondition | MediaFeature>
 }
 
 export const tokenizeMediaCondition = (
   tokens: WToken[],
+  mayContainOr: boolean,
   previousOperator: 'and' | 'or' | 'not' | null = null
 ): MediaCondition | null => {
   if (
@@ -255,16 +269,28 @@ export const tokenizeMediaCondition = (
       featureTokens[1].type === '<ident-token>' &&
       featureTokens[1].value === 'not'
     ) {
-      child = tokenizeMediaCondition(featureTokens.slice(2, -1), 'not')
+      child = tokenizeMediaCondition(
+        featureTokens.slice(2, -1),
+        mayContainOr,
+        'not'
+      )
     } else {
-      child = tokenizeMediaCondition(featureTokens.slice(1, -1))
+      child = tokenizeMediaCondition(featureTokens.slice(1, -1), mayContainOr)
     }
   }
 
   if (endIndexOfFirstFeature === tokens.length - 1) {
-    return {
-      operator: previousOperator,
-      children: [child]
+    if (
+      child === null ||
+      ('operator' in child &&
+        child.children.some((grandChild) => grandChild === null))
+    ) {
+      return null
+    } else {
+      return {
+        operator: previousOperator,
+        children: [child]
+      }
     }
   } else {
     // read for a boolean op "and", "not", "or"
@@ -272,8 +298,7 @@ export const tokenizeMediaCondition = (
     if (
       nextToken.type !== '<ident-token>' ||
       (nextToken.value !== 'and' &&
-        nextToken.value !== 'or' &&
-        nextToken.value !== 'not') ||
+        (nextToken.value !== 'or' || !mayContainOr)) ||
       (previousOperator !== null && previousOperator !== nextToken.value)
     ) {
       return null
@@ -281,10 +306,11 @@ export const tokenizeMediaCondition = (
 
     const siblings = tokenizeMediaCondition(
       tokens.slice(endIndexOfFirstFeature + 2),
+      mayContainOr,
       nextToken.value
     )
 
-    if (siblings === null) return null
+    if (child === null || siblings === null) return null
 
     return {
       operator: nextToken.value,
@@ -337,12 +363,10 @@ export const tokenizeMediaFeature = (
       const c = rawTokens[i + 2]
       if (
         a.type === '<number-token>' &&
-        a.flag === 'integer' &&
         a.value > 0 &&
         b.type === '<delim-token>' &&
         b.value === 0x002f &&
         c.type === '<number-token>' &&
-        c.flag === 'integer' &&
         c.value > 0
       ) {
         tokens.push({

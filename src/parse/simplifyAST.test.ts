@@ -1,7 +1,10 @@
 import { AST, toUnflattenedAST } from './syntacticAnalysis'
 import { simplifyAST } from './simplifyAST'
 
-const wrapper = (str: string): AST => simplifyAST(toUnflattenedAST(str) as AST)
+const wrapper = (str: string): AST | null => {
+  const ast = toUnflattenedAST(str)
+  return ast === null ? ast : simplifyAST(ast)
+}
 
 test('wrapper flattens valueless layers', () => {
   expect(wrapper('(((((hover)) and (((color))))))')).toEqual(

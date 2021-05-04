@@ -1,12 +1,12 @@
-import { toAST, removeWhitespace } from './syntacticAnalysis'
+import { toUnflattenedAST, removeWhitespace } from './syntacticAnalysis'
 
 test('should skip over @media, or error if something else', async () => {
-  expect(toAST('@media all')).toEqual([
+  expect(toUnflattenedAST('@media all')).toEqual([
     { mediaCondition: null, mediaPrefix: null, mediaType: 'all' }
   ])
-  expect(toAST('@media,all;')).toEqual(null)
-  expect(toAST('@media all;')).toEqual(null)
-  expect(toAST('@media all { /* ... */ }')).toEqual([
+  expect(toUnflattenedAST('@media,all;')).toEqual(null)
+  expect(toUnflattenedAST('@media all;')).toEqual(null)
+  expect(toUnflattenedAST('@media all { /* ... */ }')).toEqual([
     { mediaCondition: null, mediaPrefix: null, mediaType: 'all' }
   ])
 })
@@ -100,20 +100,20 @@ test('removeWhitespace', async () => {
   ])
 })
 
-test('should toAST media query', async () => {
-  expect(toAST('')).toEqual([
+test('toUnflattenedAST parses media query', async () => {
+  expect(toUnflattenedAST('')).toEqual([
     { mediaCondition: null, mediaPrefix: null, mediaType: 'all' }
   ])
-  expect(toAST(',')).toEqual(null)
-  expect(toAST('all,')).toEqual([
+  expect(toUnflattenedAST(',')).toEqual(null)
+  expect(toUnflattenedAST('all,')).toEqual([
     { mediaCondition: null, mediaPrefix: null, mediaType: 'all' }
   ])
-  expect(toAST('all, all, all')).toEqual([
+  expect(toUnflattenedAST('all, all, all')).toEqual([
     { mediaCondition: null, mediaPrefix: null, mediaType: 'all' },
     { mediaCondition: null, mediaPrefix: null, mediaType: 'all' },
     { mediaCondition: null, mediaPrefix: null, mediaType: 'all' }
   ])
-  expect(toAST('only screen and (color)')).toEqual([
+  expect(toUnflattenedAST('only screen and (color)')).toEqual([
     {
       mediaCondition: {
         children: [{ context: 'boolean', feature: 'color' }],
@@ -123,7 +123,7 @@ test('should toAST media query', async () => {
       mediaType: 'screen'
     }
   ])
-  expect(toAST('not print and (min-width: 10px)')).toEqual([
+  expect(toUnflattenedAST('not print and (min-width: 10px)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -145,7 +145,7 @@ test('should toAST media query', async () => {
       mediaType: 'print'
     }
   ])
-  expect(toAST('not print, screen, (max-width: 1000px)')).toEqual([
+  expect(toUnflattenedAST('not print, screen, (max-width: 1000px)')).toEqual([
     { mediaCondition: null, mediaPrefix: 'not', mediaType: 'print' },
     { mediaCondition: null, mediaPrefix: null, mediaType: 'screen' },
     {
@@ -171,22 +171,22 @@ test('should toAST media query', async () => {
   ])
   // as url( ) cannot contain a ), so it's a lexer error even before the list is separated by commas
   expect(
-    toAST('url(fun()) screen and (color), projection and (color)')
+    toUnflattenedAST('url(fun()) screen and (color), projection and (color)')
   ).toEqual(null)
-  expect(toAST('all,, all')).toEqual([
+  expect(toUnflattenedAST('all,, all')).toEqual([
     { mediaCondition: null, mediaPrefix: null, mediaType: 'all' },
     { mediaCondition: null, mediaPrefix: null, mediaType: 'all' }
   ])
-  expect(toAST(',all, all')).toEqual([
+  expect(toUnflattenedAST(',all, all')).toEqual([
     { mediaCondition: null, mediaPrefix: null, mediaType: 'all' },
     { mediaCondition: null, mediaPrefix: null, mediaType: 'all' }
   ])
-  expect(toAST('(all, all), all')).toEqual([
+  expect(toUnflattenedAST('(all, all), all')).toEqual([
     { mediaCondition: null, mediaPrefix: null, mediaType: 'all' }
   ])
-  expect(toAST('((min-width: -100px)')).toEqual(null)
+  expect(toUnflattenedAST('((min-width: -100px)')).toEqual(null)
 
-  expect(toAST('(min-width: -100px)')).toEqual([
+  expect(toUnflattenedAST('(min-width: -100px)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -208,7 +208,7 @@ test('should toAST media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(toAST('(max-width:1199.98px)')).toEqual([
+  expect(toUnflattenedAST('(max-width:1199.98px)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -230,7 +230,7 @@ test('should toAST media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(toAST('(max-width:1399.98px)')).toEqual([
+  expect(toUnflattenedAST('(max-width:1399.98px)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -252,7 +252,7 @@ test('should toAST media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(toAST('(max-width:575.98px)')).toEqual([
+  expect(toUnflattenedAST('(max-width:575.98px)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -274,7 +274,7 @@ test('should toAST media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(toAST('(max-width:767.98px)')).toEqual([
+  expect(toUnflattenedAST('(max-width:767.98px)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -296,7 +296,7 @@ test('should toAST media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(toAST('(max-width:991.98px)')).toEqual([
+  expect(toUnflattenedAST('(max-width:991.98px)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -318,7 +318,7 @@ test('should toAST media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(toAST('(min-width:1200px)')).toEqual([
+  expect(toUnflattenedAST('(min-width:1200px)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -340,7 +340,7 @@ test('should toAST media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(toAST('(min-width:1400px)')).toEqual([
+  expect(toUnflattenedAST('(min-width:1400px)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -362,7 +362,7 @@ test('should toAST media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(toAST('(min-width:576px)')).toEqual([
+  expect(toUnflattenedAST('(min-width:576px)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -384,7 +384,7 @@ test('should toAST media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(toAST('(min-width:768px)')).toEqual([
+  expect(toUnflattenedAST('(min-width:768px)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -406,7 +406,7 @@ test('should toAST media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(toAST('(min-width:992px)')).toEqual([
+  expect(toUnflattenedAST('(min-width:992px)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -428,7 +428,7 @@ test('should toAST media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(toAST('(prefers-reduced-motion:no-preference)')).toEqual([
+  expect(toUnflattenedAST('(prefers-reduced-motion:no-preference)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -448,7 +448,7 @@ test('should toAST media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(toAST('(any-hover:hover)')).toEqual([
+  expect(toUnflattenedAST('(any-hover:hover)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -468,7 +468,7 @@ test('should toAST media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(toAST('(any-hover:none)')).toEqual([
+  expect(toUnflattenedAST('(any-hover:none)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -488,7 +488,7 @@ test('should toAST media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(toAST('(any-hover:anything)')).toEqual([
+  expect(toUnflattenedAST('(any-hover:anything)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -508,7 +508,7 @@ test('should toAST media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(toAST('(grid:0)')).toEqual([
+  expect(toUnflattenedAST('(grid:0)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -529,7 +529,7 @@ test('should toAST media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(toAST('(aspect-ratio:16/9)')).toEqual([
+  expect(toUnflattenedAST('(aspect-ratio:16/9)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -546,7 +546,7 @@ test('should toAST media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(toAST('(prefers-reduced-motion:reduce)')).toEqual([
+  expect(toUnflattenedAST('(prefers-reduced-motion:reduce)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -566,14 +566,14 @@ test('should toAST media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(toAST('print')).toEqual([
+  expect(toUnflattenedAST('print')).toEqual([
     {
       mediaCondition: null,
       mediaPrefix: null,
       mediaType: 'print'
     }
   ])
-  expect(toAST('(height > 600px)')).toEqual([
+  expect(toUnflattenedAST('(height > 600px)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -600,7 +600,7 @@ test('should toAST media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(toAST('(600px < height)')).toEqual([
+  expect(toUnflattenedAST('(600px < height)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -627,7 +627,7 @@ test('should toAST media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(toAST('(600px > width)')).toEqual([
+  expect(toUnflattenedAST('(600px > width)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -654,7 +654,7 @@ test('should toAST media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(toAST('(width < 600px)')).toEqual([
+  expect(toUnflattenedAST('(width < 600px)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -681,13 +681,18 @@ test('should toAST media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(toAST('((not (color))) or (hover)')).toEqual([
+  expect(toUnflattenedAST('((not (color))) or (hover)')).toEqual([
     {
       mediaCondition: {
         children: [
           {
-            children: [{ context: 'boolean', feature: 'color' }],
-            operator: 'not'
+            children: [
+              {
+                children: [{ context: 'boolean', feature: 'color' }],
+                operator: 'not'
+              }
+            ],
+            operator: null
           },
           { context: 'boolean', feature: 'hover' }
         ],
@@ -697,23 +702,7 @@ test('should toAST media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(toAST('screen and (not (color)) or (hover)')).toEqual([
-    {
-      mediaCondition: {
-        children: [
-          {
-            children: [{ context: 'boolean', feature: 'color' }],
-            operator: 'not'
-          },
-          { context: 'boolean', feature: 'hover' }
-        ],
-        operator: 'or'
-      },
-      mediaPrefix: null,
-      mediaType: 'screen'
-    }
-  ])
-  expect(toAST('screen and (100px <= width <= 200px)')).toEqual([
+  expect(toUnflattenedAST('screen and (100px <= width <= 200px)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -745,7 +734,7 @@ test('should toAST media query', async () => {
       mediaType: 'screen'
     }
   ])
-  expect(toAST('(100px <= width) and (width <= 200px)')).toEqual([
+  expect(toUnflattenedAST('(100px <= width) and (width <= 200px)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -788,7 +777,7 @@ test('should toAST media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(toAST('(1/2 < aspect-ratio < 1/1)')).toEqual([
+  expect(toUnflattenedAST('(1/2 < aspect-ratio < 1/1)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -818,7 +807,7 @@ test('should toAST media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(toAST('(100px <= width <= 200px)')).toEqual([
+  expect(toUnflattenedAST('(100px <= width <= 200px)')).toEqual([
     {
       mediaCondition: {
         children: [
@@ -850,7 +839,7 @@ test('should toAST media query', async () => {
       mediaType: 'all'
     }
   ])
-  expect(toAST('only screen and (color)')).toEqual([
+  expect(toUnflattenedAST('only screen and (color)')).toEqual([
     {
       mediaCondition: {
         children: [{ context: 'boolean', feature: 'color' }],
@@ -860,4 +849,76 @@ test('should toAST media query', async () => {
       mediaType: 'screen'
     }
   ])
+  expect(
+    toUnflattenedAST('not (color) and (hover) and (min-width: 1px)')
+  ).toEqual([
+    {
+      mediaCondition: {
+        children: [
+          { context: 'boolean', feature: 'color' },
+          { context: 'boolean', feature: 'hover' },
+          {
+            context: 'value',
+            feature: 'width',
+            prefix: 'min',
+            value: {
+              flag: 'number',
+              type: '<dimension-token>',
+              unit: 'px',
+              value: 1
+            }
+          }
+        ],
+        operator: 'and'
+      },
+      mediaPrefix: 'not',
+      mediaType: 'all'
+    }
+  ])
+  expect(toUnflattenedAST('not (hover)')).toEqual([
+    {
+      mediaCondition: {
+        children: [
+          {
+            context: 'boolean',
+            feature: 'hover'
+          }
+        ],
+        operator: null
+      },
+      mediaPrefix: 'not',
+      mediaType: 'all'
+    }
+  ])
+  expect(toUnflattenedAST('not ((hover) or (color))')).toEqual([
+    {
+      mediaCondition: {
+        children: [
+          {
+            children: [
+              {
+                context: 'boolean',
+                feature: 'hover'
+              },
+              {
+                context: 'boolean',
+                feature: 'color'
+              }
+            ],
+            operator: 'or'
+          }
+        ],
+        operator: null
+      },
+      mediaPrefix: 'not',
+      mediaType: 'all'
+    }
+  ])
+  // 'or' can not appear on the right hand side of a media type (e.g. all/screen/print)
+  expect(toUnflattenedAST('screen and (not (color)) or (hover)')).toEqual(null)
+  expect(toUnflattenedAST('only ((hover) or (color))')).toEqual(null)
+  expect(toUnflattenedAST('screen and ((hover) or (color))')).toEqual(null)
+  // 'not' should not be a valid binary operator
+  expect(toUnflattenedAST('(color) not (hover)')).toEqual(null)
+  expect(toUnflattenedAST('screen and ((color) not (hover))')).toEqual(null)
 })
