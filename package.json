@@ -103,6 +103,11 @@
       "@commitlint/config-conventional"
     ]
   },
+  "release": {
+    "branches": [
+      "main"
+    ]
+  },
   "prettier": {
     "semi": false,
     "singleQuote": true,
