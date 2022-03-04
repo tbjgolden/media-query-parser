@@ -53,14 +53,24 @@ const simplifyMediaCondition = (
       | MediaFeature
     if (!('context' in unsimplifiedChild)) {
       const child = simplifyMediaCondition(unsimplifiedChild) as MediaCondition
-
       if (child.operator === null && child.children.length === 1) {
         mediaCondition.children[i] = child.children[0]
       } else if (
         child.operator === mediaCondition.operator &&
         (child.operator === 'and' || child.operator === 'or')
       ) {
-        mediaCondition.children.splice(i, 1, ...child.children)
+        const spliceArgs: [
+          start: number,
+          deleteCount: number,
+          ...args: Array<MediaCondition | MediaFeature>
+        ] = [i, 1]
+        for (let i = 0; i < child.children.length; i++) {
+          spliceArgs.push(child.children[i])
+        }
+        mediaCondition.children.splice.apply(
+          mediaCondition.children,
+          spliceArgs
+        )
       }
     }
   }

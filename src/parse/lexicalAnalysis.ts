@@ -461,7 +461,7 @@ export const consumeString = (
     const code = str.charCodeAt(i)
     if (code === firstCode) {
       // " end string
-      return [i, String.fromCharCode(...charCodes)]
+      return [i, String.fromCharCode.apply(null, charCodes)]
     } else if (code === 0x005c) {
       // \ escape mode
       const result = consumeEscape(str, i)
@@ -557,7 +557,7 @@ export const consumeEscape = (
         i += 1
       }
     }
-    return [i - 1, parseInt(String.fromCharCode(...hexCharCodes), 16)]
+    return [i - 1, parseInt(String.fromCharCode.apply(null, hexCharCodes), 16)]
   } else {
     return [index + 1, code]
   }
@@ -683,7 +683,7 @@ export const consumeNumber = (
     }
   }
 
-  const numberString = String.fromCharCode(...numberChars)
+  const numberString = String.fromCharCode.apply(null, numberChars)
   let value =
     flag === 'number' ? parseFloat(numberString) : parseInt(numberString)
   if (value === -0) value = 0
@@ -728,7 +728,7 @@ export const consumeIdentUnsafe = (
     break
   }
 
-  return [index - 1, String.fromCharCode(...identChars)]
+  return [index - 1, String.fromCharCode.apply(null, identChars)]
 }
 
 export const consumeIdent = (
@@ -767,7 +767,7 @@ export const consumeIdent = (
     break
   }
 
-  return [index - 1, String.fromCharCode(...identChars)]
+  return [index - 1, String.fromCharCode.apply(null, identChars)]
 }
 
 export const consumeUrl = (
@@ -783,7 +783,7 @@ export const consumeUrl = (
   let hasFinishedWord = false
   while (index < str.length) {
     if (code === 0x0029) {
-      return [index, String.fromCharCode(...urlChars)]
+      return [index, String.fromCharCode.apply(null, urlChars)]
     } else if (code === 0x0022 || code === 0x0027 || code === 0x0028) {
       return null
     } else if (code === 0x0009 || code === 0x0020 || code === 0x000a) {
@@ -820,7 +820,7 @@ export const consumeIdentLike = (
         for (let offset = 2; lastIndex + offset < str.length; offset += 1) {
           const nextNextCode = str.charCodeAt(lastIndex + offset)
           if (nextNextCode === 0x0022 || nextNextCode === 0x0027) {
-            return [lastIndex, value.toLowerCase(), '<function-token>']
+            return [lastIndex + 1, value.toLowerCase(), '<function-token>']
           } else if (
             nextNextCode !== 0x0009 &&
             nextNextCode !== 0x0020 &&

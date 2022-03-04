@@ -314,7 +314,7 @@ export const tokenizeMediaCondition = (
 
     return {
       operator: nextToken.value,
-      children: [child, ...siblings.children]
+      children: [child].concat(siblings.children)
     }
   }
 }

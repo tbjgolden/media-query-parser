@@ -28,8 +28,7 @@ module.exports = {
   extends: [
     ...(hasAddedReact ? ['plugin:react/recommended'] : []),
     'plugin:@typescript-eslint/recommended',
-    'prettier',
-    'prettier/@typescript-eslint'
+    'prettier'
   ],
   plugins: [
     ...(hasAddedReact ? ['react', 'react-hooks'] : []),
@@ -48,6 +47,7 @@ module.exports = {
         argsIgnorePattern: '^_'
       }
     ],
+    'prefer-spread': 'off',
     ...(hasAddedReact
       ? {
           'react/prop-types': 'off',
