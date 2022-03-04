@@ -10,13 +10,13 @@
 - [x] **Spec-compliant** - https://www.w3.org/TR/mediaqueries-4/
 - [x] **Zero-dependencies**
 - [x] **TypeScript friendly**
-
-Next steps are to create something similar to matchMedia
+- [x] **All valid queries parsed, even newer ones like
+      `@media (100px < width < 200px)`**
 
 ## Quickfire examples
 
 ```js
-const { toAST } = require('media-query-parser')
+import { toAST } from 'media-query-parser'
 
 // Simple responsive media query
 console.log(toAST('(max-width: 768px)'))
@@ -47,9 +47,13 @@ console.log(toAST('(100px < width < 200px)'))
 console.log(toAST('(4/3 <= aspect-ratio <= 16/9)'))
 // Returns null when it is not valid media query syntax
 console.log(toAST('clearly this is not a valid media query')) // => null
-// ...even the normal looking invalid ones
-console.log(toAST('(max-width: 768px) and screen')) // => null
-console.log(toAST('screen and (max-width: 768px) or (hover)')) // => null
+// ...even the normal looking but invalid ones:
+{
+  console.log(toAST('(max-width: 768px) and screen')) // => null
+  // explanation: screen must be on left hand side
+  console.log(toAST('screen and (max-width: 768px) or (hover)')) // => null
+  // explanation: spec disallows `and` and `or` on same level as ambiguous
+}
 ```
 
 ## Considerations & Caveats
@@ -61,14 +65,18 @@ This library does:
 - handle unusual whitespace anywhere that the spec allows it
 - contain many a unit test
 
-This library does not (yet):
+This library does not:
 
 - sanity check the actual media features or their types `(max-power: infinite)`
   is as valid as `(hover: none)`
 - normalize the media query features (e.g. `(max-width: -100px)` is always
   `false`)
 
-These two objectives are both on the roadmap.
+Note that:
+
+- Handling individual media features is being developed in a separate project
+- This package's API is now fixed (in the case of an updated CSS media query
+  spec, it will be released as a new major version)
 
 ## Installation
 
@@ -84,11 +92,7 @@ Alternatively, there are also client web builds available:
 <script src="https://unpkg.com/media-query-parser/dist/media-query-parser.umd.js"></script>
 ```
 
-## Documentation
-
-Full docs to come but auto-generated docs are at this link:
-
-- [`API`](docs/api)
+## [`API`](docs/api)
 
 ## License
 
