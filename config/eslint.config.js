@@ -16,9 +16,6 @@ module.exports = {
       jsx: true
     }
   },
-  env: {
-    'jest/globals': true
-  },
   settings: {
     ...(hasAddedReact
       ? {
@@ -66,6 +63,5 @@ module.exports = {
     'node_modules/',
     '/*.js',
     '/*.json'
-  ],
-  overrides: [{}]
+  ]
 }
