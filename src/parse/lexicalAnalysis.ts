@@ -242,7 +242,7 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
         const nextCode = str.charCodeAt(index + 1)
 
         if (nextCode >= 0x0030 && nextCode <= 0x0039) {
-          const result = consumeNumeric(str, index + 1)
+          const result = consumeNumeric(str, index)
           if (result === null) {
             return null
           }

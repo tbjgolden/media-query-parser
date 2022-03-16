@@ -3466,7 +3466,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 0.25,
+    "value": -0.25,
     "unit": "em",
     "flag": "number"
   },
@@ -3507,7 +3507,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 0.5,
+    "value": -0.5,
     "unit": "em",
     "flag": "number"
   },
@@ -6509,7 +6509,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 2,
+    "value": -2,
     "unit": "px",
     "flag": "number"
   },
@@ -8694,7 +8694,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 1,
+    "value": -1,
     "unit": "rem",
     "flag": "number"
   },
@@ -10271,7 +10271,7 @@
   },
   {
     "type": "<number-token>",
-    "value": 1,
+    "value": -1,
     "flag": "integer"
   },
   {
@@ -10320,7 +10320,7 @@
   },
   {
     "type": "<number-token>",
-    "value": 2,
+    "value": -2,
     "flag": "integer"
   },
   {
@@ -10369,7 +10369,7 @@
   },
   {
     "type": "<number-token>",
-    "value": 2,
+    "value": -2,
     "flag": "integer"
   },
   {
@@ -34405,7 +34405,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 0.375,
+    "value": -0.375,
     "unit": "rem",
     "flag": "number"
   },
@@ -34414,7 +34414,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 0.75,
+    "value": -0.75,
     "unit": "rem",
     "flag": "number"
   },
@@ -35017,7 +35017,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 0.375,
+    "value": -0.375,
     "unit": "rem",
     "flag": "number"
   },
@@ -35026,7 +35026,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 0.75,
+    "value": -0.75,
     "unit": "rem",
     "flag": "number"
   },
@@ -36251,7 +36251,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 0.25,
+    "value": -0.25,
     "unit": "rem",
     "flag": "number"
   },
@@ -36260,7 +36260,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 0.5,
+    "value": -0.5,
     "unit": "rem",
     "flag": "number"
   },
@@ -36390,7 +36390,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 0.25,
+    "value": -0.25,
     "unit": "rem",
     "flag": "number"
   },
@@ -36399,7 +36399,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 0.5,
+    "value": -0.5,
     "unit": "rem",
     "flag": "number"
   },
@@ -36688,7 +36688,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 0.5,
+    "value": -0.5,
     "unit": "rem",
     "flag": "number"
   },
@@ -36697,7 +36697,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 1,
+    "value": -1,
     "unit": "rem",
     "flag": "number"
   },
@@ -36827,7 +36827,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 0.5,
+    "value": -0.5,
     "unit": "rem",
     "flag": "number"
   },
@@ -36836,7 +36836,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 1,
+    "value": -1,
     "unit": "rem",
     "flag": "number"
   },
@@ -38763,7 +38763,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 1.5,
+    "value": -1.5,
     "unit": "em",
     "flag": "number"
   },
@@ -40143,7 +40143,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 2.5,
+    "value": -2.5,
     "unit": "em",
     "flag": "number"
   },
@@ -41581,7 +41581,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 0.25,
+    "value": -0.25,
     "unit": "rem",
     "flag": "number"
   },
@@ -44385,7 +44385,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 0.5,
+    "value": -0.5,
     "unit": "rem",
     "flag": "number"
   },
@@ -44637,7 +44637,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 0.5,
+    "value": -0.5,
     "unit": "rem",
     "flag": "number"
   },
@@ -44780,7 +44780,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 0.5,
+    "value": -0.5,
     "unit": "rem",
     "flag": "number"
   },
@@ -46761,7 +46761,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 1,
+    "value": -1,
     "unit": "px",
     "flag": "number"
   },
@@ -76745,7 +76745,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 1,
+    "value": -1,
     "unit": "px",
     "flag": "number"
   },
@@ -78001,7 +78001,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 1,
+    "value": -1,
     "unit": "px",
     "flag": "number"
   },
@@ -78954,7 +78954,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 1,
+    "value": -1,
     "unit": "px",
     "flag": "number"
   },
@@ -79517,7 +79517,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 1,
+    "value": -1,
     "unit": "px",
     "flag": "number"
   },
@@ -88443,7 +88443,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 0.25,
+    "value": -0.25,
     "unit": "rem",
     "flag": "number"
   },
@@ -89324,7 +89324,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 0.5,
+    "value": -0.5,
     "unit": "rem",
     "flag": "number"
   },
@@ -89346,7 +89346,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 0.5,
+    "value": -0.5,
     "unit": "rem",
     "flag": "number"
   },
@@ -89368,7 +89368,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 0.5,
+    "value": -0.5,
     "unit": "rem",
     "flag": "number"
   },
@@ -89434,7 +89434,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 0.5,
+    "value": -0.5,
     "unit": "rem",
     "flag": "number"
   },
@@ -89456,7 +89456,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 0.5,
+    "value": -0.5,
     "unit": "rem",
     "flag": "number"
   },
@@ -91779,7 +91779,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 1,
+    "value": -1,
     "unit": "px",
     "flag": "number"
   },
@@ -92607,7 +92607,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 1,
+    "value": -1,
     "unit": "px",
     "flag": "number"
   },
@@ -94865,7 +94865,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 1,
+    "value": -1,
     "unit": "px",
     "flag": "number"
   },
@@ -96265,7 +96265,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 1,
+    "value": -1,
     "unit": "px",
     "flag": "number"
   },
@@ -100290,7 +100290,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 1,
+    "value": -1,
     "unit": "px",
     "flag": "number"
   },
@@ -100798,7 +100798,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 1,
+    "value": -1,
     "unit": "px",
     "flag": "number"
   },
@@ -101344,7 +101344,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 1,
+    "value": -1,
     "unit": "px",
     "flag": "number"
   },
@@ -101896,7 +101896,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 1,
+    "value": -1,
     "unit": "px",
     "flag": "number"
   },
@@ -102448,7 +102448,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 1,
+    "value": -1,
     "unit": "px",
     "flag": "number"
   },
@@ -103000,7 +103000,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 1,
+    "value": -1,
     "unit": "px",
     "flag": "number"
   },
@@ -103552,7 +103552,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 1,
+    "value": -1,
     "unit": "px",
     "flag": "number"
   },
@@ -107861,7 +107861,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 0.375,
+    "value": -0.375,
     "unit": "rem",
     "flag": "number"
   },
@@ -108494,7 +108494,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 50,
+    "value": -50,
     "unit": "px",
     "flag": "number"
   },
@@ -109945,7 +109945,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 0.5,
+    "value": -0.5,
     "unit": "rem",
     "flag": "number"
   },
@@ -109954,7 +109954,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 0.5,
+    "value": -0.5,
     "unit": "rem",
     "flag": "number"
   },
@@ -109963,7 +109963,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 0.5,
+    "value": -0.5,
     "unit": "rem",
     "flag": "number"
   },
@@ -110533,7 +110533,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 9999,
+    "value": -9999,
     "unit": "px",
     "flag": "number"
   },
@@ -114579,7 +114579,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 1,
+    "value": -1,
     "unit": "px",
     "flag": "number"
   },
@@ -114997,7 +114997,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 1,
+    "value": -1,
     "unit": "px",
     "flag": "number"
   },
@@ -115380,7 +115380,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 1,
+    "value": -1,
     "unit": "px",
     "flag": "number"
   },
@@ -115798,7 +115798,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 1,
+    "value": -1,
     "unit": "px",
     "flag": "number"
   },
@@ -117064,7 +117064,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 0.5,
+    "value": -0.5,
     "unit": "rem",
     "flag": "number"
   },
@@ -117637,7 +117637,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 0.5,
+    "value": -0.5,
     "unit": "rem",
     "flag": "number"
   },
@@ -118272,7 +118272,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 0.5,
+    "value": -0.5,
     "unit": "rem",
     "flag": "number"
   },
@@ -118969,7 +118969,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 0.5,
+    "value": -0.5,
     "unit": "rem",
     "flag": "number"
   },
@@ -119147,7 +119147,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 0.5,
+    "value": -0.5,
     "unit": "rem",
     "flag": "number"
   },
@@ -120428,7 +120428,7 @@
   },
   {
     "type": "<percentage-token>",
-    "value": 100,
+    "value": -100,
     "flag": "number"
   },
   {
@@ -120847,7 +120847,7 @@
   },
   {
     "type": "<percentage-token>",
-    "value": 100,
+    "value": -100,
     "flag": "number"
   },
   {
@@ -122885,7 +122885,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 999,
+    "value": -999,
     "unit": "px",
     "flag": "number"
   },
@@ -125418,7 +125418,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 0.5,
+    "value": -0.5,
     "unit": "rem",
     "flag": "number"
   },
@@ -125427,7 +125427,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 0.5,
+    "value": -0.5,
     "unit": "rem",
     "flag": "number"
   },
@@ -125436,7 +125436,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 0.5,
+    "value": -0.5,
     "unit": "rem",
     "flag": "number"
   },
@@ -125793,7 +125793,7 @@
   },
   {
     "type": "<percentage-token>",
-    "value": 100,
+    "value": -100,
     "flag": "number"
   },
   {
@@ -129431,7 +129431,7 @@
   },
   {
     "type": "<dimension-token>",
-    "value": 1,
+    "value": -1,
     "unit": "px",
     "flag": "number"
   },
@@ -132538,7 +132538,7 @@
   },
   {
     "type": "<percentage-token>",
-    "value": 50,
+    "value": -50,
     "flag": "number"
   },
   {
@@ -132549,7 +132549,7 @@
   },
   {
     "type": "<percentage-token>",
-    "value": 50,
+    "value": -50,
     "flag": "number"
   },
   {
@@ -132611,7 +132611,7 @@
   },
   {
     "type": "<percentage-token>",
-    "value": 50,
+    "value": -50,
     "flag": "number"
   },
   {
@@ -132673,7 +132673,7 @@
   },
   {
     "type": "<percentage-token>",
-    "value": 50,
+    "value": -50,
     "flag": "number"
   },
   {
@@ -137263,7 +137263,7 @@
   },
   {
     "type": "<number-token>",
-    "value": 1,
+    "value": -1,
     "flag": "integer"
   },
   {
@@ -151199,7 +151199,7 @@
   },
   {
     "type": "<number-token>",
-    "value": 1,
+    "value": -1,
     "flag": "integer"
   },
   {
@@ -160710,7 +160710,7 @@
   },
   {
     "type": "<number-token>",
-    "value": 1,
+    "value": -1,
     "flag": "integer"
   },
   {
@@ -170221,7 +170221,7 @@
   },
   {
     "type": "<number-token>",
-    "value": 1,
+    "value": -1,
     "flag": "integer"
   },
   {
@@ -179732,7 +179732,7 @@
   },
   {
     "type": "<number-token>",
-    "value": 1,
+    "value": -1,
     "flag": "integer"
   },
   {
@@ -189243,7 +189243,7 @@
   },
   {
     "type": "<number-token>",
-    "value": 1,
+    "value": -1,
     "flag": "integer"
   },
   {

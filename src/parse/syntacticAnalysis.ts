@@ -165,7 +165,7 @@ export const tokenizeMediaQuery = (tokens: WToken[]): MediaQuery | null => {
         value === 'speech'
       ) {
         // these are treated as equivalent to 'not all'
-        mediaPrefix = mediaPrefix === 'not' ? 'only' : 'not'
+        mediaPrefix = mediaPrefix === 'not' ? null : 'not'
         mediaType = 'all'
       } else {
         return null
@@ -174,11 +174,21 @@ export const tokenizeMediaQuery = (tokens: WToken[]): MediaQuery | null => {
       mediaPrefix === 'not' &&
       firstNonUnaryToken.type === '<(-token>'
     ) {
-      const mediaCondition = tokenizeMediaCondition(tokens.slice(1), true)
+      const tokensWithParens: WToken[] = [
+        { type: '<(-token>', wsBefore: false, wsAfter: false }
+      ]
+      tokensWithParens.push.apply(tokensWithParens, tokens)
+      tokensWithParens.push({
+        type: '<)-token>',
+        wsBefore: false,
+        wsAfter: false
+      })
+
+      const mediaCondition = tokenizeMediaCondition(tokensWithParens, true)
       return mediaCondition === null
         ? null
         : {
-            mediaPrefix: 'not',
+            mediaPrefix: null,
             mediaType: 'all',
             mediaCondition
           }

@@ -198,7 +198,7 @@ test('toUnflattenedAST parses media query', async () => {
               flag: 'number',
               type: '<dimension-token>',
               unit: 'px',
-              value: 100
+              value: -100
             }
           }
         ],
@@ -850,28 +850,44 @@ test('toUnflattenedAST parses media query', async () => {
     }
   ])
   expect(
-    toUnflattenedAST('not (color) and (hover) and (min-width: 1px)')
+    toUnflattenedAST('not ((color) and (hover) and (min-width: 1px))')
   ).toEqual([
     {
       mediaCondition: {
         children: [
-          { context: 'boolean', feature: 'color' },
-          { context: 'boolean', feature: 'hover' },
           {
-            context: 'value',
-            feature: 'width',
-            prefix: 'min',
-            value: {
-              flag: 'number',
-              type: '<dimension-token>',
-              unit: 'px',
-              value: 1
-            }
+            children: [
+              {
+                children: [
+                  {
+                    context: 'boolean',
+                    feature: 'color'
+                  },
+                  {
+                    context: 'boolean',
+                    feature: 'hover'
+                  },
+                  {
+                    context: 'value',
+                    feature: 'width',
+                    prefix: 'min',
+                    value: {
+                      flag: 'number',
+                      type: '<dimension-token>',
+                      unit: 'px',
+                      value: 1
+                    }
+                  }
+                ],
+                operator: 'and'
+              }
+            ],
+            operator: 'not'
           }
         ],
-        operator: 'and'
+        operator: null
       },
-      mediaPrefix: 'not',
+      mediaPrefix: null,
       mediaType: 'all'
     }
   ])
@@ -880,13 +896,18 @@ test('toUnflattenedAST parses media query', async () => {
       mediaCondition: {
         children: [
           {
-            context: 'boolean',
-            feature: 'hover'
+            children: [
+              {
+                context: 'boolean',
+                feature: 'hover'
+              }
+            ],
+            operator: 'not'
           }
         ],
         operator: null
       },
-      mediaPrefix: 'not',
+      mediaPrefix: null,
       mediaType: 'all'
     }
   ])
@@ -897,20 +918,25 @@ test('toUnflattenedAST parses media query', async () => {
           {
             children: [
               {
-                context: 'boolean',
-                feature: 'hover'
-              },
-              {
-                context: 'boolean',
-                feature: 'color'
+                children: [
+                  {
+                    context: 'boolean',
+                    feature: 'hover'
+                  },
+                  {
+                    context: 'boolean',
+                    feature: 'color'
+                  }
+                ],
+                operator: 'or'
               }
             ],
-            operator: 'or'
+            operator: 'not'
           }
         ],
         operator: null
       },
-      mediaPrefix: 'not',
+      mediaPrefix: null,
       mediaType: 'all'
     }
   ])

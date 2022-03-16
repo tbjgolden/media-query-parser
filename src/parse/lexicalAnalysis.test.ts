@@ -228,6 +228,41 @@ test('consumeIdentLike', () => {
 })
 
 test('old bugs', () => {
+  expect(lexicalAnalysis('@media (min-width: -100px)')).toEqual([
+    {
+      type: '<at-keyword-token>',
+      value: 'media'
+    },
+    {
+      type: '<whitespace-token>'
+    },
+    {
+      type: '<(-token>'
+    },
+    {
+      type: '<ident-token>',
+      value: 'min-width'
+    },
+    {
+      type: '<colon-token>'
+    },
+    {
+      type: '<whitespace-token>'
+    },
+    {
+      flag: 'number',
+      type: '<dimension-token>',
+      unit: 'px',
+      value: -100
+    },
+    {
+      type: '<)-token>'
+    },
+    {
+      type: '<EOF-token>'
+    }
+  ])
+
   expect(
     lexicalAnalysis(
       '.dropdown-item:hover{color:#1e2125;background-color:#e9ecef}'
@@ -380,5 +415,6 @@ test('lexicalAnalysis', () => {
       'utf8'
     )
   )
+
   expect(lexicalAnalysis(input)).toEqual(output)
 })
