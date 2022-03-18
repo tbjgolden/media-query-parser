@@ -26,21 +26,10 @@ const simplifyMediaQuery = (mediaQuery: MediaQuery): MediaQuery => {
     mediaCondition = mediaCondition.children[0]
   }
 
-  if (mediaQuery.mediaPrefix === 'not' && mediaCondition.operator === null) {
-    return {
-      mediaPrefix: null,
-      mediaType: mediaQuery.mediaType,
-      mediaCondition: {
-        operator: 'not',
-        children: mediaCondition.children
-      }
-    }
-  } else {
-    return {
-      mediaPrefix: mediaQuery.mediaPrefix,
-      mediaType: mediaQuery.mediaType,
-      mediaCondition
-    }
+  return {
+    mediaPrefix: mediaQuery.mediaPrefix,
+    mediaType: mediaQuery.mediaType,
+    mediaCondition
   }
 }
 

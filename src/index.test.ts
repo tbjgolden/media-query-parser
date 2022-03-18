@@ -24,6 +24,40 @@ test('toAST', () => {
 })
 
 test('previously discovered bugs', () => {
+  // not print and (110px <= width <= 220px) should have mediaPrefix
+  expect(toAST('not print and (110px <= width <= 220px)')).toEqual([
+    {
+      mediaCondition: {
+        children: [
+          {
+            context: 'range',
+            feature: 'width',
+            range: {
+              featureName: 'width',
+              leftOp: '<=',
+              leftToken: {
+                flag: 'number',
+                type: '<dimension-token>',
+                unit: 'px',
+                value: 110
+              },
+              rightOp: '<=',
+              rightToken: {
+                flag: 'number',
+                type: '<dimension-token>',
+                unit: 'px',
+                value: 220
+              }
+            }
+          }
+        ],
+        operator: null
+      },
+      mediaPrefix: 'not',
+      mediaType: 'print'
+    }
+  ])
+
   // not ((min-width: 100px) and (max-width: 200px)) should not have mediaPrefix
   expect(toAST('not ((min-width: 100px) and (max-width: 200px))')).toEqual([
     {
