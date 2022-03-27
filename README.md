@@ -74,9 +74,8 @@ This library does not:
 
 Note that:
 
-- Handling individual media features is being developed in a separate project
-- This package's API is now fixed (in the case of an updated CSS media query
-  spec, it will be released as a new major version)
+- **Handling individual media features is being developed in a separate project:
+  [media-query-fns](https://github.com/tbjgolden/media-query-fns)**
 
 ## Installation
 

@@ -24,6 +24,40 @@ test('toAST', () => {
 })
 
 test('previously discovered bugs', () => {
+  expect(() =>
+    toAST(
+      'not screen and ((not ((min-width: 1000px) and (orientation: landscape))) or (color))'
+    )
+  ).toThrow()
+
+  // @media (color-index <= 128)
+  expect(toAST('@media (color-index <= 128)')).toEqual([
+    {
+      mediaCondition: {
+        children: [
+          {
+            context: 'range',
+            feature: 'color-index',
+            range: {
+              featureName: 'color-index',
+              leftOp: null,
+              leftToken: null,
+              rightOp: '<=',
+              rightToken: {
+                flag: 'integer',
+                type: '<number-token>',
+                value: 128
+              }
+            }
+          }
+        ],
+        operator: null
+      },
+      mediaPrefix: null,
+      mediaType: 'all'
+    }
+  ])
+
   // not print and (110px <= width <= 220px) should have mediaPrefix
   expect(toAST('not print and (110px <= width <= 220px)')).toEqual([
     {
@@ -99,7 +133,7 @@ test('previously discovered bugs', () => {
   ])
 
   // not (min-width: 100px) and (max-width: 200px) should fail
-  expect(toAST('not (min-width: 100px) and (max-width: 200px)')).toBe(null)
+  expect(() => toAST('not (min-width: 100px) and (max-width: 200px)')).toThrow()
 
   // other media types like tty should never match, but not break query
   expect(toAST('not tty')).toEqual([

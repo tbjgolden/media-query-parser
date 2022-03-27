@@ -1,44 +1,47 @@
-import { AST, toUnflattenedAST } from './syntacticAnalysis'
+import { AST, toUnflattenedAST as _toUnflattenedAST } from './syntacticAnalysis'
 import { simplifyAST } from './simplifyAST'
 
-const wrapper = (str: string): AST | null => {
-  const ast = toUnflattenedAST(str)
-  return ast === null ? ast : simplifyAST(ast)
+const asSimpleAST = (str: string): AST | string => {
+  try {
+    return simplifyAST(_toUnflattenedAST(str))
+  } catch (err) {
+    return err instanceof Error ? err.message : 'Error'
+  }
 }
 
 test('wrapper flattens valueless layers', () => {
-  expect(wrapper('(((((hover)) and (((color))))))')).toEqual(
-    wrapper('((hover)) and ((color))')
+  expect(asSimpleAST('(((((hover)) and (((color))))))')).toEqual(
+    asSimpleAST('((hover)) and ((color))')
   )
-  expect(wrapper('((hover)) and ((color))')).toEqual(
-    wrapper('(hover) and (color)')
+  expect(asSimpleAST('((hover)) and ((color))')).toEqual(
+    asSimpleAST('(hover) and (color)')
   )
-  expect(wrapper('((((hover)))) and ((color))')).toEqual(
-    wrapper('((hover)) and ((color))')
+  expect(asSimpleAST('((((hover)))) and ((color))')).toEqual(
+    asSimpleAST('((hover)) and ((color))')
   )
-  expect(wrapper('((hover)) and (color)')).toEqual(
-    wrapper('(hover) and (color)')
+  expect(asSimpleAST('((hover)) and (color)')).toEqual(
+    asSimpleAST('(hover) and (color)')
   )
-  expect(wrapper('((hover) and (color))')).toEqual(
-    wrapper('(hover) and (color)')
+  expect(asSimpleAST('((hover) and (color))')).toEqual(
+    asSimpleAST('(hover) and (color)')
   )
-  expect(wrapper('(not (hover))')).toEqual(wrapper('not (hover)'))
+  expect(asSimpleAST('(not (hover))')).toEqual(asSimpleAST('not (hover)'))
 })
 
 test('wrapper does not flatten useful layers', () => {
-  expect(wrapper('(not (hover)) and (color)')).not.toEqual(
-    wrapper('not (hover) and (color)')
+  expect(asSimpleAST('(not (hover)) and (color)')).not.toEqual(
+    asSimpleAST('not (hover) and (color)')
   )
-  expect(wrapper('((hover) and (color)) or (aspect-ratio > 2/1)')).not.toEqual(
-    wrapper('(hover) and (color) or (aspect-ratio > 2/1)')
+  expect(
+    asSimpleAST('((hover) and (color)) or (aspect-ratio > 2/1)')
+  ).not.toEqual(asSimpleAST('(hover) and (color) or (aspect-ratio > 2/1)'))
+  expect(asSimpleAST('((hover) and (not (color)))')).toEqual(
+    asSimpleAST('(hover) and (not (color))')
   )
-  expect(wrapper('((hover) and (not (color)))')).toEqual(
-    wrapper('(hover) and (not (color))')
+  expect(asSimpleAST('((hover) and (not (color)))')).not.toEqual(
+    asSimpleAST('(hover) and not (color)')
   )
-  expect(wrapper('((hover) and (not (color)))')).not.toEqual(
-    wrapper('(hover) and not (color)')
-  )
-  expect(wrapper('screen and (not (not (color)))')).not.toEqual(
-    wrapper('screen and (not (color))')
+  expect(asSimpleAST('screen and (not (not (color)))')).not.toEqual(
+    asSimpleAST('screen and (not (color))')
   )
 })

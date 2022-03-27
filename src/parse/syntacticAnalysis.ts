@@ -7,26 +7,29 @@ import {
 } from './lexicalAnalysis'
 import { simplifyAST } from './simplifyAST'
 
+const createError = (message: string, err?: unknown): Error => {
+  if (err instanceof Error) {
+    return new Error(`${err.message.trim()}\n${message.trim()}`)
+  } else {
+    return new Error(message.trim())
+  }
+}
+
 type WToken = Token & { wsBefore: boolean; wsAfter: boolean }
 
 export type AST = MediaQuery[]
 
-export const toAST = (str: string): AST | null => {
-  let ast = toUnflattenedAST(str)
-
-  if (ast !== null) {
-    // flatten
-    ast = simplifyAST(ast)
-  }
-
-  return ast
+export const toAST = (str: string): AST => {
+  return simplifyAST(toUnflattenedAST(str))
 }
 
-export const toUnflattenedAST = (str: string): AST | null => {
+export const toUnflattenedAST = (str: string): AST => {
   let tokenList = lexicalAnalysis(str.trim())
 
   // failed tokenizing
-  if (tokenList === null) return null
+  if (tokenList === null) {
+    throw createError('Failed tokenizing')
+  }
 
   // trim the @media and { where applicable
   let startIndex = 0
@@ -36,7 +39,7 @@ export const toUnflattenedAST = (str: string): AST | null => {
     tokenList[0].value === 'media'
   ) {
     if (tokenList[1].type !== '<whitespace-token>') {
-      return null
+      throw createError('Expected whitespace after media')
     }
 
     startIndex = 2
@@ -46,7 +49,7 @@ export const toUnflattenedAST = (str: string): AST | null => {
         endIndex = i
         break
       } else if (token.type === '<semicolon-token>') {
-        return null
+        throw createError("Expected '{' in media query but found ';'")
       }
     }
   }
@@ -79,7 +82,7 @@ export const removeWhitespace = (tokenList: Token[]): WToken[] => {
   return newTokenList
 }
 
-export const syntacticAnalysis = (tokenList: Token[]): MediaQuery[] | null => {
+export const syntacticAnalysis = (tokenList: Token[]): MediaQuery[] => {
   const mediaQueryList: Array<Array<Token>> = [[]]
   for (let i = 0; i < tokenList.length; i++) {
     const token = tokenList[i]
@@ -110,7 +113,11 @@ export const syntacticAnalysis = (tokenList: Token[]): MediaQuery[] | null => {
       }
     }
 
-    return nonNullMediaQueryTokens.length === 0 ? null : nonNullMediaQueryTokens
+    if (nonNullMediaQueryTokens.length === 0) {
+      throw createError('No valid media queries')
+    }
+
+    return nonNullMediaQueryTokens
   }
 }
 
@@ -120,18 +127,18 @@ export type MediaQuery = {
   mediaCondition: MediaCondition | null
 }
 
-export const tokenizeMediaQuery = (tokens: WToken[]): MediaQuery | null => {
+export const tokenizeMediaQuery = (tokens: WToken[]): MediaQuery => {
   const firstToken = tokens[0]
   if (firstToken.type === '<(-token>') {
-    const mediaCondition = tokenizeMediaCondition(tokens, true)
-
-    return mediaCondition === null
-      ? null
-      : {
-          mediaPrefix: null,
-          mediaType: 'all',
-          mediaCondition
-        }
+    try {
+      return {
+        mediaPrefix: null,
+        mediaType: 'all',
+        mediaCondition: tokenizeMediaCondition(tokens, true)
+      }
+    } catch (err) {
+      throw createError("Expected media condition after '('", err)
+    }
   } else if (firstToken.type === '<ident-token>') {
     let mediaPrefix: 'not' | 'only' | null = null
     let mediaType: 'all' | 'print' | 'screen'
@@ -143,7 +150,9 @@ export const tokenizeMediaQuery = (tokens: WToken[]): MediaQuery | null => {
 
     const firstIndex = mediaPrefix === null ? 0 : 1
 
-    if (tokens.length <= firstIndex) return null
+    if (tokens.length <= firstIndex) {
+      throw createError(`Expected extra token in media query`)
+    }
 
     const firstNonUnaryToken = tokens[firstIndex]
 
@@ -168,7 +177,7 @@ export const tokenizeMediaQuery = (tokens: WToken[]): MediaQuery | null => {
         mediaPrefix = mediaPrefix === 'not' ? null : 'not'
         mediaType = 'all'
       } else {
-        return null
+        throw createError(`Unknown ident '${value}' in media query`)
       }
     } else if (
       mediaPrefix === 'not' &&
@@ -184,16 +193,17 @@ export const tokenizeMediaQuery = (tokens: WToken[]): MediaQuery | null => {
         wsAfter: false
       })
 
-      const mediaCondition = tokenizeMediaCondition(tokensWithParens, true)
-      return mediaCondition === null
-        ? null
-        : {
-            mediaPrefix: null,
-            mediaType: 'all',
-            mediaCondition
-          }
+      try {
+        return {
+          mediaPrefix: null,
+          mediaType: 'all',
+          mediaCondition: tokenizeMediaCondition(tokensWithParens, true)
+        }
+      } catch (err) {
+        throw createError("Expected media condition after '('", err)
+      }
     } else {
-      return null
+      throw createError('Expected ???')
     }
 
     if (firstIndex + 1 === tokens.length) {
@@ -208,26 +218,27 @@ export const tokenizeMediaQuery = (tokens: WToken[]): MediaQuery | null => {
         secondNonUnaryToken.type === '<ident-token>' &&
         secondNonUnaryToken.value === 'and'
       ) {
-        const mediaCondition = tokenizeMediaCondition(
-          tokens.slice(firstIndex + 2),
-          false
-        )
         // should probably check here for correct operator
-        return mediaCondition === null
-          ? null
-          : {
-              mediaPrefix,
-              mediaType,
-              mediaCondition
-            }
+        try {
+          return {
+            mediaPrefix,
+            mediaType,
+            mediaCondition: tokenizeMediaCondition(
+              tokens.slice(firstIndex + 2),
+              false
+            )
+          }
+        } catch (err) {
+          throw createError("Expected media condition after 'and'", err)
+        }
       } else {
-        return null
+        throw createError("Expected 'and' after media prefix")
       }
     } else {
-      return null
+      throw createError('Expected media condition after media prefix')
     }
   } else {
-    return null
+    throw createError('Expected media condition or media prefix')
   }
 }
 
@@ -240,13 +251,13 @@ export const tokenizeMediaCondition = (
   tokens: WToken[],
   mayContainOr: boolean,
   previousOperator: 'and' | 'or' | 'not' | null = null
-): MediaCondition | null => {
+): MediaCondition => {
   if (
     tokens.length < 3 ||
     tokens[0].type !== '<(-token>' ||
     tokens[tokens.length - 1].type !== '<)-token>'
   ) {
-    return null
+    throw new Error('Invalid media condition')
   }
 
   let endIndexOfFirstFeature = tokens.length - 1
@@ -267,7 +278,7 @@ export const tokenizeMediaCondition = (
   }
 
   if (count !== 0) {
-    return null
+    throw new Error('Mismatched parens\nInvalid media condition')
   }
 
   let child: MediaCondition | MediaFeature | null
@@ -290,28 +301,30 @@ export const tokenizeMediaCondition = (
   }
 
   if (endIndexOfFirstFeature === tokens.length - 1) {
-    if (
-      child === null ||
-      ('operator' in child &&
-        child.children.some((grandChild) => grandChild === null))
-    ) {
-      return null
-    } else {
-      return {
-        operator: previousOperator,
-        children: [child]
-      }
+    return {
+      operator: previousOperator,
+      children: [child]
     }
   } else {
     // read for a boolean op "and", "not", "or"
     const nextToken = tokens[endIndexOfFirstFeature + 1]
-    if (
-      nextToken.type !== '<ident-token>' ||
-      (nextToken.value !== 'and' &&
-        (nextToken.value !== 'or' || !mayContainOr)) ||
-      (previousOperator !== null && previousOperator !== nextToken.value)
+    if (nextToken.type !== '<ident-token>') {
+      throw new Error('Invalid operator\nInvalid media condition')
+    } else if (
+      previousOperator !== null &&
+      previousOperator !== nextToken.value
     ) {
-      return null
+      throw new Error(
+        `'${nextToken.value}' and '${previousOperator}' must not be at same level\nInvalid media condition`
+      )
+    } else if (nextToken.value === 'or' && !mayContainOr) {
+      throw new Error(
+        "Cannot use 'or' at top level of a media query\nInvalid media condition"
+      )
+    } else if (nextToken.value !== 'and' && nextToken.value !== 'or') {
+      throw new Error(
+        `Invalid operator: '${nextToken.value}'\nInvalid media condition`
+      )
     }
 
     const siblings = tokenizeMediaCondition(
@@ -319,8 +332,6 @@ export const tokenizeMediaCondition = (
       mayContainOr,
       nextToken.value
     )
-
-    if (child === null || siblings === null) return null
 
     return {
       operator: nextToken.value,
@@ -354,15 +365,14 @@ export type ValidValueToken =
   | RatioToken
   | IdentToken
 
-export const tokenizeMediaFeature = (
-  rawTokens: WToken[]
-): MediaFeature | null => {
+export const tokenizeMediaFeature = (rawTokens: WToken[]): MediaFeature => {
   if (
     rawTokens.length < 3 ||
     rawTokens[0].type !== '<(-token>' ||
     rawTokens[rawTokens.length - 1].type !== '<)-token>'
-  )
-    return null
+  ) {
+    throw new Error('Invalid media feature')
+  }
 
   const tokens: ConvenientToken[] = [rawTokens[0]]
 
@@ -434,20 +444,19 @@ export const tokenizeMediaFeature = (
       }
     }
   } else if (tokens.length >= 5) {
-    const range = tokenizeRange(tokens)
-
-    if (range === null) {
-      return null
-    }
-
-    return {
-      context: 'range',
-      feature: range.featureName,
-      range
+    try {
+      const range = tokenizeRange(tokens)
+      return {
+        context: 'range',
+        feature: range.featureName,
+        range
+      }
+    } catch (err) {
+      throw createError('Invalid media feature', err)
     }
   }
 
-  return null
+  throw new Error('Invalid media feature')
 }
 
 export type RatioToken = {
@@ -506,13 +515,13 @@ export type ValidRange =
       rightToken: ValidRangeToken
     }
 
-export const tokenizeRange = (tokens: ConvenientToken[]): ValidRange | null => {
+export const tokenizeRange = (tokens: ConvenientToken[]): ValidRange => {
   if (
     tokens.length < 5 ||
     tokens[0].type !== '<(-token>' ||
     tokens[tokens.length - 1].type !== '<)-token>'
   ) {
-    return null
+    throw new Error('Invalid range')
   }
 
   // range form
@@ -553,7 +562,7 @@ export const tokenizeRange = (tokens: ConvenientToken[]): ValidRange | null => {
     } else if (tokens[2].value === 0x003d) {
       range[hasLeft ? 'leftOp' : 'rightOp'] = '='
     } else {
-      return null
+      throw new Error('Invalid range')
     }
 
     if (hasLeft) {
@@ -561,7 +570,7 @@ export const tokenizeRange = (tokens: ConvenientToken[]): ValidRange | null => {
     } else if (tokens[1].type === '<ident-token>') {
       range.featureName = tokens[1].value
     } else {
-      return null
+      throw new Error('Invalid range')
     }
 
     const tokenIndexAfterFirstOp =
@@ -601,7 +610,7 @@ export const tokenizeRange = (tokens: ConvenientToken[]): ValidRange | null => {
             } else if (charCode === 0x003d) {
               range.rightOp = '='
             } else {
-              return null
+              throw new Error('Invalid range')
             }
 
             const tokenAfterSecondOp =
@@ -609,13 +618,13 @@ export const tokenizeRange = (tokens: ConvenientToken[]): ValidRange | null => {
 
             range.rightToken = tokenAfterSecondOp
           } else {
-            return null
+            throw new Error('Invalid range')
           }
         } else if (tokenIndexAfterFirstOp + 2 !== tokens.length) {
-          return null
+          throw new Error('Invalid range')
         }
       } else {
-        return null
+        throw new Error('Invalid range')
       }
     } else {
       range.rightToken = tokenAfterFirstOp
@@ -676,7 +685,7 @@ export const tokenizeRange = (tokens: ConvenientToken[]): ValidRange | null => {
       ) {
         validRange = { leftToken, leftOp, featureName, rightOp, rightToken }
       } else {
-        return null
+        throw new Error('Invalid range')
       }
     } else if (
       leftToken === null &&
@@ -693,11 +702,11 @@ export const tokenizeRange = (tokens: ConvenientToken[]): ValidRange | null => {
     ) {
       validRange = { leftToken, leftOp, featureName, rightOp, rightToken }
     } else {
-      return null
+      throw new Error('Invalid range')
     }
 
     return validRange
   } else {
-    return null
+    throw new Error('Invalid range')
   }
 }

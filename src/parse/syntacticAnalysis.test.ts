@@ -4,8 +4,8 @@ test('should skip over @media, or error if something else', async () => {
   expect(toUnflattenedAST('@media all')).toEqual([
     { mediaCondition: null, mediaPrefix: null, mediaType: 'all' }
   ])
-  expect(toUnflattenedAST('@media,all;')).toEqual(null)
-  expect(toUnflattenedAST('@media all;')).toEqual(null)
+  expect(() => toUnflattenedAST('@media,all;')).toThrow()
+  expect(() => toUnflattenedAST('@media all;')).toThrow()
   expect(toUnflattenedAST('@media all { /* ... */ }')).toEqual([
     { mediaCondition: null, mediaPrefix: null, mediaType: 'all' }
   ])
@@ -104,7 +104,7 @@ test('toUnflattenedAST parses media query', async () => {
   expect(toUnflattenedAST('')).toEqual([
     { mediaCondition: null, mediaPrefix: null, mediaType: 'all' }
   ])
-  expect(toUnflattenedAST(',')).toEqual(null)
+  expect(() => toUnflattenedAST(',')).toThrow()
   expect(toUnflattenedAST('all,')).toEqual([
     { mediaCondition: null, mediaPrefix: null, mediaType: 'all' }
   ])
@@ -170,9 +170,9 @@ test('toUnflattenedAST parses media query', async () => {
     }
   ])
   // as url( ) cannot contain a ), so it's a lexer error even before the list is separated by commas
-  expect(
+  expect(() =>
     toUnflattenedAST('url(fun()) screen and (color), projection and (color)')
-  ).toEqual(null)
+  ).toThrow()
   expect(toUnflattenedAST('all,, all')).toEqual([
     { mediaCondition: null, mediaPrefix: null, mediaType: 'all' },
     { mediaCondition: null, mediaPrefix: null, mediaType: 'all' }
@@ -181,10 +181,8 @@ test('toUnflattenedAST parses media query', async () => {
     { mediaCondition: null, mediaPrefix: null, mediaType: 'all' },
     { mediaCondition: null, mediaPrefix: null, mediaType: 'all' }
   ])
-  expect(toUnflattenedAST('(all, all), all')).toEqual([
-    { mediaCondition: null, mediaPrefix: null, mediaType: 'all' }
-  ])
-  expect(toUnflattenedAST('((min-width: -100px)')).toEqual(null)
+  expect(() => toUnflattenedAST('(all, all), all')).toThrow()
+  expect(() => toUnflattenedAST('((min-width: -100px)')).toThrow()
 
   expect(toUnflattenedAST('(min-width: -100px)')).toEqual([
     {
@@ -940,11 +938,15 @@ test('toUnflattenedAST parses media query', async () => {
       mediaType: 'all'
     }
   ])
+  //
+  expect(() => toUnflattenedAST('only (hover)')).toThrow()
   // 'or' can not appear on the right hand side of a media type (e.g. all/screen/print)
-  expect(toUnflattenedAST('screen and (not (color)) or (hover)')).toEqual(null)
-  expect(toUnflattenedAST('only ((hover) or (color))')).toEqual(null)
-  expect(toUnflattenedAST('screen and ((hover) or (color))')).toEqual(null)
+  expect(() =>
+    toUnflattenedAST('screen and (not (color)) or (hover)')
+  ).toThrow()
+  expect(() => toUnflattenedAST('only ((hover) or (color))')).toThrow()
+  expect(() => toUnflattenedAST('screen and ((hover) or (color))')).toThrow()
   // 'not' should not be a valid binary operator
-  expect(toUnflattenedAST('(color) not (hover)')).toEqual(null)
-  expect(toUnflattenedAST('screen and ((color) not (hover))')).toEqual(null)
+  expect(() => toUnflattenedAST('(color) not (hover)')).toThrow()
+  expect(() => toUnflattenedAST('screen and ((color) not (hover))')).toThrow()
 })
