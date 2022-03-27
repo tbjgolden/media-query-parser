@@ -1,4 +1,12 @@
-import { toUnflattenedAST, removeWhitespace } from './syntacticAnalysis'
+import { lexicalAnalysis } from './lexicalAnalysis'
+import {
+  toUnflattenedAST,
+  removeWhitespace,
+  tokenizeMediaFeature,
+  tokenizeRange
+} from './syntacticAnalysis'
+
+// 77.55 | 154,180,235-241,312,374,455-459,524,558,562-565,573,600-613,621,624-627,646-648,662-664,682-688,705,710
 
 test('should skip over @media, or error if something else', async () => {
   expect(toUnflattenedAST('@media all')).toEqual([
@@ -949,4 +957,160 @@ test('toUnflattenedAST parses media query', async () => {
   // 'not' should not be a valid binary operator
   expect(() => toUnflattenedAST('(color) not (hover)')).toThrow()
   expect(() => toUnflattenedAST('screen and ((color) not (hover))')).toThrow()
+})
+
+test('coverage misses', () => {
+  expect(() => toUnflattenedAST('not')).toThrow()
+  expect(toUnflattenedAST('only tty')).toEqual([
+    { mediaCondition: null, mediaPrefix: 'not', mediaType: 'all' }
+  ])
+  expect(toUnflattenedAST('not tty')).toEqual([
+    { mediaCondition: null, mediaPrefix: null, mediaType: 'all' }
+  ])
+  expect(() => toUnflattenedAST('not mediatype')).toThrow()
+  expect(() => toUnflattenedAST('not print or (hover)')).toThrow()
+  expect(() => toUnflattenedAST('print or')).toThrow()
+  expect(() => toUnflattenedAST('not print and')).toThrow()
+  expect(() => toUnflattenedAST('not print and')).toThrow()
+  expect(() => toUnflattenedAST('(monochrome) | (hover)')).toThrow()
+  expect(() => toUnflattenedAST('*')).toThrow()
+  expect(() =>
+    tokenizeMediaFeature(
+      ([{ type: '<(-token>' }] as const).map((token) => ({
+        ...token,
+        wsBefore: true,
+        wsAfter: true
+      }))
+    )
+  ).toThrow()
+  expect(() =>
+    tokenizeMediaFeature(
+      (
+        [
+          { type: '<(-token>' },
+          { type: '<ident-token>', value: 'not' },
+          { type: '<whitespace-token>' },
+          { type: '<(-token>' },
+          { type: '<)-token>' },
+          { type: '<)-token>' }
+        ] as const
+      ).map((token) => ({ ...token, wsBefore: true, wsAfter: true }))
+    )
+  ).toThrow()
+  expect(() => toUnflattenedAST('(100px < width > 100px)')).toThrow()
+  expect(() => toUnflattenedAST('(100px width)')).toThrow()
+  expect(() =>
+    tokenizeRange(
+      (
+        [
+          { type: '<(-token>' },
+          { type: '<ident-token>', value: 'width' },
+          { type: '<delim-token>', value: 0x003c },
+          { type: '<number-token>', value: 100, flag: 'number' }
+        ] as const
+      ).map((token) => ({ ...token, wsBefore: true, wsAfter: true }))
+    )
+  ).toThrow()
+  expect(toUnflattenedAST('(200px >= width >= 100px)')).toEqual([
+    {
+      mediaCondition: {
+        children: [
+          {
+            context: 'range',
+            feature: 'width',
+            range: {
+              featureName: 'width',
+              leftOp: '>=',
+              leftToken: {
+                flag: 'number',
+                type: '<dimension-token>',
+                unit: 'px',
+                value: 200
+              },
+              rightOp: '>=',
+              rightToken: {
+                flag: 'number',
+                type: '<dimension-token>',
+                unit: 'px',
+                value: 100
+              }
+            }
+          }
+        ],
+        operator: null
+      },
+      mediaPrefix: null,
+      mediaType: 'all'
+    }
+  ])
+  expect(toUnflattenedAST('(200px = width)')).toEqual([
+    {
+      mediaCondition: {
+        children: [
+          {
+            context: 'range',
+            feature: 'width',
+            range: {
+              featureName: 'width',
+              leftOp: '=',
+              leftToken: {
+                flag: 'number',
+                type: '<dimension-token>',
+                unit: 'px',
+                value: 200
+              },
+              rightOp: null,
+              rightToken: null
+            }
+          }
+        ],
+        operator: null
+      },
+      mediaPrefix: null,
+      mediaType: 'all'
+    }
+  ])
+  expect(toUnflattenedAST('(width >= 200px)')).toEqual([
+    {
+      mediaCondition: {
+        children: [
+          {
+            context: 'range',
+            feature: 'width',
+            range: {
+              featureName: 'width',
+              leftOp: null,
+              leftToken: null,
+              rightOp: '>=',
+              rightToken: {
+                flag: 'number',
+                type: '<dimension-token>',
+                unit: 'px',
+                value: 200
+              }
+            }
+          }
+        ],
+        operator: null
+      },
+      mediaPrefix: null,
+      mediaType: 'all'
+    }
+  ])
+  expect(() => toUnflattenedAST('(1px @ width)')).toThrow()
+  expect(() => toUnflattenedAST('(# < width < 3)')).toThrow()
+  expect(() => toUnflattenedAST('(1px = width < 1)')).toThrow()
+  expect(() => toUnflattenedAST('(width = 1px)')).not.toThrow()
+  expect(() => toUnflattenedAST('(1px = width)')).not.toThrow()
+  expect(() => toUnflattenedAST('(1px < width = infinite)')).toThrow()
+  expect(() => toUnflattenedAST('(1px < width : infinite)')).toThrow()
+  expect(() => toUnflattenedAST('(1px < width : )')).toThrow()
+  expect(() => toUnflattenedAST('(1px < < 2px)')).toThrow()
+  expect(() =>
+    tokenizeRange(
+      removeWhitespace((lexicalAnalysis('(width)') ?? []).slice(0, -1))
+    )
+  ).toThrow()
+  expect(() => toUnflattenedAST('(infinite < width < infinite)')).not.toThrow()
+  expect(() => toUnflattenedAST('(infinite < width < infinite)')).not.toThrow()
 })

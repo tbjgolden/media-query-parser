@@ -203,7 +203,7 @@ export const tokenizeMediaQuery = (tokens: WToken[]): MediaQuery => {
         throw createError("Expected media condition after '('", err)
       }
     } else {
-      throw createError('Expected ???')
+      throw createError('Invalid media query')
     }
 
     if (firstIndex + 1 === tokens.length) {
@@ -607,8 +607,6 @@ export const tokenizeRange = (tokens: ConvenientToken[]): ValidRange => {
               } else {
                 range.rightOp = '>'
               }
-            } else if (charCode === 0x003d) {
-              range.rightOp = '='
             } else {
               throw new Error('Invalid range')
             }
@@ -630,7 +628,7 @@ export const tokenizeRange = (tokens: ConvenientToken[]): ValidRange => {
       range.rightToken = tokenAfterFirstOp
     }
 
-    let validRange: ValidRange
+    let validRange: ValidRange | null = null
 
     const {
       leftToken: lt,
@@ -701,11 +699,9 @@ export const tokenizeRange = (tokens: ConvenientToken[]): ValidRange => {
       rightToken === null
     ) {
       validRange = { leftToken, leftOp, featureName, rightOp, rightToken }
-    } else {
-      throw new Error('Invalid range')
     }
 
-    return validRange
+    return validRange as ValidRange
   } else {
     throw new Error('Invalid range')
   }

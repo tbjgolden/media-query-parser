@@ -2,6 +2,7 @@ import {
   consumeEscape,
   consumeIdent,
   consumeIdentLike,
+  consumeIdentUnsafe,
   consumeNumber,
   consumeNumeric,
   consumeString,
@@ -11,31 +12,35 @@ import {
 import fs from 'fs'
 import path from 'path'
 
+// 87.83 | 137,181,185,202-229,247,280-284,309-336,359-363,384,388-394,404,474,533,700,722-725,803,835
+
 test('consumeEscape', () => {
-  expect(consumeEscape('', 0)).toBe(null)
-  expect(consumeEscape('"', 0)).toBe(null)
+  expect(consumeEscape('', 0)).toEqual(null)
+  expect(consumeEscape('"', 0)).toEqual(null)
   // escape any
-  expect(consumeEscape("\\'", 0)?.[0]).toBe(1)
-  expect(String.fromCharCode(consumeEscape("\\'", 0)?.[1] ?? -1)).toBe("'")
+  expect(consumeEscape("\\'", 0)?.[0]).toEqual(1)
+  expect(String.fromCharCode(consumeEscape("\\'", 0)?.[1] ?? -1)).toEqual("'")
   // escape hex
-  expect(consumeEscape('\\0a', 0)?.[0]).toBe(2)
-  expect(String.fromCharCode(consumeEscape('\\0a', 0)?.[1] ?? -1)).toBe('\n')
+  expect(consumeEscape('\\0a', 0)?.[0]).toEqual(2)
+  expect(String.fromCharCode(consumeEscape('\\0a', 0)?.[1] ?? -1)).toEqual('\n')
   // escape hex with trailing whitespace
-  expect(consumeEscape('\\0a ', 0)?.[0]).toBe(3)
-  expect(String.fromCharCode(consumeEscape('\\0a ', 0)?.[1] ?? -1)).toBe('\n')
+  expect(consumeEscape('\\0a ', 0)?.[0]).toEqual(3)
+  expect(String.fromCharCode(consumeEscape('\\0a ', 0)?.[1] ?? -1)).toEqual(
+    '\n'
+  )
   // escape hex with trailing whitespace + more
-  expect(consumeEscape('\\0a hehe', 0)?.[0]).toBe(3)
-  expect(String.fromCharCode(consumeEscape('\\0a hehe', 0)?.[1] ?? -1)).toBe(
+  expect(consumeEscape('\\0a hehe', 0)?.[0]).toEqual(3)
+  expect(String.fromCharCode(consumeEscape('\\0a hehe', 0)?.[1] ?? -1)).toEqual(
     '\n'
   )
   // escape hex with no trailing whitespace
-  expect(consumeEscape('\\0ahehe', 0)?.[0]).toBe(2)
-  expect(String.fromCharCode(consumeEscape('\\0ahehe', 0)?.[1] ?? -1)).toBe(
+  expect(consumeEscape('\\0ahehe', 0)?.[0]).toEqual(2)
+  expect(String.fromCharCode(consumeEscape('\\0ahehe', 0)?.[1] ?? -1)).toEqual(
     '\n'
   )
 
-  expect(consumeEscape('\\0ahehe', 1)).toBe(null)
-  expect(consumeEscape(' \\0ahehe', 0)).toBe(null)
+  expect(consumeEscape('\\0ahehe', 1)).toEqual(null)
+  expect(consumeEscape(' \\0ahehe', 0)).toEqual(null)
 })
 
 test('consumeString', () => {
@@ -67,12 +72,18 @@ test('consumeString', () => {
     23,
     'Single quotes work too'
   ])
-  expect(consumeString(`'Mixing quotes does not"`, 0)).toBe(null)
+  expect(consumeString(`'Mixing quotes does not"`, 0)).toEqual(null)
   expect(consumeString(`"\\a9"`, 0)).toEqual([4, '©'])
-  expect(consumeString(`"\\"`, 0)).toBe(null)
+  expect(consumeString(`"\\"`, 0)).toEqual(null)
   expect(consumeString(`"\\\\"`, 0)).toEqual([3, '\\'])
-  expect(consumeString(`"\\\\\\"`, 0)).toBe(null)
+  expect(consumeString(`"\\\\\\"`, 0)).toEqual(null)
   expect(consumeString(`"\\\\\\\\"`, 0)).toEqual([5, '\\\\'])
+
+  expect(consumeString('"\n"', 0)).toEqual(null)
+  expect(consumeString("'\n'", 0)).toEqual(null)
+  expect(consumeString("''", 0)).toEqual([1, ''])
+  expect(consumeString('', 0)).toEqual(null)
+  expect(consumeString('"\\\x0a"', 0)).toEqual(null)
 })
 
 test('consumeNumeric', () => {
@@ -177,6 +188,7 @@ test('consumeUrl', () => {
   expect(consumeUrl('url(0)', 4)).toEqual([5, '0'])
   expect(consumeUrl('url(_a)', 4)).toEqual([6, '_a'])
   expect(consumeUrl('url( abc)', 4)).toEqual([8, 'abc'])
+  expect(consumeUrl('url( abc', 4)).toEqual(null)
   expect(consumeUrl('url(abc)', 3)).toEqual(null)
   expect(consumeUrl('url( url )', 4)).toEqual([9, 'url'])
 })
@@ -210,11 +222,17 @@ test('consumeIdentLike', () => {
   expect(consumeIdentLike('_a', 0)).toEqual([1, '_a', '<ident-token>'])
   expect(consumeIdentLike(' abc', 0)).toEqual(null)
   expect(consumeIdentLike(' abc', 1)).toEqual([3, 'abc', '<ident-token>'])
+  expect(consumeIdentLike('currentColor', 0)).toEqual([
+    11,
+    'currentcolor',
+    '<ident-token>'
+  ])
 
   expect(consumeIdentLike('0', 0)).toEqual(null)
   expect(consumeIdentLike('_a', 0)).toEqual([1, '_a', '<ident-token>'])
   expect(consumeIdentLike(' abc', 0)).toEqual(null)
   expect(consumeIdentLike(' abc', 1)).toEqual([3, 'abc', '<ident-token>'])
+  expect(consumeIdentLike(' abc(', 1)).toEqual([4, 'abc', '<function-token>'])
   expect(consumeIdentLike('url(http://something.com)', 0)).toEqual([
     24,
     'http://something.com',
@@ -225,42 +243,60 @@ test('consumeIdentLike', () => {
     'http://google.com/logo.png',
     '<url-token>'
   ])
+  expect(consumeIdentLike('url', 0)).toEqual([2, 'url', '<ident-token>'])
+  expect(consumeIdentLike('abc(   )', 0)).toEqual([
+    3,
+    'abc',
+    '<function-token>'
+  ])
+  expect(consumeIdentLike('abc(    ', 0)).toEqual([
+    3,
+    'abc',
+    '<function-token>'
+  ])
+  expect(consumeIdentLike('url(    ', 0)).toEqual([
+    3,
+    'url',
+    '<function-token>'
+  ])
+})
+
+test('consumeIdentUnsafe', () => {
+  expect(consumeIdentUnsafe('', 0)).toEqual(null)
+  expect(consumeIdentUnsafe('-', 0)).toEqual([0, '-'])
+  expect(consumeIdentUnsafe('-0', 0)).toEqual([1, '-0'])
+  expect(consumeIdentUnsafe('-a', 0)).toEqual([1, '-a'])
+  expect(consumeIdentUnsafe('--', 0)).toEqual([1, '--'])
+  expect(consumeIdentUnsafe('-a-b-c-', 0)).toEqual([6, '-a-b-c-'])
+
+  expect(consumeIdentUnsafe('0', 0)).toEqual([0, '0'])
+  expect(consumeIdentUnsafe('_a', 0)).toEqual([1, '_a'])
+  expect(consumeIdentUnsafe('~a', 0)).toEqual(null)
+  expect(consumeIdentUnsafe(' abc', 0)).toEqual(null)
+  expect(consumeIdentUnsafe(' abc', 1)).toEqual([3, 'abc'])
+  expect(consumeIdentUnsafe('##currentColor', 0)).toEqual(null)
+  expect(consumeIdentUnsafe('all\\0agood', 0)).toEqual([9, 'all\ngood'])
+  expect(consumeIdentUnsafe('all\\', 0)).toEqual([2, 'all'])
+  expect(consumeIdentUnsafe('all\\\n', 0)).toEqual([2, 'all'])
+  expect(consumeIdentUnsafe('\\\n', 0)).toEqual(null)
 })
 
 test('old bugs', () => {
   expect(lexicalAnalysis('@media (min-width: -100px)')).toEqual([
-    {
-      type: '<at-keyword-token>',
-      value: 'media'
-    },
-    {
-      type: '<whitespace-token>'
-    },
-    {
-      type: '<(-token>'
-    },
-    {
-      type: '<ident-token>',
-      value: 'min-width'
-    },
-    {
-      type: '<colon-token>'
-    },
-    {
-      type: '<whitespace-token>'
-    },
+    { type: '<at-keyword-token>', value: 'media' },
+    { type: '<whitespace-token>' },
+    { type: '<(-token>' },
+    { type: '<ident-token>', value: 'min-width' },
+    { type: '<colon-token>' },
+    { type: '<whitespace-token>' },
     {
       flag: 'number',
       type: '<dimension-token>',
       unit: 'px',
       value: -100
     },
-    {
-      type: '<)-token>'
-    },
-    {
-      type: '<EOF-token>'
-    }
+    { type: '<)-token>' },
+    { type: '<EOF-token>' }
   ])
 
   expect(
@@ -268,140 +304,161 @@ test('old bugs', () => {
       '.dropdown-item:hover{color:#1e2125;background-color:#e9ecef}'
     )
   ).toEqual([
-    {
-      type: '<delim-token>',
-      value: 46
-    },
-    {
-      type: '<ident-token>',
-      value: 'dropdown-item'
-    },
-    {
-      type: '<colon-token>'
-    },
-    {
-      type: '<ident-token>',
-      value: 'hover'
-    },
-    {
-      type: '<{-token>'
-    },
-    {
-      type: '<ident-token>',
-      value: 'color'
-    },
-    {
-      type: '<colon-token>'
-    },
+    { type: '<delim-token>', value: 46 },
+    { type: '<ident-token>', value: 'dropdown-item' },
+    { type: '<colon-token>' },
+    { type: '<ident-token>', value: 'hover' },
+    { type: '<{-token>' },
+    { type: '<ident-token>', value: 'color' },
+    { type: '<colon-token>' },
     {
       flag: 'unrestricted',
       type: '<hash-token>',
       value: '1e2125'
     },
-    {
-      type: '<semicolon-token>'
-    },
-    {
-      type: '<ident-token>',
-      value: 'background-color'
-    },
-    {
-      type: '<colon-token>'
-    },
+    { type: '<semicolon-token>' },
+    { type: '<ident-token>', value: 'background-color' },
+    { type: '<colon-token>' },
     {
       flag: 'id',
       type: '<hash-token>',
       value: 'e9ecef'
     },
-    {
-      type: '<}-token>'
-    },
-    {
-      type: '<EOF-token>'
-    }
+    { type: '<}-token>' },
+    { type: '<EOF-token>' }
   ])
   expect(lexicalAnalysis('@media (1/2 < aspect-ratio < 1/1) { }')).toEqual([
-    {
-      type: '<at-keyword-token>',
-      value: 'media'
-    },
-    {
-      type: '<whitespace-token>'
-    },
-    {
-      type: '<(-token>'
-    },
+    { type: '<at-keyword-token>', value: 'media' },
+    { type: '<whitespace-token>' },
+    { type: '<(-token>' },
     {
       flag: 'integer',
       type: '<number-token>',
       value: 1
     },
-    {
-      type: '<delim-token>',
-      value: 47
-    },
+    { type: '<delim-token>', value: 47 },
     {
       flag: 'integer',
       type: '<number-token>',
       value: 2
     },
-    {
-      type: '<whitespace-token>'
-    },
-    {
-      type: '<delim-token>',
-      value: 60
-    },
-    {
-      type: '<whitespace-token>'
-    },
-    {
-      type: '<ident-token>',
-      value: 'aspect-ratio'
-    },
-    {
-      type: '<whitespace-token>'
-    },
-    {
-      type: '<delim-token>',
-      value: 60
-    },
-    {
-      type: '<whitespace-token>'
-    },
+    { type: '<whitespace-token>' },
+    { type: '<delim-token>', value: 60 },
+    { type: '<whitespace-token>' },
+    { type: '<ident-token>', value: 'aspect-ratio' },
+    { type: '<whitespace-token>' },
+    { type: '<delim-token>', value: 60 },
+    { type: '<whitespace-token>' },
     {
       flag: 'integer',
       type: '<number-token>',
       value: 1
     },
-    {
-      type: '<delim-token>',
-      value: 47
-    },
+    { type: '<delim-token>', value: 47 },
     {
       flag: 'integer',
       type: '<number-token>',
       value: 1
     },
-    {
-      type: '<)-token>'
-    },
-    {
-      type: '<whitespace-token>'
-    },
-    {
-      type: '<{-token>'
-    },
-    {
-      type: '<whitespace-token>'
-    },
-    {
-      type: '<}-token>'
-    },
-    {
-      type: '<EOF-token>'
-    }
+    { type: '<)-token>' },
+    { type: '<whitespace-token>' },
+    { type: '<{-token>' },
+    { type: '<whitespace-token>' },
+    { type: '<}-token>' },
+    { type: '<EOF-token>' }
   ])
+})
+
+test('missing coverage', () => {
+  expect(lexicalAnalysis('"\n"')).toEqual(null)
+  expect(lexicalAnalysis("'\n'")).toEqual(null)
+  expect(lexicalAnalysis('#')).toEqual([
+    { type: '<delim-token>', value: 35 },
+    { type: '<EOF-token>' }
+  ])
+  expect(lexicalAnalysis('+3% +4 +2px')).toEqual([
+    {
+      flag: 'number',
+      type: '<percentage-token>',
+      value: 3
+    },
+    { type: '<whitespace-token>' },
+    {
+      flag: 'integer',
+      type: '<number-token>',
+      value: 4
+    },
+    { type: '<whitespace-token>' },
+    {
+      flag: 'number',
+      type: '<dimension-token>',
+      unit: 'px',
+      value: 2
+    },
+    { type: '<EOF-token>' }
+  ])
+  expect(lexicalAnalysis('-3% -4 -2px')).toEqual([
+    {
+      flag: 'number',
+      type: '<percentage-token>',
+      value: -3
+    },
+    { type: '<whitespace-token>' },
+    {
+      flag: 'integer',
+      type: '<number-token>',
+      value: -4
+    },
+    { type: '<whitespace-token>' },
+    {
+      flag: 'number',
+      type: '<dimension-token>',
+      unit: 'px',
+      value: -2
+    },
+    { type: '<EOF-token>' }
+  ])
+  expect(lexicalAnalysis('.3% .4 .2px')).toEqual([
+    {
+      flag: 'number',
+      type: '<percentage-token>',
+      value: 0.3
+    },
+    { type: '<whitespace-token>' },
+    {
+      flag: 'number',
+      type: '<number-token>',
+      value: 0.4
+    },
+    { type: '<whitespace-token>' },
+    {
+      flag: 'number',
+      type: '<dimension-token>',
+      unit: 'px',
+      value: 0.2
+    },
+    { type: '<EOF-token>' }
+  ])
+  expect(lexicalAnalysis('+2.')).toEqual([
+    {
+      flag: 'integer',
+      type: '<number-token>',
+      value: 2
+    },
+    { type: '<delim-token>', value: 46 },
+    { type: '<EOF-token>' }
+  ])
+  expect(lexicalAnalysis('<!-- -->')).toEqual([
+    { type: '<CDO-token>' },
+    { type: '<whitespace-token>' },
+    { type: '<CDC-token>' },
+    { type: '<EOF-token>' }
+  ])
+  expect(lexicalAnalysis('@')).toEqual([
+    { type: '<delim-token>', value: 64 },
+    { type: '<EOF-token>' }
+  ])
+  expect(lexicalAnalysis('\\ \\\n')).toEqual(null)
 })
 
 test('lexicalAnalysis', () => {

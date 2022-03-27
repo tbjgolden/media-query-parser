@@ -1,6 +1,8 @@
 import { AST, toUnflattenedAST as _toUnflattenedAST } from './syntacticAnalysis'
 import { simplifyAST } from './simplifyAST'
 
+// 92.85 | 55-59
+
 const asSimpleAST = (str: string): AST | string => {
   try {
     return simplifyAST(_toUnflattenedAST(str))
@@ -44,4 +46,10 @@ test('wrapper does not flatten useful layers', () => {
   expect(asSimpleAST('screen and (not (not (color)))')).not.toEqual(
     asSimpleAST('screen and (not (color))')
   )
+})
+
+test('code coverage misses', () => {
+  expect(
+    asSimpleAST('((hover) and (color) and ((monochrome) and (pointer)))')
+  ).toEqual(asSimpleAST('(hover) and (color) and (monochrome) and (pointer)'))
 })

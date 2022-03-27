@@ -195,82 +195,64 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
     } else if (code === 0x0029) {
       tokens.push({ type: '<)-token>' })
     } else if (code === 0x002b) {
-      // if number
-      if (index + 1 < str.length) {
-        const nextCode = str.charCodeAt(index + 1)
-        if (nextCode >= 0x0030 && nextCode <= 0x0039) {
-          const result = consumeNumeric(str, index + 1)
-          if (result === null) {
-            return null
-          }
-          const [lastIndex, tokenTuple] = result
-          if (tokenTuple[0] === '<dimension-token>') {
-            tokens.push({
-              type: '<dimension-token>',
-              value: tokenTuple[1],
-              unit: tokenTuple[2].toLowerCase(),
-              flag: 'number'
-            })
-          } else if (tokenTuple[0] === '<number-token>') {
-            tokens.push({
-              type: tokenTuple[0],
-              value: tokenTuple[1],
-              flag: tokenTuple[2]
-            })
-          } else {
-            tokens.push({
-              type: tokenTuple[0],
-              value: tokenTuple[1],
-              flag: 'number'
-            })
-          }
-
-          index = lastIndex
-          continue
+      const plusNumeric = consumeNumeric(str, index)
+      if (plusNumeric === null) {
+        tokens.push({
+          type: '<delim-token>',
+          value: code
+        })
+      } else {
+        const [lastIndex, tokenTuple] = plusNumeric
+        if (tokenTuple[0] === '<dimension-token>') {
+          tokens.push({
+            type: '<dimension-token>',
+            value: tokenTuple[1],
+            unit: tokenTuple[2].toLowerCase(),
+            flag: 'number'
+          })
+        } else if (tokenTuple[0] === '<number-token>') {
+          tokens.push({
+            type: tokenTuple[0],
+            value: tokenTuple[1],
+            flag: tokenTuple[2]
+          })
+        } else {
+          tokens.push({
+            type: tokenTuple[0],
+            value: tokenTuple[1],
+            flag: 'number'
+          })
         }
+        index = lastIndex
       }
-
-      tokens.push({
-        type: '<delim-token>',
-        value: code
-      })
     } else if (code === 0x002c) {
       tokens.push({ type: '<comma-token>' })
     } else if (code === 0x002d) {
-      // if number
-      if (index + 1 < str.length) {
-        const nextCode = str.charCodeAt(index + 1)
-
-        if (nextCode >= 0x0030 && nextCode <= 0x0039) {
-          const result = consumeNumeric(str, index)
-          if (result === null) {
-            return null
-          }
-          const [lastIndex, tokenTuple] = result
-          if (tokenTuple[0] === '<dimension-token>') {
-            tokens.push({
-              type: '<dimension-token>',
-              value: tokenTuple[1],
-              unit: tokenTuple[2].toLowerCase(),
-              flag: 'number'
-            })
-          } else if (tokenTuple[0] === '<number-token>') {
-            tokens.push({
-              type: tokenTuple[0],
-              value: tokenTuple[1],
-              flag: tokenTuple[2]
-            })
-          } else {
-            tokens.push({
-              type: tokenTuple[0],
-              value: tokenTuple[1],
-              flag: 'number'
-            })
-          }
-
-          index = lastIndex
-          continue
+      const minusNumeric = consumeNumeric(str, index)
+      if (minusNumeric !== null) {
+        const [lastIndex, tokenTuple] = minusNumeric
+        if (tokenTuple[0] === '<dimension-token>') {
+          tokens.push({
+            type: '<dimension-token>',
+            value: tokenTuple[1],
+            unit: tokenTuple[2].toLowerCase(),
+            flag: 'number'
+          })
+        } else if (tokenTuple[0] === '<number-token>') {
+          tokens.push({
+            type: tokenTuple[0],
+            value: tokenTuple[1],
+            flag: tokenTuple[2]
+          })
+        } else {
+          tokens.push({
+            type: tokenTuple[0],
+            value: tokenTuple[1],
+            flag: 'number'
+          })
         }
+        index = lastIndex
+        continue
       }
       // if CDC
       if (index + 2 < str.length) {
@@ -301,46 +283,37 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
         value: code
       })
     } else if (code === 0x002e) {
-      // if number
-      if (index + 1 < str.length) {
-        const nextCode = str.charCodeAt(index + 1)
-
-        if (nextCode >= 0x0030 && nextCode <= 0x0039) {
-          const result = consumeNumeric(str, index + 1)
-          if (result === null) {
-            return null
-          }
-          const [lastIndex, tokenTuple] = result
-          if (tokenTuple[0] === '<dimension-token>') {
-            tokens.push({
-              type: '<dimension-token>',
-              value: tokenTuple[1],
-              unit: tokenTuple[2].toLowerCase(),
-              flag: 'number'
-            })
-          } else if (tokenTuple[0] === '<number-token>') {
-            tokens.push({
-              type: tokenTuple[0],
-              value: tokenTuple[1],
-              flag: tokenTuple[2]
-            })
-          } else {
-            tokens.push({
-              type: tokenTuple[0],
-              value: tokenTuple[1],
-              flag: 'number'
-            })
-          }
-
-          index = lastIndex
-          continue
+      const minusNumeric = consumeNumeric(str, index)
+      if (minusNumeric === null) {
+        tokens.push({
+          type: '<delim-token>',
+          value: code
+        })
+      } else {
+        const [lastIndex, tokenTuple] = minusNumeric
+        if (tokenTuple[0] === '<dimension-token>') {
+          tokens.push({
+            type: '<dimension-token>',
+            value: tokenTuple[1],
+            unit: tokenTuple[2].toLowerCase(),
+            flag: 'number'
+          })
+        } else if (tokenTuple[0] === '<number-token>') {
+          tokens.push({
+            type: tokenTuple[0],
+            value: tokenTuple[1],
+            flag: tokenTuple[2]
+          })
+        } else {
+          tokens.push({
+            type: tokenTuple[0],
+            value: tokenTuple[1],
+            flag: 'number'
+          })
         }
+        index = lastIndex
+        continue
       }
-
-      tokens.push({
-        type: '<delim-token>',
-        value: code
-      })
     } else if (code === 0x003a) {
       tokens.push({ type: '<colon-token>' })
     } else if (code === 0x003b) {
@@ -399,10 +372,9 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
     } else if (code === 0x007d) {
       tokens.push({ type: '<}-token>' })
     } else if (code >= 0x0030 && code <= 0x0039) {
-      const result = consumeNumeric(str, index)
-      if (result === null) {
-        return null
-      }
+      const result = consumeNumeric(str, index) as NonNullable<
+        ReturnType<typeof consumeNumeric>
+      >
       const [lastIndex, tokenTuple] = result
       if (tokenTuple[0] === '<dimension-token>') {
         tokens.push({
@@ -728,7 +700,9 @@ export const consumeIdentUnsafe = (
     break
   }
 
-  return [index - 1, String.fromCharCode.apply(null, identChars)]
+  return index === 0
+    ? null
+    : [index - 1, String.fromCharCode.apply(null, identChars)]
 }
 
 export const consumeIdent = (
@@ -832,7 +806,7 @@ export const consumeIdentLike = (
             return [lastUrlIndex, value, '<url-token>']
           }
         }
-        return [lastIndex, value.toLowerCase(), '<function-token>']
+        return [lastIndex + 1, value.toLowerCase(), '<function-token>']
       }
     }
   } else if (str.length > lastIndex + 1) {
