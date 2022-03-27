@@ -28,7 +28,7 @@ test('previously discovered bugs', () => {
     toAST(
       'not screen and ((not ((min-width: 1000px) and (orientation: landscape))) or (color))'
     )
-  ).toThrow()
+  ).not.toThrow()
 
   // @media (color-index <= 128)
   expect(toAST('@media (color-index <= 128)')).toEqual([

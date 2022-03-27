@@ -218,7 +218,6 @@ export const tokenizeMediaQuery = (tokens: WToken[]): MediaQuery => {
         secondNonUnaryToken.type === '<ident-token>' &&
         secondNonUnaryToken.value === 'and'
       ) {
-        // should probably check here for correct operator
         try {
           return {
             mediaPrefix,
@@ -290,13 +289,9 @@ export const tokenizeMediaCondition = (
       featureTokens[1].type === '<ident-token>' &&
       featureTokens[1].value === 'not'
     ) {
-      child = tokenizeMediaCondition(
-        featureTokens.slice(2, -1),
-        mayContainOr,
-        'not'
-      )
+      child = tokenizeMediaCondition(featureTokens.slice(2, -1), true, 'not')
     } else {
-      child = tokenizeMediaCondition(featureTokens.slice(1, -1), mayContainOr)
+      child = tokenizeMediaCondition(featureTokens.slice(1, -1), true)
     }
   }
 

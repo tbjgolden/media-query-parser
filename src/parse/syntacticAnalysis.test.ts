@@ -946,14 +946,16 @@ test('toUnflattenedAST parses media query', async () => {
       mediaType: 'all'
     }
   ])
-  //
+  // 'only' requires a media type
   expect(() => toUnflattenedAST('only (hover)')).toThrow()
   // 'or' can not appear on the right hand side of a media type (e.g. all/screen/print)
   expect(() =>
     toUnflattenedAST('screen and (not (color)) or (hover)')
   ).toThrow()
   expect(() => toUnflattenedAST('only ((hover) or (color))')).toThrow()
-  expect(() => toUnflattenedAST('screen and ((hover) or (color))')).toThrow()
+  expect(() =>
+    toUnflattenedAST('screen and ((hover) or (color))')
+  ).not.toThrow()
   // 'not' should not be a valid binary operator
   expect(() => toUnflattenedAST('(color) not (hover)')).toThrow()
   expect(() => toUnflattenedAST('screen and ((color) not (hover))')).toThrow()
