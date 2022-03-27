@@ -45,13 +45,13 @@ console.log(toAST('@media screen { body { background: #000 } }'))
 console.log(toAST('(100px < width < 200px)'))
 // ...which was no mean feat...
 console.log(toAST('(4/3 <= aspect-ratio <= 16/9)'))
-// Returns null when it is not valid media query syntax
-console.log(toAST('clearly this is not a valid media query')) // => null
+// Throws an Error with invalid media query syntax
+console.log(toAST('clearly this is not a valid media query')) // => Error
 // ...even the normal looking but invalid ones:
 {
-  console.log(toAST('(max-width: 768px) and screen')) // => null
+  console.log(toAST('(max-width: 768px) and screen')) // => Error
   // explanation: screen must be on left hand side
-  console.log(toAST('screen and (max-width: 768px) or (hover)')) // => null
+  console.log(toAST('screen and (max-width: 768px) or (hover)')) // => Error
   // explanation: spec disallows `and` and `or` on same level as ambiguous
 }
 ```
