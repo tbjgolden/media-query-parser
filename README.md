@@ -10,8 +10,8 @@
 - [x] **Spec-compliant** - https://www.w3.org/TR/mediaqueries-4/
 - [x] **Zero-dependencies**
 - [x] **TypeScript friendly**
-- [x] **All valid queries parsed, even newer ones like
-      `@media (100px < width < 200px)`**
+- [x] **All valid queries parsed, even newer ones like  
+       `@media (100px < width < 200px)`**
 
 ## Quickfire examples
 
