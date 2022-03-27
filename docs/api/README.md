@@ -639,7 +639,7 @@ Defined in:
 | `str`   | _string_ |
 | `index` | _number_ |
 
-**Returns:** _null_ | [*number*, *number*]
+**Returns:** [*number*, *number*]
 
 Defined in:
 [parse/lexicalAnalysis.ts:524](https://github.com/tbjgolden/media-query-parser/blob/e9a76d1/src/parse/lexicalAnalysis.ts#L524)
@@ -658,7 +658,7 @@ Defined in:
 | `str`   | _string_ |
 | `index` | _number_ |
 
-**Returns:** _null_ | [*number*, *string*]
+**Returns:** [*number*, *string*]
 
 Defined in:
 [parse/lexicalAnalysis.ts:734](https://github.com/tbjgolden/media-query-parser/blob/e9a76d1/src/parse/lexicalAnalysis.ts#L734)
@@ -677,8 +677,8 @@ Defined in:
 | `str`   | _string_ |
 | `index` | _number_ |
 
-**Returns:** _null_ | [*number*, *string*, *<ident-token>* | *<function-token>*
-| *<url-token>*]
+**Returns:** [*number*, *string*, *<ident-token>* | *<function-token>* |
+*<url-token>*]
 
 Defined in:
 [parse/lexicalAnalysis.ts:806](https://github.com/tbjgolden/media-query-parser/blob/e9a76d1/src/parse/lexicalAnalysis.ts#L806)
@@ -697,7 +697,7 @@ Defined in:
 | `str`   | _string_ |
 | `index` | _number_ |
 
-**Returns:** _null_ | [*number*, *string*]
+**Returns:** [*number*, *string*]
 
 Defined in:
 [parse/lexicalAnalysis.ts:695](https://github.com/tbjgolden/media-query-parser/blob/e9a76d1/src/parse/lexicalAnalysis.ts#L695)
@@ -716,7 +716,7 @@ Defined in:
 | `str`   | _string_ |
 | `index` | _number_ |
 
-**Returns:** _null_ | [*number*, *number*, *number* | *integer*]
+**Returns:** [*number*, *number*, *number* | *integer*]
 
 Defined in:
 [parse/lexicalAnalysis.ts:599](https://github.com/tbjgolden/media-query-parser/blob/e9a76d1/src/parse/lexicalAnalysis.ts#L599)
@@ -736,9 +736,8 @@ Defined in:
 | `str`   | _string_ |
 | `index` | _number_ |
 
-**Returns:** _null_ | [_number_, [*<number-token>*, *number*, *number* |
-*integer*] | [*<percentage-token>*, *number*] | [*<dimension-token>*, *number*,
-*string*]]
+**Returns:** [_number_, [*<number-token>*, *number*, *number* | *integer*] |
+[*<percentage-token>*, *number*] | [*<dimension-token>*, *number*, *string*]]
 
 Defined in:
 [parse/lexicalAnalysis.ts:566](https://github.com/tbjgolden/media-query-parser/blob/e9a76d1/src/parse/lexicalAnalysis.ts#L566)
@@ -757,7 +756,7 @@ Defined in:
 | `str`   | _string_ |
 | `index` | _number_ |
 
-**Returns:** _null_ | [*number*, *string*]
+**Returns:** [*number*, *string*]
 
 Defined in:
 [parse/lexicalAnalysis.ts:453](https://github.com/tbjgolden/media-query-parser/blob/e9a76d1/src/parse/lexicalAnalysis.ts#L453)
@@ -766,7 +765,7 @@ Defined in:
 
 ### consumeUrl
 
-▸ `Const`**consumeUrl**(`str`: _string_, `index`: _number_): _null_ | [*number*,
+▸ `Const`**consumeUrl**(`str`: _string_, `index`: _number_): [*number*,
 *string*]
 
 #### Parameters:
@@ -776,7 +775,7 @@ Defined in:
 | `str`   | _string_ |
 | `index` | _number_ |
 
-**Returns:** _null_ | [*number*, *string*]
+**Returns:** [*number*, *string*]
 
 Defined in:
 [parse/lexicalAnalysis.ts:773](https://github.com/tbjgolden/media-query-parser/blob/e9a76d1/src/parse/lexicalAnalysis.ts#L773)
@@ -795,7 +794,7 @@ Defined in:
 | `str`   | _string_ | -             |
 | `index` | _number_ | 0             |
 
-**Returns:** _null_ | [_Token_](README.md#token)[]
+**Returns:** [_Token_](README.md#token)[]
 
 Defined in:
 [parse/lexicalAnalysis.ts:115](https://github.com/tbjgolden/media-query-parser/blob/e9a76d1/src/parse/lexicalAnalysis.ts#L115)
@@ -823,7 +822,7 @@ Defined in:
 ### syntacticAnalysis
 
 ▸ `Const`**syntacticAnalysis**(`tokenList`: [_Token_](README.md#token)[]):
-_null_ | [_MediaQuery_](README.md#mediaquery)[]
+[_MediaQuery_](README.md#mediaquery)[]
 
 #### Parameters:
 
@@ -831,7 +830,7 @@ _null_ | [_MediaQuery_](README.md#mediaquery)[]
 | ----------- | ---------------------------- |
 | `tokenList` | [_Token_](README.md#token)[] |
 
-**Returns:** _null_ | [_MediaQuery_](README.md#mediaquery)[]
+**Returns:** [_MediaQuery_](README.md#mediaquery)[]
 
 Defined in:
 [parse/syntacticAnalysis.ts:82](https://github.com/tbjgolden/media-query-parser/blob/e9a76d1/src/parse/syntacticAnalysis.ts#L82)
@@ -840,7 +839,7 @@ Defined in:
 
 ### toAST
 
-▸ `Const`**toAST**(`str`: _string_): _null_ | [_AST_](README.md#ast)
+▸ `Const`**toAST**(`str`: _string_): [_AST_](README.md#ast)
 
 #### Parameters:
 
@@ -848,7 +847,7 @@ Defined in:
 | ----- | -------- |
 | `str` | _string_ |
 
-**Returns:** _null_ | [_AST_](README.md#ast)
+**Returns:** [_AST_](README.md#ast)
 
 Defined in:
 [parse/syntacticAnalysis.ts:14](https://github.com/tbjgolden/media-query-parser/blob/e9a76d1/src/parse/syntacticAnalysis.ts#L14)
@@ -857,7 +856,7 @@ Defined in:
 
 ### toUnflattenedAST
 
-▸ `Const`**toUnflattenedAST**(`str`: _string_): _null_ | [_AST_](README.md#ast)
+▸ `Const`**toUnflattenedAST**(`str`: _string_): [_AST_](README.md#ast)
 
 #### Parameters:
 
@@ -865,7 +864,7 @@ Defined in:
 | ----- | -------- |
 | `str` | _string_ |
 
-**Returns:** _null_ | [_AST_](README.md#ast)
+**Returns:** [_AST_](README.md#ast)
 
 Defined in:
 [parse/syntacticAnalysis.ts:25](https://github.com/tbjgolden/media-query-parser/blob/e9a76d1/src/parse/syntacticAnalysis.ts#L25)
@@ -875,7 +874,7 @@ Defined in:
 ### tokenizeMediaCondition
 
 ▸ `Const`**tokenizeMediaCondition**(`tokens`: WToken[], `mayContainOr`:
-_boolean_, `previousOperator?`: _null_ | _and_ | _or_ | _not_): _null_ |
+_boolean_, `previousOperator?`: _and_ | _or_ | _not_): _null_ |
 [_MediaCondition_](README.md#mediacondition)
 
 #### Parameters:
@@ -886,7 +885,7 @@ _boolean_, `previousOperator?`: _null_ | _and_ | _or_ | _not_): _null_ |
 | `mayContainOr`     | _boolean_ | -             |
 | `previousOperator` | _null_    | _and_         | _or_ | _not_ | null |
 
-**Returns:** _null_ | [_MediaCondition_](README.md#mediacondition)
+**Returns:** [_MediaCondition_](README.md#mediacondition)
 
 Defined in:
 [parse/syntacticAnalysis.ts:229](https://github.com/tbjgolden/media-query-parser/blob/e9a76d1/src/parse/syntacticAnalysis.ts#L229)
@@ -906,7 +905,7 @@ Defined in:
 | ----------- | -------- |
 | `rawTokens` | WToken[] |
 
-**Returns:** _null_ | [_MediaFeatureBoolean_](README.md#mediafeatureboolean) |
+**Returns:** [_MediaFeatureBoolean_](README.md#mediafeatureboolean) |
 [_MediaFeatureValue_](README.md#mediafeaturevalue) |
 [_MediaFeatureRange_](README.md#mediafeaturerange)
 
@@ -926,7 +925,7 @@ Defined in:
 | -------- | -------- |
 | `tokens` | WToken[] |
 
-**Returns:** _null_ | [_MediaQuery_](README.md#mediaquery)
+**Returns:** [_MediaQuery_](README.md#mediaquery)
 
 Defined in:
 [parse/syntacticAnalysis.ts:123](https://github.com/tbjgolden/media-query-parser/blob/e9a76d1/src/parse/syntacticAnalysis.ts#L123)
@@ -935,8 +934,8 @@ Defined in:
 
 ### tokenizeRange
 
-▸ `Const`**tokenizeRange**(`tokens`: ConvenientToken[]): _null_ | {
-`featureName`: _string_ ; `leftOp`: _<_ | _<=_ ; `leftToken`:
+▸ `Const`**tokenizeRange**(`tokens`: ConvenientToken[]): { `featureName`:
+_string_ ; `leftOp`: _<_ | _<=_ ; `leftToken`:
 [_ValidRangeToken_](README.md#validrangetoken) ; `rightOp`: _<_ | _<=_ ;
 `rightToken`: [_ValidRangeToken_](README.md#validrangetoken) } | {
 `featureName`: _string_ ; `leftOp`: _>_ | _>=_ ; `leftToken`:
@@ -954,9 +953,9 @@ Defined in:
 | -------- | ----------------- |
 | `tokens` | ConvenientToken[] |
 
-**Returns:** _null_ | { `featureName`: _string_ ; `leftOp`: _<_ | _<=_ ;
-`leftToken`: [_ValidRangeToken_](README.md#validrangetoken) ; `rightOp`: _<_ |
-_<=_ ; `rightToken`: [_ValidRangeToken_](README.md#validrangetoken) } | {
+**Returns:** { `featureName`: _string_ ; `leftOp`: _<_ | _<=_ ; `leftToken`:
+[_ValidRangeToken_](README.md#validrangetoken) ; `rightOp`: _<_ | _<=_ ;
+`rightToken`: [_ValidRangeToken_](README.md#validrangetoken) } | {
 `featureName`: _string_ ; `leftOp`: _>_ | _>=_ ; `leftToken`:
 [_ValidRangeToken_](README.md#validrangetoken) ; `rightOp`: _>_ | _>=_ ;
 `rightToken`: [_ValidRangeToken_](README.md#validrangetoken) } | {
