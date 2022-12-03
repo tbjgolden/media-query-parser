@@ -2,7 +2,7 @@
 
 [![npm version](https://img.shields.io/npm/v/media-query-parser.svg?style=flat-square)](https://www.npmjs.com/package/media-query-parser)
 ![npm bundle size](https://img.shields.io/bundlephobia/minzip/media-query-parser?style=flat-square)
-![npm downloads](https://img.shields.io/npm/dw/media-query-parser)
+![npm downloads](https://img.shields.io/npm/dw/media-query-parser?style=flat-square)
 [![test coverage](https://img.shields.io/badge/dynamic/json?style=flat-square&color=brightgreen&label=coverage&query=%24.total.branches.pct&url=https%3A%2F%2Fraw.githubusercontent.com%2Ftbjgolden%2Fmedia-query-parser%2Fmain%2Fcoverage%2Fcoverage-summary.json)](https://www.npmjs.com/package/media-query-parser)
 [![GitHub Workflow Status](https://img.shields.io/github/workflow/status/tbjgolden/media-query-parser/Release?style=flat-square)](https://github.com/tbjgolden/media-query-parser/actions?query=workflow%3ARelease)
 
@@ -13,6 +13,9 @@
          `@media (100px < width < 200px)`**
 - [x] **Zero-dependencies**
 - [x] **TypeScript friendly**
+
+Notably this is used internally in
+[`vanilla-extract`](https://vanilla-extract.style/).
 
 ## Quickfire examples
 
@@ -56,6 +59,8 @@ console.log(toAST('screen and (max-width: 768px) or (hover)')) // => Error
 // explanation: spec disallows `and` and `or` on same level as ambiguous
 ```
 
+## [Playground](https://tbjgolden.github.io/media-query-parser/)
+
 ## Considerations & Caveats
 
 This library does:
@@ -87,7 +92,7 @@ Alternatively, there are also client web builds available:
 <script src="https://unpkg.com/media-query-parser/dist/media-query-parser.umd.js"></script>
 ```
 
-## [`API`](api)
+## [`API + AST`](api)
 
 ## License
 
