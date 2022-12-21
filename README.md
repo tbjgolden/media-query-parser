@@ -4,7 +4,7 @@
 ![npm bundle size](https://img.shields.io/bundlephobia/minzip/media-query-parser?style=flat-square)
 ![npm downloads](https://img.shields.io/npm/dw/media-query-parser?style=flat-square)
 [![test coverage](https://img.shields.io/badge/dynamic/json?style=flat-square&color=brightgreen&label=coverage&query=%24.total.branches.pct&url=https%3A%2F%2Fraw.githubusercontent.com%2Ftbjgolden%2Fmedia-query-parser%2Fmain%2Fcoverage%2Fcoverage-summary.json)](https://www.npmjs.com/package/media-query-parser)
-[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/tbjgolden/media-query-parser/Release?style=flat-square)](https://github.com/tbjgolden/media-query-parser/actions?query=workflow%3ARelease)
+[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/tbjgolden/media-query-parser/release.yml?branch=main&style=flat-square)](https://github.com/tbjgolden/media-query-parser/actions?query=workflow%3ARelease)
 
 - [x] **Parses correct CSS media queries**
 - [x] **Fails on invalid CSS media queries**
