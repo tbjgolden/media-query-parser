@@ -2,7 +2,6 @@
   "recommendations": [
     "dbaeumer.vscode-eslint",
     "esbenp.prettier-vscode",
-    "EditorConfig.EditorConfig",
-    "naumovs.color-highlight"
+    "editorconfig.editorconfig"
   ]
 }
