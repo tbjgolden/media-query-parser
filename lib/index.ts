@@ -1,5 +1,2 @@
-import { exclamation } from "./exclamation.js";
-
-export const hello = (world: string): string => {
-  return exclamation(`Hello ${world}`);
-};
+export * from "./lexicalAnalysis.js";
+export * from "./syntacticAnalysis.js";

@@ -1,5 +1,13 @@
 const { statSync } = require("node:fs");
 const { resolve } = require("node:path");
+const { builtinModules } = require("node:module");
+
+const builtins = new Set(builtinModules);
+/** @param {string} str */
+const isBuiltIn = (str) => {
+  if (str.startsWith("node:")) str = str.slice(5);
+  return builtins.has(str);
+};
 
 const resolveLocalImport = import("xnr").then(({ resolveLocalImport }) => resolveLocalImport);
 
@@ -11,7 +19,7 @@ const asyncResolver = async (
   const prefix = "jest-sequencer-";
   if (importPath.startsWith(prefix)) importPath = importPath.slice(prefix.length);
 
-  if (importPath.startsWith(options.basedir + "/node_modules/")) {
+  if (isBuiltIn(importPath) || importPath.startsWith(options.basedir + "/node_modules/")) {
     return options.defaultResolver(importPath, options);
   } else {
     // override local only

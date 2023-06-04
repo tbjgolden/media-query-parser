@@ -1,23 +1,33 @@
 {
   "name": "media-query-parser",
+  "description": "Parse CSS media queries (spec-compliant)",
   "version": "0.0.0",
-  "license": "Apache-2.0",
+  "license": "MIT",
+  "keywords": [
+    "media",
+    "query",
+    "parser",
+    "compiler",
+    "token",
+    "typescript"
+  ],
   "type": "module",
   "main": "./dist/lib/index.js",
   "exports": "./dist/lib/index.js",
   "types": "./dist/lib/index.d.ts",
-  "bin": {
-    "media-query-parser": "./dist/cli/index.js"
-  },
+  "sideEffects": false,
   "homepage": "https://github.com/tbjgolden/media-query-parser",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tbjgolden/media-query-parser.git"
+  },
   "author": {
     "name": "Tom Golden",
     "email": "oss@tom.bio",
     "url": "https://tom.bio"
   },
   "engines": {
-    "node": ">=17.1.0 || ^16.14.0",
-    "npm": ">=6.14.17"
+    "node": ">=16.0.0 || ^14.13.1"
   },
   "scripts": {
     "build": "xnr ./.scripts/build.ts",
@@ -45,8 +55,7 @@
     "xnr": "^1.1.2"
   },
   "files": [
-    "dist",
-    "!dist/cli/*.d.*ts"
+    "dist"
   ],
   "simple-git-hooks": {
     "commit-msg": "npx msg-time",

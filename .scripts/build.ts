@@ -9,6 +9,7 @@ await mkdir("dist", { recursive: true });
 
 type TSConfig = {
   compilerOptions: { [args: string]: unknown };
+  include?: string[];
   exclude?: string[];
   [args: string]: unknown;
 };
@@ -16,6 +17,7 @@ const tsconfigJson = readJSON<TSConfig>(await readFile("tsconfig.json", "utf8"))
 const buildTsconfig: TSConfig = {
   ...tsconfigJson,
   exclude: [...(tsconfigJson.exclude ?? []), "**/*.test.ts"],
+  include: (tsconfigJson.include ?? []).filter((path) => !path.startsWith(".")),
   compilerOptions: { ...tsconfigJson.compilerOptions, noEmit: false },
 };
 await writeFile("tsconfig.tmp.json", JSON.stringify(buildTsconfig));

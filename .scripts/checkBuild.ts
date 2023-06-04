@@ -1,36 +1,8 @@
-import { execSync } from "node:child_process";
 import { getPackageJson, checkDirectory, isFile, isDirectory } from "./lib/utils.js";
 
 checkDirectory();
 
 const packageJson = await getPackageJson();
-
-if (await isDirectory("cli")) {
-  console.log("validating cli...");
-  for (const [cliName, cliFilePath] of Object.entries(packageJson.bin ?? {})) {
-    if (cliFilePath) {
-      let isCliPathAFile = false;
-      try {
-        isCliPathAFile = await isFile(cliFilePath);
-      } catch {}
-      if (!isCliPathAFile) {
-        console.log(`"${cliName}": "${cliFilePath}" is not an executable file`);
-        process.exit(1);
-      }
-      const command = `${cliFilePath} arg1 arg2`;
-      const stdout = execSync(`node ${command}`).toString();
-      const expected = `Hello arg1 arg2!\n`;
-      if (stdout !== expected) {
-        console.log(`unexpected response when running: ${command}\n`);
-        console.log("expected:");
-        console.log(JSON.stringify(expected));
-        console.log("actual:");
-        console.log(JSON.stringify(stdout));
-        process.exit(1);
-      }
-    }
-  }
-}
 
 if (await isDirectory("lib")) {
   console.log("validating api...");

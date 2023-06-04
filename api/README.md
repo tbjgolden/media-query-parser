@@ -168,8 +168,8 @@ Defined in:
 
 ### DimensionToken
 
-Ƭ **DimensionToken**: { `flag`: _number_ ; `type`: _<dimension-token>_ ; `unit`:
-_string_ ; `value`: _number_ }
+Ƭ **DimensionToken**: { `flag`: _number_ ; `type`: _<dimension-token>_ ; `unit`: _string_ ; `value`:
+_number_ }
 
 #### Type declaration:
 
@@ -218,8 +218,7 @@ Defined in:
 
 ### HashToken
 
-Ƭ **HashToken**: { `flag`: _id_ | _unrestricted_ ; `type`: _<hash-token>_ ;
-`value`: _string_ }
+Ƭ **HashToken**: { `flag`: _id_ | _unrestricted_ ; `type`: _<hash-token>_ ; `value`: _string_ }
 
 #### Type declaration:
 
@@ -297,10 +296,8 @@ Defined in:
 
 ### MediaCondition
 
-Ƭ **MediaCondition**: { `children`:
-([_MediaCondition_](README.md#mediacondition) |
-[_MediaFeature_](README.md#mediafeature))[] ; `operator`: _and_ | _or_ | _not_ |
-_null_ }
+Ƭ **MediaCondition**: { `children`: ([_MediaCondition_](README.md#mediacondition) |
+[_MediaFeature_](README.md#mediafeature))[] ; `operator`: _and_ | _or_ | _not_ | _null_ }
 
 #### Type declaration:
 
@@ -361,9 +358,8 @@ Defined in:
 
 ### MediaFeatureValue
 
-Ƭ **MediaFeatureValue**: { `context`: _value_ ; `feature`: _string_ ; `prefix`:
-_min_ | _max_ | _null_ ; `value`: [_ValidValueToken_](README.md#validvaluetoken)
-}
+Ƭ **MediaFeatureValue**: { `context`: _value_ ; `feature`: _string_ ; `prefix`: _min_ | _max_ |
+_null_ ; `value`: [_ValidValueToken_](README.md#validvaluetoken) }
 
 #### Type declaration:
 
@@ -381,9 +377,8 @@ Defined in:
 
 ### MediaQuery
 
-Ƭ **MediaQuery**: { `mediaCondition`:
-[_MediaCondition_](README.md#mediacondition) | _null_ ; `mediaPrefix`: _not_ |
-_only_ | _null_ ; `mediaType`: _all_ | _screen_ | _print_ }
+Ƭ **MediaQuery**: { `mediaCondition`: [_MediaCondition_](README.md#mediacondition) | _null_ ;
+`mediaPrefix`: _not_ | _only_ | _null_ ; `mediaType`: _all_ | _screen_ | _print_ }
 
 #### Type declaration:
 
@@ -400,8 +395,7 @@ Defined in:
 
 ### NumberToken
 
-Ƭ **NumberToken**: { `flag`: _number_ | _integer_ ; `type`: _<number-token>_ ;
-`value`: _number_ }
+Ƭ **NumberToken**: { `flag`: _number_ | _integer_ ; `type`: _<number-token>_ ; `value`: _number_ }
 
 #### Type declaration:
 
@@ -418,8 +412,7 @@ Defined in:
 
 ### PercentageToken
 
-Ƭ **PercentageToken**: { `flag`: _number_ ; `type`: _<percentage-token>_ ;
-`value`: _number_ }
+Ƭ **PercentageToken**: { `flag`: _number_ ; `type`: _<percentage-token>_ ; `value`: _number_ }
 
 #### Type declaration:
 
@@ -436,8 +429,7 @@ Defined in:
 
 ### RatioToken
 
-Ƭ **RatioToken**: { `denominator`: _number_ ; `numerator`: _number_ ; `type`:
-_<ratio-token>_ }
+Ƭ **RatioToken**: { `denominator`: _number_ ; `numerator`: _number_ ; `type`: _<ratio-token>_ }
 
 #### Type declaration:
 
@@ -530,24 +522,18 @@ Defined in:
 
 ### Token
 
-Ƭ **Token**: [_WhitespaceToken_](README.md#whitespacetoken) |
-[_StringToken_](README.md#stringtoken) | [_HashToken_](README.md#hashtoken) |
-[_DelimToken_](README.md#delimtoken) | [_CommaToken_](README.md#commatoken) |
-[_LeftParenToken_](README.md#leftparentoken) |
-[_RightParenToken_](README.md#rightparentoken) |
-[_DimensionToken_](README.md#dimensiontoken) |
-[_NumberToken_](README.md#numbertoken) |
-[_PercentageToken_](README.md#percentagetoken) |
-[_IdentToken_](README.md#identtoken) |
-[_FunctionToken_](README.md#functiontoken) | [_UrlToken_](README.md#urltoken) |
-[_CDCToken_](README.md#cdctoken) | [_ColonToken_](README.md#colontoken) |
-[_SemicolonToken_](README.md#semicolontoken) | [_CDOToken_](README.md#cdotoken)
-| [_AtKeywordToken_](README.md#atkeywordtoken) |
+Ƭ **Token**: [_WhitespaceToken_](README.md#whitespacetoken) | [_StringToken_](README.md#stringtoken)
+| [_HashToken_](README.md#hashtoken) | [_DelimToken_](README.md#delimtoken) |
+[_CommaToken_](README.md#commatoken) | [_LeftParenToken_](README.md#leftparentoken) |
+[_RightParenToken_](README.md#rightparentoken) | [_DimensionToken_](README.md#dimensiontoken) |
+[_NumberToken_](README.md#numbertoken) | [_PercentageToken_](README.md#percentagetoken) |
+[_IdentToken_](README.md#identtoken) | [_FunctionToken_](README.md#functiontoken) |
+[_UrlToken_](README.md#urltoken) | [_CDCToken_](README.md#cdctoken) |
+[_ColonToken_](README.md#colontoken) | [_SemicolonToken_](README.md#semicolontoken) |
+[_CDOToken_](README.md#cdotoken) | [_AtKeywordToken_](README.md#atkeywordtoken) |
 [_LeftBracketToken_](README.md#leftbrackettoken) |
-[_RightBracketToken_](README.md#rightbrackettoken) |
-[_LeftCurlyToken_](README.md#leftcurlytoken) |
-[_RightCurlyToken_](README.md#rightcurlytoken) |
-[_EOFToken_](README.md#eoftoken)
+[_RightBracketToken_](README.md#rightbrackettoken) | [_LeftCurlyToken_](README.md#leftcurlytoken) |
+[_RightCurlyToken_](README.md#rightcurlytoken) | [_EOFToken_](README.md#eoftoken)
 
 Defined in:
 [parse/lexicalAnalysis.ts:1](https://github.com/tbjgolden/media-query-parser/blob/e9a76d1/src/parse/lexicalAnalysis.ts#L1)
@@ -572,17 +558,15 @@ Defined in:
 
 ### ValidRange
 
-Ƭ **ValidRange**: { `featureName`: _string_ ; `leftOp`: _<_ | _<=_ ;
-`leftToken`: [_ValidRangeToken_](README.md#validrangetoken) ; `rightOp`: _<_ |
-_<=_ ; `rightToken`: [_ValidRangeToken_](README.md#validrangetoken) } | {
-`featureName`: _string_ ; `leftOp`: _>_ | _>=_ ; `leftToken`:
-[_ValidRangeToken_](README.md#validrangetoken) ; `rightOp`: _>_ | _>=_ ;
-`rightToken`: [_ValidRangeToken_](README.md#validrangetoken) } | {
-`featureName`: _string_ ; `leftOp`: _>_ | _>=_ | _<_ | _<=_ | _=_ ; `leftToken`:
-[_ValidRangeToken_](README.md#validrangetoken) ; `rightOp`: _null_ ;
-`rightToken`: _null_ } | { `featureName`: _string_ ; `leftOp`: _null_ ;
-`leftToken`: _null_ ; `rightOp`: _>_ | _>=_ | _<_ | _<=_ | _=_ ; `rightToken`:
-[_ValidRangeToken_](README.md#validrangetoken) }
+Ƭ **ValidRange**: { `featureName`: _string_ ; `leftOp`: _<_ | _<=_ ; `leftToken`:
+[_ValidRangeToken_](README.md#validrangetoken) ; `rightOp`: _<_ | _<=_ ; `rightToken`:
+[_ValidRangeToken_](README.md#validrangetoken) } | { `featureName`: _string_ ; `leftOp`: _>_ | _>=_
+; `leftToken`: [_ValidRangeToken_](README.md#validrangetoken) ; `rightOp`: _>_ | _>=_ ;
+`rightToken`: [_ValidRangeToken_](README.md#validrangetoken) } | { `featureName`: _string_ ;
+`leftOp`: _>_ | _>=_ | _<_ | _<=_ | _=_ ; `leftToken`:
+[_ValidRangeToken_](README.md#validrangetoken) ; `rightOp`: _null_ ; `rightToken`: _null_ } | {
+`featureName`: _string_ ; `leftOp`: _null_ ; `leftToken`: _null_ ; `rightOp`: _>_ | _>=_ | _<_ |
+_<=_ | _=_ ; `rightToken`: [_ValidRangeToken_](README.md#validrangetoken) }
 
 Defined in:
 [parse/syntacticAnalysis.ts:469](https://github.com/tbjgolden/media-query-parser/blob/e9a76d1/src/parse/syntacticAnalysis.ts#L469)
@@ -592,9 +576,8 @@ Defined in:
 ### ValidRangeToken
 
 Ƭ **ValidRangeToken**: [_NumberToken_](README.md#numbertoken) |
-[_DimensionToken_](README.md#dimensiontoken) |
-[_RatioToken_](README.md#ratiotoken) | { `type`: _<ident-token>_ ; `value`:
-_infinite_ }
+[_DimensionToken_](README.md#dimensiontoken) | [_RatioToken_](README.md#ratiotoken) | { `type`:
+_<ident-token>_ ; `value`: _infinite_ }
 
 Defined in:
 [parse/syntacticAnalysis.ts:448](https://github.com/tbjgolden/media-query-parser/blob/e9a76d1/src/parse/syntacticAnalysis.ts#L448)
@@ -604,8 +587,8 @@ Defined in:
 ### ValidValueToken
 
 Ƭ **ValidValueToken**: [_NumberToken_](README.md#numbertoken) |
-[_DimensionToken_](README.md#dimensiontoken) |
-[_RatioToken_](README.md#ratiotoken) | [_IdentToken_](README.md#identtoken)
+[_DimensionToken_](README.md#dimensiontoken) | [_RatioToken_](README.md#ratiotoken) |
+[_IdentToken_](README.md#identtoken)
 
 Defined in:
 [parse/syntacticAnalysis.ts:341](https://github.com/tbjgolden/media-query-parser/blob/e9a76d1/src/parse/syntacticAnalysis.ts#L341)
@@ -629,8 +612,7 @@ Defined in:
 
 ### consumeEscape
 
-▸ `Const`**consumeEscape**(`str`: _string_, `index`: _number_): _null_ |
-[*number*, *number*]
+▸ `Const`**consumeEscape**(`str`: _string_, `index`: _number_): _null_ | [*number*, *number*]
 
 #### Parameters:
 
@@ -648,8 +630,7 @@ Defined in:
 
 ### consumeIdent
 
-▸ `Const`**consumeIdent**(`str`: _string_, `index`: _number_): _null_ |
-[*number*, *string*]
+▸ `Const`**consumeIdent**(`str`: _string_, `index`: _number_): _null_ | [*number*, *string*]
 
 #### Parameters:
 
@@ -667,8 +648,8 @@ Defined in:
 
 ### consumeIdentLike
 
-▸ `Const`**consumeIdentLike**(`str`: _string_, `index`: _number_): _null_ |
-[*number*, *string*, *<ident-token>* | *<function-token>* | *<url-token>*]
+▸ `Const`**consumeIdentLike**(`str`: _string_, `index`: _number_): _null_ | [*number*, *string*,
+*<ident-token>* | *<function-token>* | *<url-token>*]
 
 #### Parameters:
 
@@ -677,8 +658,7 @@ Defined in:
 | `str`   | _string_ |
 | `index` | _number_ |
 
-**Returns:** [*number*, *string*, *<ident-token>* | *<function-token>* |
-*<url-token>*]
+**Returns:** [*number*, *string*, *<ident-token>* | *<function-token>* | *<url-token>*]
 
 Defined in:
 [parse/lexicalAnalysis.ts:806](https://github.com/tbjgolden/media-query-parser/blob/e9a76d1/src/parse/lexicalAnalysis.ts#L806)
@@ -687,8 +667,7 @@ Defined in:
 
 ### consumeIdentUnsafe
 
-▸ `Const`**consumeIdentUnsafe**(`str`: _string_, `index`: _number_): _null_ |
-[*number*, *string*]
+▸ `Const`**consumeIdentUnsafe**(`str`: _string_, `index`: _number_): _null_ | [*number*, *string*]
 
 #### Parameters:
 
@@ -706,8 +685,8 @@ Defined in:
 
 ### consumeNumber
 
-▸ `Const`**consumeNumber**(`str`: _string_, `index`: _number_): _null_ |
-[*number*, *number*, *number* | *integer*]
+▸ `Const`**consumeNumber**(`str`: _string_, `index`: _number_): _null_ | [*number*, *number*,
+*number* | *integer*]
 
 #### Parameters:
 
@@ -725,9 +704,9 @@ Defined in:
 
 ### consumeNumeric
 
-▸ `Const`**consumeNumeric**(`str`: _string_, `index`: _number_): _null_ |
-[_number_, [*<number-token>*, *number*, *number* | *integer*] |
-[*<percentage-token>*, *number*] | [*<dimension-token>*, *number*, *string*]]
+▸ `Const`**consumeNumeric**(`str`: _string_, `index`: _number_): _null_ | [_number_,
+[*<number-token>*, *number*, *number* | *integer*] | [*<percentage-token>*, *number*] |
+[*<dimension-token>*, *number*, *string*]]
 
 #### Parameters:
 
@@ -736,8 +715,8 @@ Defined in:
 | `str`   | _string_ |
 | `index` | _number_ |
 
-**Returns:** [_number_, [*<number-token>*, *number*, *number* | *integer*] |
-[*<percentage-token>*, *number*] | [*<dimension-token>*, *number*, *string*]]
+**Returns:** [_number_, [*<number-token>*, *number*, *number* | *integer*] | [*<percentage-token>*,
+*number*] | [*<dimension-token>*, *number*, *string*]]
 
 Defined in:
 [parse/lexicalAnalysis.ts:566](https://github.com/tbjgolden/media-query-parser/blob/e9a76d1/src/parse/lexicalAnalysis.ts#L566)
@@ -746,8 +725,7 @@ Defined in:
 
 ### consumeString
 
-▸ `Const`**consumeString**(`str`: _string_, `index`: _number_): _null_ |
-[*number*, *string*]
+▸ `Const`**consumeString**(`str`: _string_, `index`: _number_): _null_ | [*number*, *string*]
 
 #### Parameters:
 
@@ -765,8 +743,7 @@ Defined in:
 
 ### consumeUrl
 
-▸ `Const`**consumeUrl**(`str`: _string_, `index`: _number_): [*number*,
-*string*]
+▸ `Const`**consumeUrl**(`str`: _string_, `index`: _number_): [*number*, *string*]
 
 #### Parameters:
 
@@ -803,8 +780,7 @@ Defined in:
 
 ### removeWhitespace
 
-▸ `Const`**removeWhitespace**(`tokenList`: [_Token_](README.md#token)[]):
-WToken[]
+▸ `Const`**removeWhitespace**(`tokenList`: [_Token_](README.md#token)[]): WToken[]
 
 #### Parameters:
 
@@ -873,9 +849,8 @@ Defined in:
 
 ### tokenizeMediaCondition
 
-▸ `Const`**tokenizeMediaCondition**(`tokens`: WToken[], `mayContainOr`:
-_boolean_, `previousOperator?`: _and_ | _or_ | _not_): _null_ |
-[_MediaCondition_](README.md#mediacondition)
+▸ `Const`**tokenizeMediaCondition**(`tokens`: WToken[], `mayContainOr`: _boolean_,
+`previousOperator?`: _and_ | _or_ | _not_): _null_ | [_MediaCondition_](README.md#mediacondition)
 
 #### Parameters:
 
@@ -916,8 +891,7 @@ Defined in:
 
 ### tokenizeMediaQuery
 
-▸ `Const`**tokenizeMediaQuery**(`tokens`: WToken[]): _null_ |
-[_MediaQuery_](README.md#mediaquery)
+▸ `Const`**tokenizeMediaQuery**(`tokens`: WToken[]): _null_ | [_MediaQuery_](README.md#mediaquery)
 
 #### Parameters:
 
@@ -934,18 +908,15 @@ Defined in:
 
 ### tokenizeRange
 
-▸ `Const`**tokenizeRange**(`tokens`: ConvenientToken[]): { `featureName`:
-_string_ ; `leftOp`: _<_ | _<=_ ; `leftToken`:
-[_ValidRangeToken_](README.md#validrangetoken) ; `rightOp`: _<_ | _<=_ ;
-`rightToken`: [_ValidRangeToken_](README.md#validrangetoken) } | {
-`featureName`: _string_ ; `leftOp`: _>_ | _>=_ ; `leftToken`:
-[_ValidRangeToken_](README.md#validrangetoken) ; `rightOp`: _>_ | _>=_ ;
-`rightToken`: [_ValidRangeToken_](README.md#validrangetoken) } | {
-`featureName`: _string_ ; `leftOp`: _<_ | _<=_ | _>_ | _>=_ | _=_ ; `leftToken`:
-[_ValidRangeToken_](README.md#validrangetoken) ; `rightOp`: _null_ ;
-`rightToken`: _null_ } | { `featureName`: _string_ ; `leftOp`: _null_ ;
-`leftToken`: _null_ ; `rightOp`: _<_ | _<=_ | _>_ | _>=_ | _=_ ; `rightToken`:
-[_ValidRangeToken_](README.md#validrangetoken) }
+▸ `Const`**tokenizeRange**(`tokens`: ConvenientToken[]): { `featureName`: _string_ ; `leftOp`: _<_ |
+_<=_ ; `leftToken`: [_ValidRangeToken_](README.md#validrangetoken) ; `rightOp`: _<_ | _<=_ ;
+`rightToken`: [_ValidRangeToken_](README.md#validrangetoken) } | { `featureName`: _string_ ;
+`leftOp`: _>_ | _>=_ ; `leftToken`: [_ValidRangeToken_](README.md#validrangetoken) ; `rightOp`: _>_
+| _>=_ ; `rightToken`: [_ValidRangeToken_](README.md#validrangetoken) } | { `featureName`: _string_
+; `leftOp`: _<_ | _<=_ | _>_ | _>=_ | _=_ ; `leftToken`:
+[_ValidRangeToken_](README.md#validrangetoken) ; `rightOp`: _null_ ; `rightToken`: _null_ } | {
+`featureName`: _string_ ; `leftOp`: _null_ ; `leftToken`: _null_ ; `rightOp`: _<_ | _<=_ | _>_ |
+_>=_ | _=_ ; `rightToken`: [_ValidRangeToken_](README.md#validrangetoken) }
 
 #### Parameters:
 
@@ -954,16 +925,14 @@ _string_ ; `leftOp`: _<_ | _<=_ ; `leftToken`:
 | `tokens` | ConvenientToken[] |
 
 **Returns:** { `featureName`: _string_ ; `leftOp`: _<_ | _<=_ ; `leftToken`:
-[_ValidRangeToken_](README.md#validrangetoken) ; `rightOp`: _<_ | _<=_ ;
-`rightToken`: [_ValidRangeToken_](README.md#validrangetoken) } | {
-`featureName`: _string_ ; `leftOp`: _>_ | _>=_ ; `leftToken`:
-[_ValidRangeToken_](README.md#validrangetoken) ; `rightOp`: _>_ | _>=_ ;
-`rightToken`: [_ValidRangeToken_](README.md#validrangetoken) } | {
-`featureName`: _string_ ; `leftOp`: _<_ | _<=_ | _>_ | _>=_ | _=_ ; `leftToken`:
-[_ValidRangeToken_](README.md#validrangetoken) ; `rightOp`: _null_ ;
-`rightToken`: _null_ } | { `featureName`: _string_ ; `leftOp`: _null_ ;
-`leftToken`: _null_ ; `rightOp`: _<_ | _<=_ | _>_ | _>=_ | _=_ ; `rightToken`:
-[_ValidRangeToken_](README.md#validrangetoken) }
+[_ValidRangeToken_](README.md#validrangetoken) ; `rightOp`: _<_ | _<=_ ; `rightToken`:
+[_ValidRangeToken_](README.md#validrangetoken) } | { `featureName`: _string_ ; `leftOp`: _>_ | _>=_
+; `leftToken`: [_ValidRangeToken_](README.md#validrangetoken) ; `rightOp`: _>_ | _>=_ ;
+`rightToken`: [_ValidRangeToken_](README.md#validrangetoken) } | { `featureName`: _string_ ;
+`leftOp`: _<_ | _<=_ | _>_ | _>=_ | _=_ ; `leftToken`:
+[_ValidRangeToken_](README.md#validrangetoken) ; `rightOp`: _null_ ; `rightToken`: _null_ } | {
+`featureName`: _string_ ; `leftOp`: _null_ ; `leftToken`: _null_ ; `rightOp`: _<_ | _<=_ | _>_ |
+_>=_ | _=_ ; `rightToken`: [_ValidRangeToken_](README.md#validrangetoken) }
 
 Defined in:
 [parse/syntacticAnalysis.ts:499](https://github.com/tbjgolden/media-query-parser/blob/e9a76d1/src/parse/syntacticAnalysis.ts#L499)

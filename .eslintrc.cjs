@@ -13,7 +13,7 @@ const config = {
     "prettier",
   ],
   plugins: ["@typescript-eslint", "unicorn", "prettier"],
-  ignorePatterns: require("fs")
+  ignorePatterns: require("node:fs")
     .readFileSync(".gitignore", "utf8")
     .split("\n")
     .map((line) => line.split("#")[0].trim())
@@ -54,9 +54,17 @@ const config = {
         },
       },
     ],
-    "unicorn/prefer-switch": ["error", { minimumCases: 5 }],
     "unicorn/no-new-array": "off",
     "unicorn/no-await-expression-member": "off",
+
+    // project specific
+    "unicorn/prefer-code-point": "off",
+    "unicorn/prefer-string-replace-all": "off",
+    "unicorn/prefer-switch": "off",
+    "unicorn/prefer-at": "off",
+    "unicorn/prefer-ternary": ["error", "only-single-line"],
+    "unicorn/numeric-separators-style": "off",
+    "unicorn/prefer-node-protocol": "off",
   },
   overrides: [
     {
@@ -67,7 +75,7 @@ const config = {
       },
     },
     {
-      files: [".scripts/**/*.ts", "cli/**/*.ts"],
+      files: [".scripts/**/*.ts"],
       rules: {
         "no-console": "off",
         "unicorn/no-process-exit": "off",

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>media-query-parser</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+          sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+      }
+      input {
+        padding: 6px 8px;
+        font-size: 20px;
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div style="padding: 40px; max-width: 600px">
+      <h1>media-query-parser</h1>
+      <p>
+        toAST(...) ·
+        <a href="https://github.com/tbjgolden/media-query-parser/blob/main/api/README.md"
+          >API Docs</a
+        >
+      </p>
+      <input id="inputEl" type="text" oninput="globalThis.update(event.target.value)" />
+      <pre><code id="codeEl"></code></pre>
+    </div>
+
+    <script src="./media-query-parser.umd.js"></script>
+    <script>
+      const inputEl = document.getElementById("inputEl");
+      const codeEl = document.getElementById("codeEl");
+      globalThis.update = (value) => {
+        try {
+          const ast = globalThis.MediaQueryParser.toAST(value);
+          codeEl.style.color = "#006";
+          codeEl.innerHTML = JSON.stringify(ast, null, 2);
+        } catch (error) {
+          codeEl.style.color = "red";
+          codeEl.innerHTML = error.message;
+        }
+      };
+
+      const initialValue = "not screen and (not ((width <= 500px) and (orientation: portrait)))";
+
+      inputEl.value = initialValue;
+      inputEl.focus();
+      inputEl.setSelectionRange(0, initialValue.length);
+      update(initialValue);
+    </script>
+  </body>
+</html>
