@@ -12,9 +12,9 @@
     "typescript"
   ],
   "type": "module",
-  "main": "./dist/lib/index.js",
-  "exports": "./dist/lib/index.js",
-  "types": "./dist/lib/index.d.ts",
+  "main": "./dist/index.js",
+  "exports": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "sideEffects": false,
   "homepage": "https://github.com/tbjgolden/media-query-parser",
   "repository": {
