@@ -114,29 +114,64 @@ export interface EOFToken {
   type: "EOF";
 }
 
+const TAB_CODEPOINT = 0x00_09;
+const NEWLINE_CODEPOINT = 0x00_0a;
+const SPACE_CODEPOINT = 0x00_20;
+const EXCLAMATION_CODEPOINT = 0x00_21;
+const DOUBLE_QUOTE_CODEPOINT = 0x00_22;
+const HASH_CODEPOINT = 0x00_23;
+const PERCENTAGE_CODEPOINT = 0x00_25;
+const SINGLE_QUOTE_CODEPOINT = 0x00_27;
+const LEFT_PAREN_CODEPOINT = 0x00_28;
+const RIGHT_PAREN_CODEPOINT = 0x00_29;
+const ASTERISK_CODEPOINT = 0x00_2a;
+const PLUS_CODEPOINT = 0x00_2b;
+const COMMA_CODEPOINT = 0x00_2c;
+const HYPHEN_CODEPOINT = 0x00_2d;
+const DOT_CODEPOINT = 0x00_2e;
+const FORWARD_SLASH_CODEPOINT = 0x00_2f;
+const ZERO_CODEPOINT = 0x00_30;
+const NINE_CODEPOINT = 0x00_39;
+const COLON_CODEPOINT = 0x00_3a;
+const SEMICOLON_CODEPOINT = 0x00_3b;
+const LEFT_ANGLE_CODEPOINT = 0x00_3c;
+const RIGHT_ANGLE_CODEPOINT = 0x00_3e;
+const AT_SIGN_CODEPOINT = 0x00_40;
+const UPPER_A_CODEPOINT = 0x00_41;
+const UPPER_E_CODEPOINT = 0x00_45;
+const UPPER_F_CODEPOINT = 0x00_46;
+const UPPER_Z_CODEPOINT = 0x00_5a;
+const LEFT_SQUARE_CODEPOINT = 0x00_5b;
+const BACKSLASH_CODEPOINT = 0x00_5c;
+const RIGHT_SQUARE_CODEPOINT = 0x00_5d;
+const UNDERSCORE_CODEPOINT = 0x00_5f;
+const LOWER_A_CODEPOINT = 0x00_61;
+const LOWER_E_CODEPOINT = 0x00_65;
+const LOWER_F_CODEPOINT = 0x00_66;
+const LOWER_Z_CODEPOINT = 0x00_7a;
+const LEFT_CURLY_CODEPOINT = 0x00_7b;
+const RIGHT_CURLY_CODEPOINT = 0x00_7d;
+const FIRST_NON_ASCII_CODEPOINT = 0x00_80;
+
 export const codepointsToTokens = (codepoints: number[], index = 0): Token[] | null => {
   const tokens: Token[] = [];
 
   for (; index < codepoints.length; index += 1) {
-    const code = codepoints.at(index) as number;
+    const c = codepoints.at(index) as number;
     const start = index;
 
-    if (code === 0x00_2f && codepoints.at(index + 1) === 0x00_2a) {
+    if (c === FORWARD_SLASH_CODEPOINT && codepoints.at(index + 1) === ASTERISK_CODEPOINT) {
       index += 2;
-      for (
-        let nextCode = codepoints.at(index);
-        nextCode !== undefined;
-        nextCode = codepoints.at(++index)
-      ) {
-        if (nextCode === 0x00_2a && codepoints.at(index + 1) === 0x00_2f) {
+      for (let cc = codepoints.at(index); cc !== undefined; cc = codepoints.at(++index)) {
+        if (cc === ASTERISK_CODEPOINT && codepoints.at(index + 1) === FORWARD_SLASH_CODEPOINT) {
           index += 1;
           break;
         }
       }
-    } else if (code === 0x00_09 || code === 0x00_20 || code === 0x00_0a) {
-      let code = codepoints.at(++index);
-      while (code === 0x00_09 || code === 0x00_20 || code === 0x00_0a) {
-        code = codepoints.at(++index);
+    } else if (c === TAB_CODEPOINT || c === SPACE_CODEPOINT || c === NEWLINE_CODEPOINT) {
+      let c = codepoints.at(++index);
+      while (c === TAB_CODEPOINT || c === SPACE_CODEPOINT || c === NEWLINE_CODEPOINT) {
+        c = codepoints.at(++index);
       }
       index -= 1;
 
@@ -147,7 +182,7 @@ export const codepointsToTokens = (codepoints: number[], index = 0): Token[] | n
       } else {
         tokens.push({ type: "whitespace", start, end: index });
       }
-    } else if (code === 0x00_22) {
+    } else if (c === DOUBLE_QUOTE_CODEPOINT) {
       const result = consumeString(codepoints, index);
       if (result === null) {
         return null;
@@ -155,20 +190,20 @@ export const codepointsToTokens = (codepoints: number[], index = 0): Token[] | n
       const [lastIndex, value] = result;
       index = lastIndex;
       tokens.push({ type: "string", value, start, end: index });
-    } else if (code === 0x00_23) {
+    } else if (c === HASH_CODEPOINT) {
       // if hash
       if (index + 1 < codepoints.length) {
-        const nextCode = codepoints.at(index + 1) as number;
+        const cc = codepoints.at(index + 1) as number;
 
         if (
-          nextCode === 0x00_5f ||
-          (nextCode >= 0x00_41 && nextCode <= 0x00_5a) ||
-          (nextCode >= 0x00_61 && nextCode <= 0x00_7a) ||
-          nextCode >= 0x00_80 ||
-          (nextCode >= 0x00_30 && nextCode <= 0x00_39) ||
-          (nextCode === 0x00_5c &&
+          cc === UNDERSCORE_CODEPOINT ||
+          (cc >= UPPER_A_CODEPOINT && cc <= UPPER_Z_CODEPOINT) ||
+          (cc >= LOWER_A_CODEPOINT && cc <= LOWER_Z_CODEPOINT) ||
+          cc >= FIRST_NON_ASCII_CODEPOINT ||
+          (cc >= ZERO_CODEPOINT && cc <= NINE_CODEPOINT) ||
+          (cc === BACKSLASH_CODEPOINT &&
             index + 2 < codepoints.length &&
-            codepoints.at(index + 2) !== 0x00_0a)
+            codepoints.at(index + 2) !== NEWLINE_CODEPOINT)
         ) {
           const flag: "id" | "unrestricted" = wouldStartIdentifier(codepoints, index + 1)
             ? "id"
@@ -184,8 +219,8 @@ export const codepointsToTokens = (codepoints: number[], index = 0): Token[] | n
         }
       }
 
-      tokens.push({ type: "delim", value: code, start, end: index });
-    } else if (code === 0x00_27) {
+      tokens.push({ type: "delim", value: c, start, end: index });
+    } else if (c === SINGLE_QUOTE_CODEPOINT) {
       const result = consumeString(codepoints, index);
       if (result === null) {
         return null;
@@ -193,14 +228,14 @@ export const codepointsToTokens = (codepoints: number[], index = 0): Token[] | n
       const [lastIndex, value] = result;
       index = lastIndex;
       tokens.push({ type: "string", value, start, end: index });
-    } else if (code === 0x00_28) {
+    } else if (c === LEFT_PAREN_CODEPOINT) {
       tokens.push({ type: "(", start, end: index });
-    } else if (code === 0x00_29) {
+    } else if (c === RIGHT_PAREN_CODEPOINT) {
       tokens.push({ type: ")", start, end: index });
-    } else if (code === 0x00_2b) {
+    } else if (c === PLUS_CODEPOINT) {
       const plusNumeric = consumeNumeric(codepoints, index);
       if (plusNumeric === null) {
-        tokens.push({ type: "delim", value: code, start, end: index });
+        tokens.push({ type: "delim", value: c, start, end: index });
       } else {
         const [lastIndex, tokenTuple] = plusNumeric;
         index = lastIndex;
@@ -231,9 +266,9 @@ export const codepointsToTokens = (codepoints: number[], index = 0): Token[] | n
           });
         }
       }
-    } else if (code === 0x00_2c) {
+    } else if (c === COMMA_CODEPOINT) {
       tokens.push({ type: "comma", start, end: index });
-    } else if (code === 0x00_2d) {
+    } else if (c === HYPHEN_CODEPOINT) {
       const minusNumeric = consumeNumeric(codepoints, index);
       if (minusNumeric !== null) {
         const [lastIndex, tokenTuple] = minusNumeric;
@@ -268,9 +303,9 @@ export const codepointsToTokens = (codepoints: number[], index = 0): Token[] | n
       }
       // if CDC
       if (index + 2 < codepoints.length) {
-        const nextCode = codepoints.at(index + 1);
-        const nextNextCode = codepoints.at(index + 2);
-        if (nextCode === 0x00_2d && nextNextCode === 0x00_3e) {
+        const cc = codepoints.at(index + 1);
+        const ccc = codepoints.at(index + 2);
+        if (cc === HYPHEN_CODEPOINT && ccc === RIGHT_ANGLE_CODEPOINT) {
           index += 2;
           tokens.push({ type: "CDC", start, end: index });
           continue;
@@ -285,11 +320,11 @@ export const codepointsToTokens = (codepoints: number[], index = 0): Token[] | n
         continue;
       }
 
-      tokens.push({ type: "delim", value: code, start, end: index });
-    } else if (code === 0x00_2e) {
+      tokens.push({ type: "delim", value: c, start, end: index });
+    } else if (c === DOT_CODEPOINT) {
       const minusNumeric = consumeNumeric(codepoints, index);
       if (minusNumeric === null) {
-        tokens.push({ type: "delim", value: code, start, end: index });
+        tokens.push({ type: "delim", value: c, start, end: index });
       } else {
         const [lastIndex, tokenTuple] = minusNumeric;
         index = lastIndex;
@@ -321,25 +356,25 @@ export const codepointsToTokens = (codepoints: number[], index = 0): Token[] | n
         }
         continue;
       }
-    } else if (code === 0x00_3a) {
+    } else if (c === COLON_CODEPOINT) {
       tokens.push({ type: "colon", start, end: index });
-    } else if (code === 0x00_3b) {
+    } else if (c === SEMICOLON_CODEPOINT) {
       tokens.push({ type: "semicolon", start, end: index });
-    } else if (code === 0x00_3c) {
+    } else if (c === LEFT_ANGLE_CODEPOINT) {
       // if CDO
       if (index + 3 < codepoints.length) {
-        const nextCode = codepoints.at(index + 1);
-        const nextNextCode = codepoints.at(index + 2);
-        const nextNextNextCode = codepoints.at(index + 3);
-        if (nextCode === 0x00_21 && nextNextCode === 0x00_2d && nextNextNextCode === 0x00_2d) {
+        const cc = codepoints.at(index + 1);
+        const ccc = codepoints.at(index + 2);
+        const cccc = codepoints.at(index + 3);
+        if (cc === EXCLAMATION_CODEPOINT && ccc === HYPHEN_CODEPOINT && cccc === HYPHEN_CODEPOINT) {
           index += 3;
           tokens.push({ type: "CDO", start, end: index });
           continue;
         }
       }
 
-      tokens.push({ type: "delim", value: code, start, end: index });
-    } else if (code === 0x00_40) {
+      tokens.push({ type: "delim", value: c, start, end: index });
+    } else if (c === AT_SIGN_CODEPOINT) {
       // if at keyword
       const result = consumeIdent(codepoints, index + 1);
       if (result !== null) {
@@ -354,16 +389,16 @@ export const codepointsToTokens = (codepoints: number[], index = 0): Token[] | n
         continue;
       }
 
-      tokens.push({ type: "delim", value: code, start, end: index });
-    } else if (code === 0x00_5b) {
+      tokens.push({ type: "delim", value: c, start, end: index });
+    } else if (c === LEFT_SQUARE_CODEPOINT) {
       tokens.push({ type: "[", start, end: index });
-    } else if (code === 0x00_5d) {
+    } else if (c === RIGHT_SQUARE_CODEPOINT) {
       tokens.push({ type: "]", start, end: index });
-    } else if (code === 0x00_7b) {
+    } else if (c === LEFT_CURLY_CODEPOINT) {
       tokens.push({ type: "{", start, end: index });
-    } else if (code === 0x00_7d) {
+    } else if (c === RIGHT_CURLY_CODEPOINT) {
       tokens.push({ type: "}", start, end: index });
-    } else if (code >= 0x00_30 && code <= 0x00_39) {
+    } else if (c >= ZERO_CODEPOINT && c <= NINE_CODEPOINT) {
       const result = consumeNumeric(codepoints, index) as NonNullable<
         ReturnType<typeof consumeNumeric>
       >;
@@ -396,15 +431,15 @@ export const codepointsToTokens = (codepoints: number[], index = 0): Token[] | n
         });
       }
     } else if (
-      code === 0x00_5f ||
-      (code >= 0x00_41 && code <= 0x00_5a) ||
-      (code >= 0x00_61 && code <= 0x00_7a) ||
-      code >= 0x00_80 ||
-      code === 0x00_5c
+      c === UNDERSCORE_CODEPOINT ||
+      (c >= UPPER_A_CODEPOINT && c <= UPPER_Z_CODEPOINT) ||
+      (c >= LOWER_A_CODEPOINT && c <= LOWER_Z_CODEPOINT) ||
+      c >= FIRST_NON_ASCII_CODEPOINT ||
+      c === BACKSLASH_CODEPOINT
     ) {
-      const nextCode = codepoints.at(index + 1);
-      if (code === 0x00_5c && (nextCode === undefined || nextCode === 0x0a)) {
-        tokens.push({ type: "delim", value: code, start, end: index });
+      const cc = codepoints.at(index + 1);
+      if (c === BACKSLASH_CODEPOINT && (cc === undefined || cc === NEWLINE_CODEPOINT)) {
+        tokens.push({ type: "delim", value: c, start, end: index });
       } else {
         const result = consumeIdentLike(codepoints, index);
         if (result === null) {
@@ -420,7 +455,7 @@ export const codepointsToTokens = (codepoints: number[], index = 0): Token[] | n
         });
       }
     } else {
-      tokens.push({ type: "delim", value: code, start, end: index });
+      tokens.push({ type: "delim", value: c, start, end: index });
     }
   }
   tokens.push({ type: "EOF" });
@@ -429,21 +464,21 @@ export const codepointsToTokens = (codepoints: number[], index = 0): Token[] | n
 
 export const consumeString = (codepoints: number[], index: number): [number, string] | null => {
   if (codepoints.length <= index + 1) return null;
-  const firstCode = codepoints.at(index);
+  const c = codepoints.at(index);
   const stringCodepoints: number[] = [];
   for (let i = index + 1; i < codepoints.length; i += 1) {
     const codepoint = codepoints.at(i) as number;
-    if (codepoint === firstCode) {
+    if (codepoint === c) {
       // " end string
-      return [i, String.fromCodePoint.apply(null, stringCodepoints)];
-    } else if (codepoint === 0x00_5c) {
+      return [i, String.fromCodePoint(...stringCodepoints)];
+    } else if (codepoint === BACKSLASH_CODEPOINT) {
       // \ escape mode
       const result = consumeEscape(codepoints, i);
       if (result === null) return null;
-      const [lastIndex, charCode] = result;
-      stringCodepoints.push(charCode);
+      const [lastIndex, cc] = result;
+      stringCodepoints.push(cc);
       i = lastIndex;
-    } else if (codepoint === 0x00_0a) {
+    } else if (codepoint === NEWLINE_CODEPOINT) {
       // \n
       return null;
     } else {
@@ -455,39 +490,39 @@ export const consumeString = (codepoints: number[], index: number): [number, str
 };
 
 export const wouldStartIdentifier = (codepoints: number[], index: number): boolean => {
-  const codepoint = codepoints.at(index);
-  if (codepoint === undefined) return false;
-  if (codepoint === 0x00_2d) {
-    const nextCodepoint = codepoints.at(index + 1);
-    if (nextCodepoint === undefined) return false;
+  const c = codepoints.at(index);
+  if (c === undefined) return false;
+  if (c === HYPHEN_CODEPOINT) {
+    const cc = codepoints.at(index + 1);
+    if (cc === undefined) return false;
     if (
-      nextCodepoint === 0x00_2d ||
-      nextCodepoint === 0x00_5f ||
-      (nextCodepoint >= 0x00_41 && nextCodepoint <= 0x00_5a) ||
-      (nextCodepoint >= 0x00_61 && nextCodepoint <= 0x00_7a) ||
-      nextCodepoint >= 0x00_80
+      cc === HYPHEN_CODEPOINT ||
+      cc === UNDERSCORE_CODEPOINT ||
+      (cc >= UPPER_A_CODEPOINT && cc <= UPPER_Z_CODEPOINT) ||
+      (cc >= LOWER_A_CODEPOINT && cc <= LOWER_Z_CODEPOINT) ||
+      cc >= FIRST_NON_ASCII_CODEPOINT
     ) {
       return true;
-    } else if (nextCodepoint === 0x00_5c) {
+    } else if (cc === BACKSLASH_CODEPOINT) {
       if (codepoints.length <= index + 2) return false;
-      const nextNextCode = codepoints.at(index + 2);
-      return nextNextCode !== 0x00_0a;
+      const ccc = codepoints.at(index + 2);
+      return ccc !== NEWLINE_CODEPOINT;
     } else {
       return false;
     }
   } else if (
     // identifier-start code point
-    codepoint === 0x00_5f ||
-    (codepoint >= 0x00_41 && codepoint <= 0x00_5a) ||
-    (codepoint >= 0x00_61 && codepoint <= 0x00_7a) ||
-    codepoint >= 0x00_80
+    c === UNDERSCORE_CODEPOINT ||
+    (c >= UPPER_A_CODEPOINT && c <= UPPER_Z_CODEPOINT) ||
+    (c >= LOWER_A_CODEPOINT && c <= LOWER_Z_CODEPOINT) ||
+    c >= FIRST_NON_ASCII_CODEPOINT
   ) {
     return true;
-  } else if (codepoint === 0x00_5c) {
+  } else if (c === BACKSLASH_CODEPOINT) {
     // \
     if (codepoints.length <= index + 1) return false;
-    const nextCode = codepoints.at(index + 1);
-    return nextCode !== 0x00_0a;
+    const cc = codepoints.at(index + 1);
+    return cc !== NEWLINE_CODEPOINT;
   } else {
     return false;
   }
@@ -495,40 +530,40 @@ export const wouldStartIdentifier = (codepoints: number[], index: number): boole
 
 export const consumeEscape = (codepoints: number[], index: number): [number, number] | null => {
   if (codepoints.length <= index + 1) return null;
-  if (codepoints.at(index) !== 0x00_5c) return null;
+  if (codepoints.at(index) !== BACKSLASH_CODEPOINT) return null;
 
-  const code = codepoints.at(index + 1) as number;
-  if (code === 0x00_0a) {
+  const cc = codepoints.at(index + 1) as number;
+  if (cc === NEWLINE_CODEPOINT) {
     return null;
   } else if (
-    (code >= 0x00_30 && code <= 0x00_39) ||
-    (code >= 0x00_41 && code <= 0x00_46) ||
-    (code >= 0x00_61 && code <= 0x00_66)
+    (cc >= ZERO_CODEPOINT && cc <= NINE_CODEPOINT) ||
+    (cc >= UPPER_A_CODEPOINT && cc <= UPPER_F_CODEPOINT) ||
+    (cc >= LOWER_A_CODEPOINT && cc <= LOWER_F_CODEPOINT)
   ) {
-    const hexCharCodes: number[] = [code];
+    const hexCharCodes: number[] = [cc];
     const min = Math.min(index + 7, codepoints.length);
     let i = index + 2;
     for (; i < min; i += 1) {
-      const code = codepoints.at(i) as number;
+      const ccc = codepoints.at(i) as number;
       if (
-        (code >= 0x00_30 && code <= 0x00_39) ||
-        (code >= 0x00_41 && code <= 0x00_46) ||
-        (code >= 0x00_61 && code <= 0x00_66)
+        (ccc >= ZERO_CODEPOINT && ccc <= NINE_CODEPOINT) ||
+        (ccc >= UPPER_A_CODEPOINT && ccc <= UPPER_F_CODEPOINT) ||
+        (ccc >= LOWER_A_CODEPOINT && ccc <= LOWER_F_CODEPOINT)
       ) {
-        hexCharCodes.push(code);
+        hexCharCodes.push(ccc);
       } else {
         break;
       }
     }
     if (i < codepoints.length) {
-      const code = codepoints.at(i);
-      if (code === 0x00_09 || code === 0x00_20 || code === 0x00_0a) {
+      const cccc = codepoints.at(i);
+      if (cccc === TAB_CODEPOINT || cccc === SPACE_CODEPOINT || cccc === NEWLINE_CODEPOINT) {
         i += 1;
       }
     }
-    return [i - 1, Number.parseInt(String.fromCharCode.apply(null, hexCharCodes), 16)];
+    return [i - 1, Number.parseInt(String.fromCodePoint(...hexCharCodes), 16)];
   } else {
-    return [index + 1, code];
+    return [index + 1, cc];
   }
 };
 
@@ -555,7 +590,10 @@ export const consumeNumeric = (
     return [identEndIndex, ["dimension", numberValue, identValue]];
   }
 
-  if (numberEndIndex + 1 < codepoints.length && codepoints.at(numberEndIndex + 1) === 0x00_25) {
+  if (
+    numberEndIndex + 1 < codepoints.length &&
+    codepoints.at(numberEndIndex + 1) === PERCENTAGE_CODEPOINT
+  ) {
     return [numberEndIndex + 1, ["percentage", numberValue]];
   }
 
@@ -566,20 +604,20 @@ export const consumeNumber = (
   codepoints: number[],
   index: number
 ): [number, number, "integer" | "number"] | null => {
-  const firstCode = codepoints.at(index);
-  if (firstCode === undefined) return null;
+  const c = codepoints.at(index);
+  if (c === undefined) return null;
 
   let flag: "integer" | "number" = "integer";
 
   const numberChars: number[] = [];
-  if (firstCode === 0x00_2b || firstCode === 0x00_2d) {
+  if (c === PLUS_CODEPOINT || c === HYPHEN_CODEPOINT) {
     index += 1;
-    if (firstCode === 0x00_2d) numberChars.push(0x00_2d);
+    if (c === HYPHEN_CODEPOINT) numberChars.push(HYPHEN_CODEPOINT);
   }
   while (index < codepoints.length) {
-    const code = codepoints.at(index) as number;
-    if (code >= 0x00_30 && code <= 0x00_39) {
-      numberChars.push(code);
+    const cc = codepoints.at(index) as number;
+    if (cc >= ZERO_CODEPOINT && cc <= NINE_CODEPOINT) {
+      numberChars.push(cc);
       index += 1;
     } else {
       break;
@@ -587,18 +625,18 @@ export const consumeNumber = (
   }
 
   if (index + 1 < codepoints.length) {
-    const nextCode = codepoints.at(index) as number;
-    const nextNextCode = codepoints.at(index + 1) as number;
+    const cc = codepoints.at(index) as number;
+    const ccc = codepoints.at(index + 1) as number;
 
-    if (nextCode === 0x00_2e && nextNextCode >= 0x00_30 && nextNextCode <= 0x00_39) {
-      numberChars.push(nextCode, nextNextCode);
+    if (cc === DOT_CODEPOINT && ccc >= ZERO_CODEPOINT && ccc <= NINE_CODEPOINT) {
+      numberChars.push(cc, ccc);
       flag = "number";
       index += 2;
 
       while (index < codepoints.length) {
-        const code = codepoints.at(index) as number;
-        if (code >= 0x00_30 && code <= 0x00_39) {
-          numberChars.push(code);
+        const cccc = codepoints.at(index) as number;
+        if (cccc >= ZERO_CODEPOINT && cccc <= NINE_CODEPOINT) {
+          numberChars.push(cccc);
           index += 1;
         } else {
           break;
@@ -608,28 +646,28 @@ export const consumeNumber = (
   }
 
   if (index + 1 < codepoints.length) {
-    const nextCode = codepoints.at(index) as number;
-    const nextNextCode = codepoints.at(index + 1) as number;
-    const nextNextNextCode = codepoints.at(index + 2);
+    const cc = codepoints.at(index) as number;
+    const ccc = codepoints.at(index + 1) as number;
+    const cccc = codepoints.at(index + 2);
 
     // e or E
-    if (nextCode === 0x00_45 || nextCode === 0x00_65) {
-      const nextNextIsDigit = nextNextCode >= 0x00_30 && nextNextCode <= 0x00_39;
+    if (cc === UPPER_E_CODEPOINT || cc === LOWER_E_CODEPOINT) {
+      const nextNextIsDigit = ccc >= ZERO_CODEPOINT && ccc <= NINE_CODEPOINT;
 
       let isValidExponent = false;
       if (nextNextIsDigit) {
-        numberChars.push(0x00_45, nextNextCode);
+        numberChars.push(UPPER_E_CODEPOINT, ccc);
         index += 2;
         isValidExponent = true;
       } else if (
-        (nextNextCode === 0x00_2d || nextNextCode === 0x00_2b) &&
-        nextNextNextCode !== undefined &&
-        nextNextNextCode >= 0x00_30 &&
-        nextNextNextCode <= 0x00_39
+        (ccc === HYPHEN_CODEPOINT || ccc === PLUS_CODEPOINT) &&
+        cccc !== undefined &&
+        cccc >= ZERO_CODEPOINT &&
+        cccc <= NINE_CODEPOINT
       ) {
-        numberChars.push(0x00_45);
-        if (nextNextCode === 0x00_2d) numberChars.push(0x00_2d);
-        numberChars.push(nextNextNextCode);
+        numberChars.push(UPPER_E_CODEPOINT);
+        if (ccc === HYPHEN_CODEPOINT) numberChars.push(HYPHEN_CODEPOINT);
+        numberChars.push(cccc);
         index += 3;
         isValidExponent = true;
       }
@@ -637,9 +675,9 @@ export const consumeNumber = (
       if (isValidExponent) {
         flag = "number";
         while (index < codepoints.length) {
-          const code = codepoints.at(index) as number;
-          if (code >= 0x00_30 && code <= 0x00_39) {
-            numberChars.push(code);
+          const ccccc = codepoints.at(index) as number;
+          if (ccccc >= ZERO_CODEPOINT && ccccc <= NINE_CODEPOINT) {
+            numberChars.push(ccccc);
             index += 1;
           } else {
             break;
@@ -649,7 +687,7 @@ export const consumeNumber = (
     }
   }
 
-  const numberString = String.fromCharCode.apply(null, numberChars);
+  const numberString = String.fromCodePoint(...numberChars);
   let value = flag === "number" ? Number.parseFloat(numberString) : Number.parseInt(numberString);
   // convert -0 to 0
   if (value === 0) value = 0;
@@ -668,25 +706,25 @@ export const consumeIdentUnsafe = (
 
   const identChars: number[] = [];
   for (
-    let code = codepoints.at(index) as number;
+    let c = codepoints.at(index) as number;
     index < codepoints.length;
-    code = codepoints.at(++index) as number
+    c = codepoints.at(++index) as number
   ) {
     if (
-      code === 0x00_2d ||
-      code === 0x00_5f ||
-      (code >= 0x00_41 && code <= 0x00_5a) ||
-      (code >= 0x00_61 && code <= 0x00_7a) ||
-      code >= 0x00_80 ||
-      (code >= 0x00_30 && code <= 0x00_39)
+      c === HYPHEN_CODEPOINT ||
+      c === UNDERSCORE_CODEPOINT ||
+      (c >= UPPER_A_CODEPOINT && c <= UPPER_Z_CODEPOINT) ||
+      (c >= LOWER_A_CODEPOINT && c <= LOWER_Z_CODEPOINT) ||
+      c >= FIRST_NON_ASCII_CODEPOINT ||
+      (c >= ZERO_CODEPOINT && c <= NINE_CODEPOINT)
     ) {
-      identChars.push(code);
+      identChars.push(c);
       continue;
     } else {
       const result = consumeEscape(codepoints, index);
       if (result !== null) {
-        const [lastIndex, code] = result;
-        identChars.push(code);
+        const [lastIndex, cc] = result;
+        identChars.push(cc);
         index = lastIndex;
         continue;
       }
@@ -694,7 +732,7 @@ export const consumeIdentUnsafe = (
     break;
   }
 
-  return index === 0 ? null : [index - 1, String.fromCharCode.apply(null, identChars)];
+  return index === 0 ? null : [index - 1, String.fromCodePoint(...identChars)];
 };
 
 export const consumeIdent = (codepoints: number[], index: number): [number, string] | null => {
@@ -704,25 +742,25 @@ export const consumeIdent = (codepoints: number[], index: number): [number, stri
 
   const identChars: number[] = [];
   for (
-    let code = codepoints.at(index) as number;
+    let c = codepoints.at(index) as number;
     index < codepoints.length;
-    code = codepoints.at(++index) as number
+    c = codepoints.at(++index) as number
   ) {
     if (
-      code === 0x00_2d ||
-      code === 0x00_5f ||
-      (code >= 0x00_41 && code <= 0x00_5a) ||
-      (code >= 0x00_61 && code <= 0x00_7a) ||
-      code >= 0x00_80 ||
-      (code >= 0x00_30 && code <= 0x00_39)
+      c === HYPHEN_CODEPOINT ||
+      c === UNDERSCORE_CODEPOINT ||
+      (c >= UPPER_A_CODEPOINT && c <= UPPER_Z_CODEPOINT) ||
+      (c >= LOWER_A_CODEPOINT && c <= LOWER_Z_CODEPOINT) ||
+      c >= FIRST_NON_ASCII_CODEPOINT ||
+      (c >= ZERO_CODEPOINT && c <= NINE_CODEPOINT)
     ) {
-      identChars.push(code);
+      identChars.push(c);
       continue;
     } else {
       const result = consumeEscape(codepoints, index);
       if (result !== null) {
-        const [lastIndex, code] = result;
-        identChars.push(code);
+        const [lastIndex, cc] = result;
+        identChars.push(cc);
         index = lastIndex;
         continue;
       }
@@ -730,25 +768,37 @@ export const consumeIdent = (codepoints: number[], index: number): [number, stri
     break;
   }
 
-  return [index - 1, String.fromCharCode.apply(null, identChars)];
+  return [index - 1, String.fromCodePoint(...identChars)];
 };
 
 export const consumeUrl = (codepoints: number[], index: number): [number, string] | null => {
   let codepoint = codepoints.at(index);
-  while (codepoint === 0x00_09 || codepoint === 0x00_20 || codepoint === 0x00_0a) {
+  while (
+    codepoint === TAB_CODEPOINT ||
+    codepoint === SPACE_CODEPOINT ||
+    codepoint === NEWLINE_CODEPOINT
+  ) {
     codepoint = codepoints.at(++index);
   }
 
   const urlChars: number[] = [];
   let hasFinishedWord = false;
   while (index < codepoints.length) {
-    if (codepoint === 0x00_29) {
-      return [index, String.fromCharCode.apply(null, urlChars)];
-    } else if (codepoint === 0x00_22 || codepoint === 0x00_27 || codepoint === 0x00_28) {
+    if (codepoint === RIGHT_PAREN_CODEPOINT) {
+      return [index, String.fromCodePoint(...urlChars)];
+    } else if (
+      codepoint === DOUBLE_QUOTE_CODEPOINT ||
+      codepoint === SINGLE_QUOTE_CODEPOINT ||
+      codepoint === LEFT_PAREN_CODEPOINT
+    ) {
       return null;
-    } else if (codepoint === 0x00_09 || codepoint === 0x00_20 || codepoint === 0x00_0a) {
+    } else if (
+      codepoint === TAB_CODEPOINT ||
+      codepoint === SPACE_CODEPOINT ||
+      codepoint === NEWLINE_CODEPOINT
+    ) {
       if (!hasFinishedWord && urlChars.length > 0) hasFinishedWord = true;
-    } else if (codepoint === 0x00_5c) {
+    } else if (codepoint === BACKSLASH_CODEPOINT) {
       const result = consumeEscape(codepoints, index);
       if (result === null || hasFinishedWord) return null;
       const [lastIndex, value] = result;
@@ -773,16 +823,16 @@ export const consumeIdentLike = (
   const [lastIndex, value] = result;
   if (value.toLowerCase() === "url") {
     if (codepoints.length > lastIndex + 1) {
-      const nextCode = codepoints.at(lastIndex + 1);
-      if (nextCode === 0x00_28) {
+      const cc = codepoints.at(lastIndex + 1);
+      if (cc === LEFT_PAREN_CODEPOINT) {
         for (let offset = 2; lastIndex + offset < codepoints.length; offset += 1) {
-          const nextNextCode = codepoints.at(lastIndex + offset);
-          if (nextNextCode === 0x00_22 || nextNextCode === 0x00_27) {
+          const ccc = codepoints.at(lastIndex + offset);
+          if (ccc === DOUBLE_QUOTE_CODEPOINT || ccc === SINGLE_QUOTE_CODEPOINT) {
             return [lastIndex + 1, value.toLowerCase(), "function"];
           } else if (
-            nextNextCode !== 0x00_09 &&
-            nextNextCode !== 0x00_20 &&
-            nextNextCode !== 0x00_0a
+            ccc !== TAB_CODEPOINT &&
+            ccc !== SPACE_CODEPOINT &&
+            ccc !== NEWLINE_CODEPOINT
           ) {
             const result = consumeUrl(codepoints, lastIndex + offset);
             if (result === null) return null;
@@ -794,8 +844,8 @@ export const consumeIdentLike = (
       }
     }
   } else if (codepoints.length > lastIndex + 1) {
-    const nextCode = codepoints.at(lastIndex + 1);
-    if (nextCode === 0x00_28) {
+    const cc = codepoints.at(lastIndex + 1);
+    if (cc === LEFT_PAREN_CODEPOINT) {
       return [lastIndex + 1, value.toLowerCase(), "function"];
     }
   }
