@@ -1,3 +1,9 @@
+interface GenericToken {
+  type: string;
+  start: number;
+  end: number;
+}
+
 export type Token =
   | WhitespaceToken
   | StringToken
@@ -23,96 +29,97 @@ export type Token =
   | RightCurlyToken
   | EOFToken;
 
-export type WhitespaceToken = {
+export interface WhitespaceToken extends GenericToken {
   type: "whitespace";
-};
-export type StringToken = {
+}
+export interface StringToken extends GenericToken {
   type: "string";
   value: string;
-};
-export type HashToken = {
+}
+export interface HashToken extends GenericToken {
   type: "hash";
   value: string;
   flag: "id" | "unrestricted";
-};
-export type DelimToken = {
+}
+export interface DelimToken extends GenericToken {
   type: "delim";
   value: number;
-};
-export type CommaToken = {
+}
+export interface CommaToken extends GenericToken {
   type: "comma";
-};
-export type LeftParenToken = {
+}
+export interface LeftParenToken extends GenericToken {
   type: "(";
-};
-export type RightParenToken = {
+}
+export interface RightParenToken extends GenericToken {
   type: ")";
-};
-export type DimensionToken = {
+}
+export interface DimensionToken extends GenericToken {
   type: "dimension";
   value: number;
   unit: string;
   flag: "number";
-};
-export type NumberToken = {
+}
+export interface NumberToken extends GenericToken {
   type: "number";
   value: number;
   flag: "number" | "integer";
-};
-export type PercentageToken = {
+}
+export interface PercentageToken extends GenericToken {
   type: "percentage";
   value: number;
   flag: "number";
-};
-export type CDCToken = {
+}
+export interface CDCToken extends GenericToken {
   type: "CDC";
-};
-export type ColonToken = {
+}
+export interface ColonToken extends GenericToken {
   type: "colon";
-};
-export type SemicolonToken = {
+}
+export interface SemicolonToken extends GenericToken {
   type: "semicolon";
-};
-export type CDOToken = {
+}
+export interface CDOToken extends GenericToken {
   type: "CDO";
-};
-export type AtKeywordToken = {
+}
+export interface AtKeywordToken extends GenericToken {
   type: "at-keyword";
   value: string;
-};
-export type LeftBracketToken = {
+}
+export interface LeftBracketToken extends GenericToken {
   type: "[";
-};
-export type RightBracketToken = {
+}
+export interface RightBracketToken extends GenericToken {
   type: "]";
-};
-export type LeftCurlyToken = {
+}
+export interface LeftCurlyToken extends GenericToken {
   type: "{";
-};
-export type RightCurlyToken = {
+}
+export interface RightCurlyToken extends GenericToken {
   type: "}";
-};
-export type EOFToken = {
-  type: "EOF";
-};
-export type IdentToken = {
+}
+export interface IdentToken extends GenericToken {
   type: "ident";
   value: string;
-};
-export type FunctionToken = {
+}
+export interface FunctionToken extends GenericToken {
   type: "function";
   value: string;
-};
-export type UrlToken = {
+}
+export interface UrlToken extends GenericToken {
   type: "url";
   value: string;
-};
+}
+export interface EOFToken {
+  type: "EOF";
+}
 
 export const codepointsToTokens = (codepoints: number[], index = 0): Token[] | null => {
   const tokens: Token[] = [];
 
   for (; index < codepoints.length; index += 1) {
     const code = codepoints.at(index) as number;
+    const start = index;
 
     if (code === 0x00_2f && codepoints.at(index + 1) === 0x00_2a) {
       index += 2;
@@ -136,21 +143,18 @@ export const codepointsToTokens = (codepoints: number[], index = 0): Token[] | n
       const prevToken = tokens.at(-1);
       if (prevToken?.type === "whitespace") {
         tokens.pop();
+        tokens.push({ type: "whitespace", start: prevToken.start, end: index });
+      } else {
+        tokens.push({ type: "whitespace", start, end: index });
       }
-      tokens.push({
-        type: "whitespace",
-      });
     } else if (code === 0x00_22) {
       const result = consumeString(codepoints, index);
       if (result === null) {
         return null;
       }
       const [lastIndex, value] = result;
-      tokens.push({
-        type: "string",
-        value,
-      });
       index = lastIndex;
+      tokens.push({ type: "string", value, start, end: index });
     } else if (code === 0x00_23) {
       // if hash
       if (index + 1 < codepoints.length) {
@@ -173,91 +177,93 @@ export const codepointsToTokens = (codepoints: number[], index = 0): Token[] | n
           const result = consumeIdentUnsafe(codepoints, index + 1);
           if (result !== null) {
             const [lastIndex, value] = result;
-            tokens.push({
-              type: "hash",
-              value: value.toLowerCase(),
-              flag,
-            });
             index = lastIndex;
+            tokens.push({ type: "hash", value: value.toLowerCase(), flag, start, end: index });
             continue;
           }
         }
       }
 
-      tokens.push({ type: "delim", value: code });
+      tokens.push({ type: "delim", value: code, start, end: index });
     } else if (code === 0x00_27) {
       const result = consumeString(codepoints, index);
       if (result === null) {
         return null;
       }
       const [lastIndex, value] = result;
-      tokens.push({
-        type: "string",
-        value,
-      });
       index = lastIndex;
+      tokens.push({ type: "string", value, start, end: index });
     } else if (code === 0x00_28) {
-      tokens.push({ type: "(" });
+      tokens.push({ type: "(", start, end: index });
     } else if (code === 0x00_29) {
-      tokens.push({ type: ")" });
+      tokens.push({ type: ")", start, end: index });
     } else if (code === 0x00_2b) {
       const plusNumeric = consumeNumeric(codepoints, index);
       if (plusNumeric === null) {
-        tokens.push({
-          type: "delim",
-          value: code,
-        });
+        tokens.push({ type: "delim", value: code, start, end: index });
       } else {
         const [lastIndex, tokenTuple] = plusNumeric;
+        index = lastIndex;
         if (tokenTuple[0] === "dimension") {
           tokens.push({
             type: "dimension",
             value: tokenTuple[1],
             unit: tokenTuple[2].toLowerCase(),
             flag: "number",
+            start,
+            end: index,
           });
         } else if (tokenTuple[0] === "number") {
           tokens.push({
             type: tokenTuple[0],
             value: tokenTuple[1],
             flag: tokenTuple[2],
+            start,
+            end: index,
           });
         } else {
           tokens.push({
             type: tokenTuple[0],
             value: tokenTuple[1],
             flag: "number",
+            start,
+            end: index,
           });
         }
-        index = lastIndex;
       }
     } else if (code === 0x00_2c) {
-      tokens.push({ type: "comma" });
+      tokens.push({ type: "comma", start, end: index });
     } else if (code === 0x00_2d) {
       const minusNumeric = consumeNumeric(codepoints, index);
       if (minusNumeric !== null) {
         const [lastIndex, tokenTuple] = minusNumeric;
+        index = lastIndex;
         if (tokenTuple[0] === "dimension") {
           tokens.push({
             type: "dimension",
             value: tokenTuple[1],
             unit: tokenTuple[2].toLowerCase(),
             flag: "number",
+            start,
+            end: index,
           });
         } else if (tokenTuple[0] === "number") {
           tokens.push({
             type: tokenTuple[0],
             value: tokenTuple[1],
             flag: tokenTuple[2],
+            start,
+            end: index,
           });
         } else {
           tokens.push({
             type: tokenTuple[0],
             value: tokenTuple[1],
             flag: "number",
+            start,
+            end: index,
           });
         }
-        index = lastIndex;
         continue;
       }
       // if CDC
@@ -265,10 +271,8 @@ export const codepointsToTokens = (codepoints: number[], index = 0): Token[] | n
         const nextCode = codepoints.at(index + 1);
         const nextNextCode = codepoints.at(index + 2);
         if (nextCode === 0x00_2d && nextNextCode === 0x00_3e) {
-          tokens.push({
-            type: "CDC",
-          });
           index += 2;
+          tokens.push({ type: "CDC", start, end: index });
           continue;
         }
       }
@@ -276,54 +280,51 @@ export const codepointsToTokens = (codepoints: number[], index = 0): Token[] | n
       const result = consumeIdentLike(codepoints, index);
       if (result !== null) {
         const [lastIndex, value, type] = result;
-        tokens.push({
-          type,
-          value,
-        });
         index = lastIndex;
+        tokens.push({ type, value, start, end: index });
         continue;
       }
 
-      tokens.push({
-        type: "delim",
-        value: code,
-      });
+      tokens.push({ type: "delim", value: code, start, end: index });
     } else if (code === 0x00_2e) {
       const minusNumeric = consumeNumeric(codepoints, index);
       if (minusNumeric === null) {
-        tokens.push({
-          type: "delim",
-          value: code,
-        });
+        tokens.push({ type: "delim", value: code, start, end: index });
       } else {
         const [lastIndex, tokenTuple] = minusNumeric;
+        index = lastIndex;
         if (tokenTuple[0] === "dimension") {
           tokens.push({
             type: "dimension",
             value: tokenTuple[1],
             unit: tokenTuple[2].toLowerCase(),
             flag: "number",
+            start,
+            end: index,
           });
         } else if (tokenTuple[0] === "number") {
           tokens.push({
             type: tokenTuple[0],
             value: tokenTuple[1],
             flag: tokenTuple[2],
+            start,
+            end: index,
           });
         } else {
           tokens.push({
             type: tokenTuple[0],
             value: tokenTuple[1],
             flag: "number",
+            start,
+            end: index,
           });
         }
-        index = lastIndex;
         continue;
       }
     } else if (code === 0x00_3a) {
-      tokens.push({ type: "colon" });
+      tokens.push({ type: "colon", start, end: index });
     } else if (code === 0x00_3b) {
-      tokens.push({ type: "semicolon" });
+      tokens.push({ type: "semicolon", start, end: index });
     } else if (code === 0x00_3c) {
       // if CDO
       if (index + 3 < codepoints.length) {
@@ -331,67 +332,69 @@ export const codepointsToTokens = (codepoints: number[], index = 0): Token[] | n
         const nextNextCode = codepoints.at(index + 2);
         const nextNextNextCode = codepoints.at(index + 3);
         if (nextCode === 0x00_21 && nextNextCode === 0x00_2d && nextNextNextCode === 0x00_2d) {
-          tokens.push({
-            type: "CDO",
-          });
           index += 3;
+          tokens.push({ type: "CDO", start, end: index });
           continue;
         }
       }
 
-      tokens.push({
-        type: "delim",
-        value: code,
-      });
+      tokens.push({ type: "delim", value: code, start, end: index });
     } else if (code === 0x00_40) {
       // if at keyword
       const result = consumeIdent(codepoints, index + 1);
       if (result !== null) {
         const [lastIndex, value] = result;
+        index = lastIndex;
         tokens.push({
           type: "at-keyword",
           value: value.toLowerCase(),
+          start,
+          end: index,
         });
-        index = lastIndex;
         continue;
       }
 
-      tokens.push({ type: "delim", value: code });
+      tokens.push({ type: "delim", value: code, start, end: index });
     } else if (code === 0x00_5b) {
-      tokens.push({ type: "[" });
+      tokens.push({ type: "[", start, end: index });
     } else if (code === 0x00_5d) {
-      tokens.push({ type: "]" });
+      tokens.push({ type: "]", start, end: index });
     } else if (code === 0x00_7b) {
-      tokens.push({ type: "{" });
+      tokens.push({ type: "{", start, end: index });
     } else if (code === 0x00_7d) {
-      tokens.push({ type: "}" });
+      tokens.push({ type: "}", start, end: index });
     } else if (code >= 0x00_30 && code <= 0x00_39) {
       const result = consumeNumeric(codepoints, index) as NonNullable<
         ReturnType<typeof consumeNumeric>
       >;
       const [lastIndex, tokenTuple] = result;
+      index = lastIndex;
       if (tokenTuple[0] === "dimension") {
         tokens.push({
           type: "dimension",
           value: tokenTuple[1],
           unit: tokenTuple[2].toLowerCase(),
           flag: "number",
+          start,
+          end: index,
         });
       } else if (tokenTuple[0] === "number") {
         tokens.push({
           type: tokenTuple[0],
           value: tokenTuple[1],
           flag: tokenTuple[2],
+          start,
+          end: index,
         });
       } else {
         tokens.push({
           type: tokenTuple[0],
           value: tokenTuple[1],
           flag: "number",
+          start,
+          end: index,
         });
       }
-
-      index = lastIndex;
     } else if (
       code === 0x00_5f ||
       (code >= 0x00_41 && code <= 0x00_5a) ||
@@ -401,21 +404,23 @@ export const codepointsToTokens = (codepoints: number[], index = 0): Token[] | n
     ) {
       const nextCode = codepoints.at(index + 1);
       if (code === 0x00_5c && (nextCode === undefined || nextCode === 0x0a)) {
-        tokens.push({ type: "delim", value: code });
+        tokens.push({ type: "delim", value: code, start, end: index });
       } else {
         const result = consumeIdentLike(codepoints, index);
         if (result === null) {
           return null;
         }
         const [lastIndex, value, type] = result;
+        index = lastIndex;
         tokens.push({
           type,
           value,
+          start,
+          end: index,
         });
-        index = lastIndex;
       }
     } else {
-      tokens.push({ type: "delim", value: code });
+      tokens.push({ type: "delim", value: code, start, end: index });
     }
   }
   tokens.push({ type: "EOF" });

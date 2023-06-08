@@ -15,6 +15,22 @@ import path from "node:path";
 
 // codepoints
 const c = (strings: TemplateStringsArray): number[] => readCodepoints(strings[0]);
+// lexer without indexes
+const l = (cssStr: string) => {
+  const result = lexer(cssStr);
+  if (result) {
+    return result.map((token) => {
+      if (token.type === "EOF") {
+        return token;
+      } else {
+        const { start: _0, end: _1, ...t } = token;
+        return t;
+      }
+    });
+  } else {
+    return result;
+  }
+};
 
 test("consumeEscape", () => {
   expect(consumeEscape(c``, 0)).toEqual(null);
@@ -218,23 +234,18 @@ test("consumeIdentUnsafe", () => {
 
 test("old bugs", () => {
   expect(lexer("@media (min-width: -100px)")).toEqual([
-    { type: "at-keyword", value: "media" },
-    { type: "whitespace" },
-    { type: "(" },
-    { type: "ident", value: "min-width" },
-    { type: "colon" },
-    { type: "whitespace" },
-    {
-      flag: "number",
-      type: "dimension",
-      unit: "px",
-      value: -100,
-    },
-    { type: ")" },
+    { end: 5, start: 0, type: "at-keyword", value: "media" },
+    { end: 6, start: 6, type: "whitespace" },
+    { end: 7, start: 7, type: "(" },
+    { end: 16, start: 8, type: "ident", value: "min-width" },
+    { end: 17, start: 17, type: "colon" },
+    { end: 18, start: 18, type: "whitespace" },
+    { end: 24, flag: "number", start: 19, type: "dimension", unit: "px", value: -100 },
+    { end: 25, start: 25, type: ")" },
     { type: "EOF" },
   ]);
 
-  expect(lexer(".dropdown-item:hover{color:#1e2125;background-color:#e9ecef}")).toEqual([
+  expect(l(".dropdown-item:hover{color:#1e2125;background-color:#e9ecef}")).toEqual([
     { type: "delim", value: 46 },
     { type: "ident", value: "dropdown-item" },
     { type: "colon" },
@@ -258,7 +269,7 @@ test("old bugs", () => {
     { type: "}" },
     { type: "EOF" },
   ]);
-  expect(lexer("@media (1/2 < aspect-ratio < 1/1) { }")).toEqual([
+  expect(l("@media (1/2 < aspect-ratio < 1/1) { }")).toEqual([
     { type: "at-keyword", value: "media" },
     { type: "whitespace" },
     { type: "(" },
@@ -301,10 +312,10 @@ test("old bugs", () => {
 });
 
 test("missing coverage", () => {
-  expect(lexer('"\n"')).toEqual(null);
-  expect(lexer("'\n'")).toEqual(null);
-  expect(lexer("#")).toEqual([{ type: "delim", value: 35 }, { type: "EOF" }]);
-  expect(lexer("+3% +4 +2px")).toEqual([
+  expect(l('"\n"')).toEqual(null);
+  expect(l("'\n'")).toEqual(null);
+  expect(l("#")).toEqual([{ type: "delim", value: 35 }, { type: "EOF" }]);
+  expect(l("+3% +4 +2px")).toEqual([
     {
       flag: "number",
       type: "percentage",
@@ -325,7 +336,7 @@ test("missing coverage", () => {
     },
     { type: "EOF" },
   ]);
-  expect(lexer("-3% -4 -2px")).toEqual([
+  expect(l("-3% -4 -2px")).toEqual([
     {
       flag: "number",
       type: "percentage",
@@ -346,7 +357,7 @@ test("missing coverage", () => {
     },
     { type: "EOF" },
   ]);
-  expect(lexer(".3% .4 .2px")).toEqual([
+  expect(l(".3% .4 .2px")).toEqual([
     {
       flag: "number",
       type: "percentage",
@@ -367,7 +378,7 @@ test("missing coverage", () => {
     },
     { type: "EOF" },
   ]);
-  expect(lexer("+2.")).toEqual([
+  expect(l("+2.")).toEqual([
     {
       flag: "integer",
       type: "number",
@@ -376,27 +387,27 @@ test("missing coverage", () => {
     { type: "delim", value: 46 },
     { type: "EOF" },
   ]);
-  expect(lexer("<!-- -->")).toEqual([
+  expect(l("<!-- -->")).toEqual([
     { type: "CDO" },
     { type: "whitespace" },
     { type: "CDC" },
     { type: "EOF" },
   ]);
-  expect(lexer("@")).toEqual([{ type: "delim", value: 64 }, { type: "EOF" }]);
-  expect(lexer("\\ \\\n")).toEqual([
+  expect(l("@")).toEqual([{ type: "delim", value: 64 }, { type: "EOF" }]);
+  expect(l("\\ \\\n")).toEqual([
     { type: "ident", value: " " },
     { type: "delim", value: 92 },
     { type: "whitespace" },
     { type: "EOF" },
   ]);
-  expect(lexer("a/**/b")).toEqual([
+  expect(l("a/**/b")).toEqual([
     { type: "ident", value: "a" },
     { type: "ident", value: "b" },
     { type: "EOF" },
   ]);
-  expect(lexer("a/*b")).toEqual([{ type: "ident", value: "a" }, { type: "EOF" }]);
-  expect(lexer("a/**b")).toEqual([{ type: "ident", value: "a" }, { type: "EOF" }]);
-  expect(lexer("/* * / * */b")).toEqual([{ type: "ident", value: "b" }, { type: "EOF" }]);
+  expect(l("a/*b")).toEqual([{ type: "ident", value: "a" }, { type: "EOF" }]);
+  expect(l("a/**b")).toEqual([{ type: "ident", value: "a" }, { type: "EOF" }]);
+  expect(l("/* * / * */b")).toEqual([{ type: "ident", value: "b" }, { type: "EOF" }]);
 });
 
 test("lexer", () => {
