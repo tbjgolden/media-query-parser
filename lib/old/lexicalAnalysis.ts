@@ -24,87 +24,87 @@ export type Token =
   | EOFToken;
 
 export type WhitespaceToken = {
-  type: "<whitespace-token>";
+  type: "whitespace";
 };
 export type StringToken = {
-  type: "<string-token>";
+  type: "string";
   value: string;
 };
 export type HashToken = {
-  type: "<hash-token>";
+  type: "hash";
   value: string;
   flag: "id" | "unrestricted";
 };
 export type DelimToken = {
-  type: "<delim-token>";
+  type: "delim";
   value: number;
 };
 export type CommaToken = {
-  type: "<comma-token>";
+  type: "comma";
 };
 export type LeftParenToken = {
-  type: "<(-token>";
+  type: "(";
 };
 export type RightParenToken = {
-  type: "<)-token>";
+  type: ")";
 };
 export type DimensionToken = {
-  type: "<dimension-token>";
+  type: "dimension";
   value: number;
   unit: string;
   flag: "number";
 };
 export type NumberToken = {
-  type: "<number-token>";
+  type: "number";
   value: number;
   flag: "number" | "integer";
 };
 export type PercentageToken = {
-  type: "<percentage-token>";
+  type: "percentage";
   value: number;
   flag: "number";
 };
 export type CDCToken = {
-  type: "<CDC-token>";
+  type: "CDC";
 };
 export type ColonToken = {
-  type: "<colon-token>";
+  type: "colon";
 };
 export type SemicolonToken = {
-  type: "<semicolon-token>";
+  type: "semicolon";
 };
 export type CDOToken = {
-  type: "<CDO-token>";
+  type: "CDO";
 };
 export type AtKeywordToken = {
-  type: "<at-keyword-token>";
+  type: "at-keyword";
   value: string;
 };
 export type LeftBracketToken = {
-  type: "<[-token>";
+  type: "[";
 };
 export type RightBracketToken = {
-  type: "<]-token>";
+  type: "]";
 };
 export type LeftCurlyToken = {
-  type: "<{-token>";
+  type: "{";
 };
 export type RightCurlyToken = {
-  type: "<}-token>";
+  type: "}";
 };
 export type EOFToken = {
-  type: "<EOF-token>";
+  type: "EOF";
 };
 export type IdentToken = {
-  type: "<ident-token>";
+  type: "ident";
   value: string;
 };
 export type FunctionToken = {
-  type: "<function-token>";
+  type: "function";
   value: string;
 };
 export type UrlToken = {
-  type: "<url-token>";
+  type: "url";
   value: string;
 };
 
@@ -131,7 +131,7 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
       }
       index -= 1;
       tokens.push({
-        type: "<whitespace-token>",
+        type: "whitespace",
       });
     } else if (code === 0x00_22) {
       const result = consumeString(str, index);
@@ -140,7 +140,7 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
       }
       const [lastIndex, value] = result;
       tokens.push({
-        type: "<string-token>",
+        type: "string",
         value,
       });
       index = lastIndex;
@@ -165,7 +165,7 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
           if (result !== null) {
             const [lastIndex, value] = result;
             tokens.push({
-              type: "<hash-token>",
+              type: "hash",
               value: value.toLowerCase(),
               flag,
             });
@@ -175,7 +175,7 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
         }
       }
 
-      tokens.push({ type: "<delim-token>", value: code });
+      tokens.push({ type: "delim", value: code });
     } else if (code === 0x00_27) {
       const result = consumeString(str, index);
       if (result === null) {
@@ -183,31 +183,31 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
       }
       const [lastIndex, value] = result;
       tokens.push({
-        type: "<string-token>",
+        type: "string",
         value,
       });
       index = lastIndex;
     } else if (code === 0x00_28) {
-      tokens.push({ type: "<(-token>" });
+      tokens.push({ type: "(" });
     } else if (code === 0x00_29) {
-      tokens.push({ type: "<)-token>" });
+      tokens.push({ type: ")" });
     } else if (code === 0x00_2b) {
       const plusNumeric = consumeNumeric(str, index);
       if (plusNumeric === null) {
         tokens.push({
-          type: "<delim-token>",
+          type: "delim",
           value: code,
         });
       } else {
         const [lastIndex, tokenTuple] = plusNumeric;
-        if (tokenTuple[0] === "<dimension-token>") {
+        if (tokenTuple[0] === "dimension") {
           tokens.push({
-            type: "<dimension-token>",
+            type: "dimension",
             value: tokenTuple[1],
             unit: tokenTuple[2].toLowerCase(),
             flag: "number",
           });
-        } else if (tokenTuple[0] === "<number-token>") {
+        } else if (tokenTuple[0] === "number") {
           tokens.push({
             type: tokenTuple[0],
             value: tokenTuple[1],
@@ -223,19 +223,19 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
         index = lastIndex;
       }
     } else if (code === 0x00_2c) {
-      tokens.push({ type: "<comma-token>" });
+      tokens.push({ type: "comma" });
     } else if (code === 0x00_2d) {
       const minusNumeric = consumeNumeric(str, index);
       if (minusNumeric !== null) {
         const [lastIndex, tokenTuple] = minusNumeric;
-        if (tokenTuple[0] === "<dimension-token>") {
+        if (tokenTuple[0] === "dimension") {
           tokens.push({
-            type: "<dimension-token>",
+            type: "dimension",
             value: tokenTuple[1],
             unit: tokenTuple[2].toLowerCase(),
             flag: "number",
           });
-        } else if (tokenTuple[0] === "<number-token>") {
+        } else if (tokenTuple[0] === "number") {
           tokens.push({
             type: tokenTuple[0],
             value: tokenTuple[1],
@@ -257,7 +257,7 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
         const nextNextCode = str.charCodeAt(index + 2);
         if (nextCode === 0x00_2d && nextNextCode === 0x00_3e) {
           tokens.push({
-            type: "<CDC-token>",
+            type: "CDC",
           });
           index += 2;
           continue;
@@ -276,26 +276,26 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
       }
 
       tokens.push({
-        type: "<delim-token>",
+        type: "delim",
         value: code,
       });
     } else if (code === 0x00_2e) {
       const minusNumeric = consumeNumeric(str, index);
       if (minusNumeric === null) {
         tokens.push({
-          type: "<delim-token>",
+          type: "delim",
           value: code,
         });
       } else {
         const [lastIndex, tokenTuple] = minusNumeric;
-        if (tokenTuple[0] === "<dimension-token>") {
+        if (tokenTuple[0] === "dimension") {
           tokens.push({
-            type: "<dimension-token>",
+            type: "dimension",
             value: tokenTuple[1],
             unit: tokenTuple[2].toLowerCase(),
             flag: "number",
           });
-        } else if (tokenTuple[0] === "<number-token>") {
+        } else if (tokenTuple[0] === "number") {
           tokens.push({
             type: tokenTuple[0],
             value: tokenTuple[1],
@@ -312,9 +312,9 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
         continue;
       }
     } else if (code === 0x00_3a) {
-      tokens.push({ type: "<colon-token>" });
+      tokens.push({ type: "colon" });
     } else if (code === 0x00_3b) {
-      tokens.push({ type: "<semicolon-token>" });
+      tokens.push({ type: "semicolon" });
     } else if (code === 0x00_3c) {
       // if CDO
       if (index + 3 < str.length) {
@@ -323,7 +323,7 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
         const nextNextNextCode = str.charCodeAt(index + 3);
         if (nextCode === 0x00_21 && nextNextCode === 0x00_2d && nextNextNextCode === 0x00_2d) {
           tokens.push({
-            type: "<CDO-token>",
+            type: "CDO",
           });
           index += 3;
           continue;
@@ -331,7 +331,7 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
       }
 
       tokens.push({
-        type: "<delim-token>",
+        type: "delim",
         value: code,
       });
     } else if (code === 0x00_40) {
@@ -340,16 +340,16 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
       if (result !== null) {
         const [lastIndex, value] = result;
         tokens.push({
-          type: "<at-keyword-token>",
+          type: "at-keyword",
           value: value.toLowerCase(),
         });
         index = lastIndex;
         continue;
       }
 
-      tokens.push({ type: "<delim-token>", value: code });
+      tokens.push({ type: "delim", value: code });
     } else if (code === 0x00_5b) {
-      tokens.push({ type: "<[-token>" });
+      tokens.push({ type: "[" });
     } else if (code === 0x00_5c) {
       const result = consumeEscape(str, index);
       if (result === null) {
@@ -359,22 +359,22 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
       str = str.slice(0, index) + value + str.slice(lastIndex + 1);
       index -= 1;
     } else if (code === 0x00_5d) {
-      tokens.push({ type: "<]-token>" });
+      tokens.push({ type: "]" });
     } else if (code === 0x00_7b) {
-      tokens.push({ type: "<{-token>" });
+      tokens.push({ type: "{" });
     } else if (code === 0x00_7d) {
-      tokens.push({ type: "<}-token>" });
+      tokens.push({ type: "}" });
     } else if (code >= 0x00_30 && code <= 0x00_39) {
       const result = consumeNumeric(str, index) as NonNullable<ReturnType<typeof consumeNumeric>>;
       const [lastIndex, tokenTuple] = result;
-      if (tokenTuple[0] === "<dimension-token>") {
+      if (tokenTuple[0] === "dimension") {
         tokens.push({
-          type: "<dimension-token>",
+          type: "dimension",
           value: tokenTuple[1],
           unit: tokenTuple[2].toLowerCase(),
           flag: "number",
         });
-      } else if (tokenTuple[0] === "<number-token>") {
+      } else if (tokenTuple[0] === "number") {
         tokens.push({
           type: tokenTuple[0],
           value: tokenTuple[1],
@@ -406,10 +406,10 @@ export const lexicalAnalysis = (str: string, index = 0): Token[] | null => {
       });
       index = lastIndex;
     } else {
-      tokens.push({ type: "<delim-token>", value: code });
+      tokens.push({ type: "delim", value: code });
     }
   }
-  tokens.push({ type: "<EOF-token>" });
+  tokens.push({ type: "EOF" });
   return tokens;
 };
 
@@ -527,9 +527,9 @@ export const consumeNumeric = (
   | [
       number,
       (
-        | ["<number-token>", number, "number" | "integer"]
-        | ["<percentage-token>", number]
-        | ["<dimension-token>", number, string]
+        | ["number", number, "number" | "integer"]
+        | ["percentage", number]
+        | ["dimension", number, string]
       )
     ]
   | null => {
@@ -540,14 +540,14 @@ export const consumeNumeric = (
   const identResult = consumeIdent(str, numberEndIndex + 1);
   if (identResult !== null) {
     const [identEndIndex, identValue] = identResult;
-    return [identEndIndex, ["<dimension-token>", numberValue, identValue]];
+    return [identEndIndex, ["dimension", numberValue, identValue]];
   }
 
   if (numberEndIndex + 1 < str.length && str.charCodeAt(numberEndIndex + 1) === 0x00_25) {
-    return [numberEndIndex + 1, ["<percentage-token>", numberValue]];
+    return [numberEndIndex + 1, ["percentage", numberValue]];
   }
 
-  return [numberEndIndex, ["<number-token>", numberValue, numberFlag]];
+  return [numberEndIndex, ["number", numberValue, numberFlag]];
 };
 
 export const consumeNumber = (
@@ -739,7 +739,7 @@ export const consumeUrl = (str: string, index: number): [number, string] | null 
 export const consumeIdentLike = (
   str: string,
   index: number
-): [number, string, "<ident-token>" | "<function-token>" | "<url-token>"] | null => {
+): [number, string, "ident" | "function" | "url"] | null => {
   const result = consumeIdent(str, index);
   if (result === null) return null;
 
@@ -751,7 +751,7 @@ export const consumeIdentLike = (
         for (let offset = 2; lastIndex + offset < str.length; offset += 1) {
           const nextNextCode = str.charCodeAt(lastIndex + offset);
           if (nextNextCode === 0x00_22 || nextNextCode === 0x00_27) {
-            return [lastIndex + 1, value.toLowerCase(), "<function-token>"];
+            return [lastIndex + 1, value.toLowerCase(), "function"];
           } else if (
             nextNextCode !== 0x00_09 &&
             nextNextCode !== 0x00_20 &&
@@ -760,18 +760,18 @@ export const consumeIdentLike = (
             const result = consumeUrl(str, lastIndex + offset);
             if (result === null) return null;
             const [lastUrlIndex, value] = result;
-            return [lastUrlIndex, value, "<url-token>"];
+            return [lastUrlIndex, value, "url"];
           }
         }
-        return [lastIndex + 1, value.toLowerCase(), "<function-token>"];
+        return [lastIndex + 1, value.toLowerCase(), "function"];
       }
     }
   } else if (str.length > lastIndex + 1) {
     const nextCode = str.charCodeAt(lastIndex + 1);
     if (nextCode === 0x00_28) {
-      return [lastIndex + 1, value.toLowerCase(), "<function-token>"];
+      return [lastIndex + 1, value.toLowerCase(), "function"];
     }
   }
 
-  return [lastIndex, value.toLowerCase(), "<ident-token>"];
+  return [lastIndex, value.toLowerCase(), "ident"];
 };

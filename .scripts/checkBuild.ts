@@ -38,7 +38,7 @@ if (await isDirectory("lib")) {
             context: "value",
             prefix: "min",
             feature: "width",
-            value: { type: "<dimension-token>", value: 123, unit: "px", flag: "number" },
+            value: { type: "dimension", value: 123, unit: "px", flag: "number" },
           },
         ],
       },

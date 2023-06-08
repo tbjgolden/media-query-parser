@@ -1,0 +1,9 @@
+- [ ] handle utf16 to utf8 conversion with TextDecoder
+- [ ] make it clear in Readme how to use with csstree or postcss
+- [ ] match csstree ast
+- [ ] support `loc` (source, start, end)
+- [ ] create generator
+- [ ] more useful exported api
+  - parse{MediaQuery,MediaQueryList,...}
+  - validate
+  - generate

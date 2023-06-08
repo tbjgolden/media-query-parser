@@ -1,2 +1,2 @@
-export * from "./lexicalAnalysis.js";
-export * from "./syntacticAnalysis.js";
+export * from "./old/lexicalAnalysis.js";
+export * from "./old/syntacticAnalysis.js";

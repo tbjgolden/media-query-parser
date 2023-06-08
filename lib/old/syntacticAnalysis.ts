@@ -32,8 +32,8 @@ export const toUnflattenedAST = (str: string): AST => {
   // trim the @media and { where applicable
   let startIndex = 0;
   let endIndex = tokenList.length - 1;
-  if (tokenList[0].type === "<at-keyword-token>" && tokenList[0].value === "media") {
-    if (tokenList[1].type !== "<whitespace-token>") {
+  if (tokenList[0].type === "at-keyword" && tokenList[0].value === "media") {
+    if (tokenList[1].type !== "whitespace") {
       throw createError("Expected whitespace after media");
     }
 
@@ -41,10 +41,10 @@ export const toUnflattenedAST = (str: string): AST => {
     for (let i = 2; i < tokenList.length - 1; i++) {
       // eslint-disable-next-line security/detect-object-injection
       const token = tokenList[i];
-      if (token.type === "<{-token>") {
+      if (token.type === "{") {
         endIndex = i;
         break;
-      } else if (token.type === "<semicolon-token>") {
+      } else if (token.type === "semicolon") {
         throw createError("Expected '{' in media query but found ';'");
       }
     }
@@ -60,7 +60,7 @@ export const removeWhitespace = (tokenList: Token[]): WToken[] => {
 
   let before = false;
   for (const element of tokenList) {
-    if (element.type === "<whitespace-token>") {
+    if (element.type === "whitespace") {
       before = true;
       if (newTokenList.length > 0) {
         newTokenList[newTokenList.length - 1].wsAfter = true;
@@ -81,7 +81,7 @@ export const removeWhitespace = (tokenList: Token[]): WToken[] => {
 export const syntacticAnalysis = (tokenList: Token[]): MediaQuery[] => {
   const mediaQueryList: Array<Array<Token>> = [[]];
   for (const token of tokenList) {
-    if (token.type === "<comma-token>") {
+    if (token.type === "comma") {
       mediaQueryList.push([]);
     } else {
       mediaQueryList[mediaQueryList.length - 1].push(token);
@@ -120,7 +120,7 @@ export type MediaQuery = {
 
 export const tokenizeMediaQuery = (tokens: WToken[]): MediaQuery => {
   const firstToken = tokens[0];
-  if (firstToken.type === "<(-token>") {
+  if (firstToken.type === "(") {
     try {
       return {
         mediaPrefix: null,
@@ -130,7 +130,7 @@ export const tokenizeMediaQuery = (tokens: WToken[]): MediaQuery => {
     } catch (error) {
       throw createError("Expected media condition after '('", error);
     }
-  } else if (firstToken.type === "<ident-token>") {
+  } else if (firstToken.type === "ident") {
     let mediaPrefix: "not" | "only" | null = null;
     let mediaType: "all" | "print" | "screen";
 
@@ -148,7 +148,7 @@ export const tokenizeMediaQuery = (tokens: WToken[]): MediaQuery => {
     // eslint-disable-next-line security/detect-object-injection
     const firstNonUnaryToken = tokens[firstIndex];
 
-    if (firstNonUnaryToken.type === "<ident-token>") {
+    if (firstNonUnaryToken.type === "ident") {
       const { value } = firstNonUnaryToken;
 
       if (value === "all") {
@@ -171,10 +171,10 @@ export const tokenizeMediaQuery = (tokens: WToken[]): MediaQuery => {
       } else {
         throw createError(`Unknown ident '${value}' in media query`);
       }
-    } else if (mediaPrefix === "not" && firstNonUnaryToken.type === "<(-token>") {
-      const tokensWithParens: WToken[] = [{ type: "<(-token>", wsBefore: false, wsAfter: false }];
+    } else if (mediaPrefix === "not" && firstNonUnaryToken.type === "(") {
+      const tokensWithParens: WToken[] = [{ type: "(", wsBefore: false, wsAfter: false }];
       tokensWithParens.push(...tokens, {
-        type: "<)-token>",
+        type: ")",
         wsBefore: false,
         wsAfter: false,
       });
@@ -200,7 +200,7 @@ export const tokenizeMediaQuery = (tokens: WToken[]): MediaQuery => {
       };
     } else if (firstIndex + 4 < tokens.length) {
       const secondNonUnaryToken = tokens[firstIndex + 1];
-      if (secondNonUnaryToken.type === "<ident-token>" && secondNonUnaryToken.value === "and") {
+      if (secondNonUnaryToken.type === "ident" && secondNonUnaryToken.value === "and") {
         try {
           return {
             mediaPrefix,
@@ -231,11 +231,7 @@ export const tokenizeMediaCondition = (
   mayContainOr: boolean,
   previousOperator: "and" | "or" | "not" | null = null
 ): MediaCondition => {
-  if (
-    tokens.length < 3 ||
-    tokens[0].type !== "<(-token>" ||
-    tokens[tokens.length - 1].type !== "<)-token>"
-  ) {
+  if (tokens.length < 3 || tokens[0].type !== "(" || tokens[tokens.length - 1].type !== ")") {
     throw new Error("Invalid media condition");
   }
 
@@ -243,10 +239,10 @@ export const tokenizeMediaCondition = (
   let maxDepth = 0;
   let count = 0;
   for (const [i, token] of tokens.entries()) {
-    if (token.type === "<(-token>") {
+    if (token.type === "(") {
       count += 1;
       maxDepth = Math.max(maxDepth, count);
-    } else if (token.type === "<)-token>") {
+    } else if (token.type === ")") {
       count -= 1;
     }
     if (count === 0) {
@@ -265,7 +261,7 @@ export const tokenizeMediaCondition = (
     child = tokenizeMediaFeature(featureTokens);
   } else {
     // eslint-disable-next-line unicorn/prefer-ternary
-    if (featureTokens[1].type === "<ident-token>" && featureTokens[1].value === "not") {
+    if (featureTokens[1].type === "ident" && featureTokens[1].value === "not") {
       child = tokenizeMediaCondition(featureTokens.slice(2, -1), true, "not");
     } else {
       child = tokenizeMediaCondition(featureTokens.slice(1, -1), true);
@@ -280,7 +276,7 @@ export const tokenizeMediaCondition = (
   } else {
     // read for a boolean op "and", "not", "or"
     const nextToken = tokens[endIndexOfFirstFeature + 1];
-    if (nextToken.type !== "<ident-token>") {
+    if (nextToken.type !== "ident") {
       throw new Error("Invalid operator\nInvalid media condition");
     } else if (previousOperator !== null && previousOperator !== nextToken.value) {
       throw new Error(
@@ -326,8 +322,8 @@ export type ValidValueToken = NumberToken | DimensionToken | RatioToken | IdentT
 export const tokenizeMediaFeature = (rawTokens: WToken[]): MediaFeature => {
   if (
     rawTokens.length < 3 ||
-    rawTokens[0].type !== "<(-token>" ||
-    rawTokens[rawTokens.length - 1].type !== "<)-token>"
+    rawTokens[0].type !== "(" ||
+    rawTokens[rawTokens.length - 1].type !== ")"
   ) {
     throw new Error("Invalid media feature");
   }
@@ -341,15 +337,15 @@ export const tokenizeMediaFeature = (rawTokens: WToken[]): MediaFeature => {
       const b = rawTokens[i + 1];
       const c = rawTokens[i + 2];
       if (
-        a.type === "<number-token>" &&
+        a.type === "number" &&
         a.value > 0 &&
-        b.type === "<delim-token>" &&
+        b.type === "delim" &&
         b.value === 0x002f &&
-        c.type === "<number-token>" &&
+        c.type === "number" &&
         c.value > 0
       ) {
         tokens.push({
-          type: "<ratio-token>",
+          type: "ratio",
           numerator: a.value,
           denominator: c.value,
           wsBefore: a.wsBefore,
@@ -364,22 +360,18 @@ export const tokenizeMediaFeature = (rawTokens: WToken[]): MediaFeature => {
   }
 
   const nextToken = tokens[1];
-  if (nextToken.type === "<ident-token>" && tokens.length === 3) {
+  if (nextToken.type === "ident" && tokens.length === 3) {
     return {
       context: "boolean",
       feature: nextToken.value,
     };
-  } else if (
-    tokens.length === 5 &&
-    tokens[1].type === "<ident-token>" &&
-    tokens[2].type === "<colon-token>"
-  ) {
+  } else if (tokens.length === 5 && tokens[1].type === "ident" && tokens[2].type === "colon") {
     const valueToken = tokens[3];
     if (
-      valueToken.type === "<number-token>" ||
-      valueToken.type === "<dimension-token>" ||
-      valueToken.type === "<ratio-token>" ||
-      valueToken.type === "<ident-token>"
+      valueToken.type === "number" ||
+      valueToken.type === "dimension" ||
+      valueToken.type === "ratio" ||
+      valueToken.type === "ident"
     ) {
       let feature = tokens[1].value;
 
@@ -420,7 +412,7 @@ export const tokenizeMediaFeature = (rawTokens: WToken[]): MediaFeature => {
 };
 
 export type RatioToken = {
-  type: "<ratio-token>";
+  type: "ratio";
   numerator: number;
   denominator: number;
 };
@@ -429,7 +421,7 @@ export type ValidRangeToken =
   | DimensionToken
   | RatioToken
   | {
-      type: "<ident-token>";
+      type: "ident";
       value: "infinite";
     };
 
@@ -474,11 +466,7 @@ export type ValidRange =
     };
 
 export const tokenizeRange = (tokens: ConvenientToken[]): ValidRange => {
-  if (
-    tokens.length < 5 ||
-    tokens[0].type !== "<(-token>" ||
-    tokens[tokens.length - 1].type !== "<)-token>"
-  ) {
+  if (tokens.length < 5 || tokens[0].type !== "(" || tokens[tokens.length - 1].type !== ")") {
     throw new Error("Invalid range");
   }
 
@@ -492,19 +480,19 @@ export const tokenizeRange = (tokens: ConvenientToken[]): ValidRange => {
   };
 
   const hasLeft =
-    tokens[1].type === "<number-token>" ||
-    tokens[1].type === "<dimension-token>" ||
-    tokens[1].type === "<ratio-token>" ||
-    (tokens[1].type === "<ident-token>" && tokens[1].value === "infinite");
-  if (tokens[2].type === "<delim-token>") {
+    tokens[1].type === "number" ||
+    tokens[1].type === "dimension" ||
+    tokens[1].type === "ratio" ||
+    (tokens[1].type === "ident" && tokens[1].value === "infinite");
+  if (tokens[2].type === "delim") {
     if (tokens[2].value === 0x003c) {
-      if (tokens[3].type === "<delim-token>" && tokens[3].value === 0x003d && !tokens[3].wsBefore) {
+      if (tokens[3].type === "delim" && tokens[3].value === 0x003d && !tokens[3].wsBefore) {
         range[hasLeft ? "leftOp" : "rightOp"] = "<=";
       } else {
         range[hasLeft ? "leftOp" : "rightOp"] = "<";
       }
     } else if (tokens[2].value === 0x003e) {
-      if (tokens[3].type === "<delim-token>" && tokens[3].value === 0x003d && !tokens[3].wsBefore) {
+      if (tokens[3].type === "delim" && tokens[3].value === 0x003d && !tokens[3].wsBefore) {
         range[hasLeft ? "leftOp" : "rightOp"] = ">=";
       } else {
         range[hasLeft ? "leftOp" : "rightOp"] = ">";
@@ -517,7 +505,7 @@ export const tokenizeRange = (tokens: ConvenientToken[]): ValidRange => {
 
     if (hasLeft) {
       range.leftToken = tokens[1];
-    } else if (tokens[1].type === "<ident-token>") {
+    } else if (tokens[1].type === "ident") {
       range.featureName = tokens[1].value;
     } else {
       throw new Error("Invalid range");
@@ -528,18 +516,18 @@ export const tokenizeRange = (tokens: ConvenientToken[]): ValidRange => {
     const tokenAfterFirstOp = tokens[tokenIndexAfterFirstOp];
 
     if (hasLeft) {
-      if (tokenAfterFirstOp.type === "<ident-token>") {
+      if (tokenAfterFirstOp.type === "ident") {
         range.featureName = tokenAfterFirstOp.value;
 
         if (tokens.length >= 7) {
           // check for right side
           const secondOpToken = tokens[tokenIndexAfterFirstOp + 1];
           const followingToken = tokens[tokenIndexAfterFirstOp + 2];
-          if (secondOpToken.type === "<delim-token>") {
+          if (secondOpToken.type === "delim") {
             const charCode = secondOpToken.value;
             if (charCode === 0x003c) {
               if (
-                followingToken.type === "<delim-token>" &&
+                followingToken.type === "delim" &&
                 followingToken.value === 0x003d &&
                 !followingToken.wsBefore
               ) {
@@ -549,7 +537,7 @@ export const tokenizeRange = (tokens: ConvenientToken[]): ValidRange => {
               }
             } else if (charCode === 0x003e) {
               if (
-                followingToken.type === "<delim-token>" &&
+                followingToken.type === "delim" &&
                 followingToken.value === 0x003d &&
                 !followingToken.wsBefore
               ) {
@@ -584,32 +572,24 @@ export const tokenizeRange = (tokens: ConvenientToken[]): ValidRange => {
 
     let leftToken: ValidRangeToken | null = null;
     if (lt !== null) {
-      if (lt.type === "<ident-token>") {
+      if (lt.type === "ident") {
         const { type, value } = lt;
         if (value === "infinite") {
           leftToken = { type, value };
         }
-      } else if (
-        lt.type === "<number-token>" ||
-        lt.type === "<dimension-token>" ||
-        lt.type === "<ratio-token>"
-      ) {
+      } else if (lt.type === "number" || lt.type === "dimension" || lt.type === "ratio") {
         const { wsBefore: _0, wsAfter: _1, ...ltNoWS } = lt;
         leftToken = ltNoWS;
       }
     }
     let rightToken: ValidRangeToken | null = null;
     if (rt !== null) {
-      if (rt.type === "<ident-token>") {
+      if (rt.type === "ident") {
         const { type, value } = rt;
         if (value === "infinite") {
           rightToken = { type, value };
         }
-      } else if (
-        rt.type === "<number-token>" ||
-        rt.type === "<dimension-token>" ||
-        rt.type === "<ratio-token>"
-      ) {
+      } else if (rt.type === "number" || rt.type === "dimension" || rt.type === "ratio") {
         const { wsBefore: _0, wsAfter: _1, ...rtNoWS } = rt;
         rightToken = rtNoWS;
       }

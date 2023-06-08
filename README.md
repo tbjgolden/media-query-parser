@@ -45,7 +45,7 @@ console.log(toAST("(max-width: 768px)"));
         {"context":"value",
          "prefix":"max",
          "feature":"width",
-         "value":{"type":"<dimension-token>","value":768,"unit":"px","flag":"number"}
+         "value":{"type":"dimension","value":768,"unit":"px","flag":"number"}
         }
       ]
     }

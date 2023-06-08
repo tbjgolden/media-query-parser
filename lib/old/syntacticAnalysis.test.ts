@@ -30,64 +30,56 @@ const removeHint = <T extends { wsBefore: boolean; wsAfter: boolean }>({
 
 test("removeWhitespace", async () => {
   expect(removeHints(removeWhitespace([]))).toEqual([]);
-  expect(removeHints(removeWhitespace([{ type: "<colon-token>" }]))).toEqual([
-    { type: "<colon-token>" },
+  expect(removeHints(removeWhitespace([{ type: "colon" }]))).toEqual([{ type: "colon" }]);
+  expect(removeHints(removeWhitespace([{ type: "whitespace" }]))).toEqual([]);
+  expect(removeHints(removeWhitespace([{ type: "whitespace" }, { type: "whitespace" }]))).toEqual(
+    []
+  );
+  expect(removeHints(removeWhitespace([{ type: "colon" }, { type: "whitespace" }]))).toEqual([
+    { type: "colon" },
   ]);
-  expect(removeHints(removeWhitespace([{ type: "<whitespace-token>" }]))).toEqual([]);
-  expect(
-    removeHints(removeWhitespace([{ type: "<whitespace-token>" }, { type: "<whitespace-token>" }]))
-  ).toEqual([]);
-  expect(
-    removeHints(removeWhitespace([{ type: "<colon-token>" }, { type: "<whitespace-token>" }]))
-  ).toEqual([{ type: "<colon-token>" }]);
-  expect(
-    removeHints(removeWhitespace([{ type: "<whitespace-token>" }, { type: "<colon-token>" }]))
-  ).toEqual([{ type: "<colon-token>" }]);
+  expect(removeHints(removeWhitespace([{ type: "whitespace" }, { type: "colon" }]))).toEqual([
+    { type: "colon" },
+  ]);
   expect(
     removeHints(
       removeWhitespace([
-        { type: "<whitespace-token>" },
-        { type: "<colon-token>" },
-        { type: "<whitespace-token>" },
-        { type: "<colon-token>" },
-        { type: "<whitespace-token>" },
+        { type: "whitespace" },
+        { type: "colon" },
+        { type: "whitespace" },
+        { type: "colon" },
+        { type: "whitespace" },
       ])
     )
-  ).toEqual([{ type: "<colon-token>" }, { type: "<colon-token>" }]);
+  ).toEqual([{ type: "colon" }, { type: "colon" }]);
 
   // validate ws hints
   expect(
     removeWhitespace([
-      { type: "<whitespace-token>" },
-      { type: "<colon-token>" },
-      { type: "<whitespace-token>" },
-      { type: "<colon-token>" },
-      { type: "<whitespace-token>" },
+      { type: "whitespace" },
+      { type: "colon" },
+      { type: "whitespace" },
+      { type: "colon" },
+      { type: "whitespace" },
     ])
   ).toEqual([
-    { type: "<colon-token>", wsBefore: true, wsAfter: true },
-    { type: "<colon-token>", wsBefore: true, wsAfter: true },
+    { type: "colon", wsBefore: true, wsAfter: true },
+    { type: "colon", wsBefore: true, wsAfter: true },
   ]);
   expect(
     removeWhitespace([
-      { type: "<whitespace-token>" },
-      { type: "<colon-token>" },
-      { type: "<colon-token>" },
-      { type: "<whitespace-token>" },
+      { type: "whitespace" },
+      { type: "colon" },
+      { type: "colon" },
+      { type: "whitespace" },
     ])
   ).toEqual([
-    { type: "<colon-token>", wsBefore: true, wsAfter: false },
-    { type: "<colon-token>", wsBefore: false, wsAfter: true },
+    { type: "colon", wsBefore: true, wsAfter: false },
+    { type: "colon", wsBefore: false, wsAfter: true },
   ]);
-  expect(
-    removeWhitespace([
-      { type: "<colon-token>" },
-      { type: "<whitespace-token>" },
-      { type: "<colon-token>" },
-    ])
-  ).toEqual([
-    { type: "<colon-token>", wsBefore: false, wsAfter: true },
-    { type: "<colon-token>", wsBefore: true, wsAfter: false },
+  expect(removeWhitespace([{ type: "colon" }, { type: "whitespace" }, { type: "colon" }])).toEqual([
+    { type: "colon", wsBefore: false, wsAfter: true },
+    { type: "colon", wsBefore: true, wsAfter: false },
   ]);
 });
 
@@ -124,7 +116,7 @@ test("toUnflattenedAST parses media query", async () => {
             prefix: "min",
             value: {
               flag: "number",
-              type: "<dimension-token>",
+              type: "dimension",
               unit: "px",
               value: 10,
             },
@@ -148,7 +140,7 @@ test("toUnflattenedAST parses media query", async () => {
             prefix: "max",
             value: {
               flag: "number",
-              type: "<dimension-token>",
+              type: "dimension",
               unit: "px",
               value: 1000,
             },
@@ -183,7 +175,7 @@ test("toUnflattenedAST parses media query", async () => {
             prefix: "min",
             value: {
               flag: "number",
-              type: "<dimension-token>",
+              type: "dimension",
               unit: "px",
               value: -100,
             },
@@ -205,7 +197,7 @@ test("toUnflattenedAST parses media query", async () => {
             prefix: "max",
             value: {
               flag: "number",
-              type: "<dimension-token>",
+              type: "dimension",
               unit: "px",
               value: 1199.98,
             },
@@ -227,7 +219,7 @@ test("toUnflattenedAST parses media query", async () => {
             prefix: "max",
             value: {
               flag: "number",
-              type: "<dimension-token>",
+              type: "dimension",
               unit: "px",
               value: 1399.98,
             },
@@ -249,7 +241,7 @@ test("toUnflattenedAST parses media query", async () => {
             prefix: "max",
             value: {
               flag: "number",
-              type: "<dimension-token>",
+              type: "dimension",
               unit: "px",
               value: 575.98,
             },
@@ -271,7 +263,7 @@ test("toUnflattenedAST parses media query", async () => {
             prefix: "max",
             value: {
               flag: "number",
-              type: "<dimension-token>",
+              type: "dimension",
               unit: "px",
               value: 767.98,
             },
@@ -293,7 +285,7 @@ test("toUnflattenedAST parses media query", async () => {
             prefix: "max",
             value: {
               flag: "number",
-              type: "<dimension-token>",
+              type: "dimension",
               unit: "px",
               value: 991.98,
             },
@@ -315,7 +307,7 @@ test("toUnflattenedAST parses media query", async () => {
             prefix: "min",
             value: {
               flag: "number",
-              type: "<dimension-token>",
+              type: "dimension",
               unit: "px",
               value: 1200,
             },
@@ -337,7 +329,7 @@ test("toUnflattenedAST parses media query", async () => {
             prefix: "min",
             value: {
               flag: "number",
-              type: "<dimension-token>",
+              type: "dimension",
               unit: "px",
               value: 1400,
             },
@@ -359,7 +351,7 @@ test("toUnflattenedAST parses media query", async () => {
             prefix: "min",
             value: {
               flag: "number",
-              type: "<dimension-token>",
+              type: "dimension",
               unit: "px",
               value: 576,
             },
@@ -381,7 +373,7 @@ test("toUnflattenedAST parses media query", async () => {
             prefix: "min",
             value: {
               flag: "number",
-              type: "<dimension-token>",
+              type: "dimension",
               unit: "px",
               value: 768,
             },
@@ -403,7 +395,7 @@ test("toUnflattenedAST parses media query", async () => {
             prefix: "min",
             value: {
               flag: "number",
-              type: "<dimension-token>",
+              type: "dimension",
               unit: "px",
               value: 992,
             },
@@ -424,7 +416,7 @@ test("toUnflattenedAST parses media query", async () => {
             feature: "prefers-reduced-motion",
             prefix: null,
             value: {
-              type: "<ident-token>",
+              type: "ident",
               value: "no-preference",
             },
           },
@@ -444,7 +436,7 @@ test("toUnflattenedAST parses media query", async () => {
             feature: "any-hover",
             prefix: null,
             value: {
-              type: "<ident-token>",
+              type: "ident",
               value: "hover",
             },
           },
@@ -464,7 +456,7 @@ test("toUnflattenedAST parses media query", async () => {
             feature: "any-hover",
             prefix: null,
             value: {
-              type: "<ident-token>",
+              type: "ident",
               value: "none",
             },
           },
@@ -484,7 +476,7 @@ test("toUnflattenedAST parses media query", async () => {
             feature: "any-hover",
             prefix: null,
             value: {
-              type: "<ident-token>",
+              type: "ident",
               value: "anything",
             },
           },
@@ -505,7 +497,7 @@ test("toUnflattenedAST parses media query", async () => {
             prefix: null,
             value: {
               flag: "integer",
-              type: "<number-token>",
+              type: "number",
               value: 0,
             },
           },
@@ -524,7 +516,7 @@ test("toUnflattenedAST parses media query", async () => {
             context: "value",
             feature: "aspect-ratio",
             prefix: null,
-            value: { denominator: 9, numerator: 16, type: "<ratio-token>" },
+            value: { denominator: 9, numerator: 16, type: "ratio" },
           },
         ],
         operator: null,
@@ -542,7 +534,7 @@ test("toUnflattenedAST parses media query", async () => {
             feature: "prefers-reduced-motion",
             prefix: null,
             value: {
-              type: "<ident-token>",
+              type: "ident",
               value: "reduce",
             },
           },
@@ -574,7 +566,7 @@ test("toUnflattenedAST parses media query", async () => {
               rightOp: ">",
               rightToken: {
                 flag: "number",
-                type: "<dimension-token>",
+                type: "dimension",
                 unit: "px",
                 value: 600,
               },
@@ -599,7 +591,7 @@ test("toUnflattenedAST parses media query", async () => {
               leftOp: "<",
               leftToken: {
                 flag: "number",
-                type: "<dimension-token>",
+                type: "dimension",
                 unit: "px",
                 value: 600,
               },
@@ -626,7 +618,7 @@ test("toUnflattenedAST parses media query", async () => {
               leftOp: ">",
               leftToken: {
                 flag: "number",
-                type: "<dimension-token>",
+                type: "dimension",
                 unit: "px",
                 value: 600,
               },
@@ -655,7 +647,7 @@ test("toUnflattenedAST parses media query", async () => {
               rightOp: "<",
               rightToken: {
                 flag: "number",
-                type: "<dimension-token>",
+                type: "dimension",
                 unit: "px",
                 value: 600,
               },
@@ -701,14 +693,14 @@ test("toUnflattenedAST parses media query", async () => {
               leftOp: "<=",
               leftToken: {
                 flag: "number",
-                type: "<dimension-token>",
+                type: "dimension",
                 unit: "px",
                 value: 100,
               },
               rightOp: "<=",
               rightToken: {
                 flag: "number",
-                type: "<dimension-token>",
+                type: "dimension",
                 unit: "px",
                 value: 200,
               },
@@ -733,7 +725,7 @@ test("toUnflattenedAST parses media query", async () => {
               leftOp: "<=",
               leftToken: {
                 flag: "number",
-                type: "<dimension-token>",
+                type: "dimension",
                 unit: "px",
                 value: 100,
               },
@@ -751,7 +743,7 @@ test("toUnflattenedAST parses media query", async () => {
               rightOp: "<=",
               rightToken: {
                 flag: "number",
-                type: "<dimension-token>",
+                type: "dimension",
                 unit: "px",
                 value: 200,
               },
@@ -777,13 +769,13 @@ test("toUnflattenedAST parses media query", async () => {
               leftToken: {
                 denominator: 2,
                 numerator: 1,
-                type: "<ratio-token>",
+                type: "ratio",
               },
               rightOp: "<",
               rightToken: {
                 denominator: 1,
                 numerator: 1,
-                type: "<ratio-token>",
+                type: "ratio",
               },
             },
           },
@@ -806,14 +798,14 @@ test("toUnflattenedAST parses media query", async () => {
               leftOp: "<=",
               leftToken: {
                 flag: "number",
-                type: "<dimension-token>",
+                type: "dimension",
                 unit: "px",
                 value: 100,
               },
               rightOp: "<=",
               rightToken: {
                 flag: "number",
-                type: "<dimension-token>",
+                type: "dimension",
                 unit: "px",
                 value: 200,
               },
@@ -858,7 +850,7 @@ test("toUnflattenedAST parses media query", async () => {
                     prefix: "min",
                     value: {
                       flag: "number",
-                      type: "<dimension-token>",
+                      type: "dimension",
                       unit: "px",
                       value: 1,
                     },
@@ -953,7 +945,7 @@ test("coverage misses", () => {
   expect(() => toUnflattenedAST("*")).toThrow();
   expect(() =>
     tokenizeMediaFeature(
-      ([{ type: "<(-token>" }] as const).map((token) => ({
+      ([{ type: "(" }] as const).map((token) => ({
         ...token,
         wsBefore: true,
         wsAfter: true,
@@ -964,12 +956,12 @@ test("coverage misses", () => {
     tokenizeMediaFeature(
       (
         [
-          { type: "<(-token>" },
-          { type: "<ident-token>", value: "not" },
-          { type: "<whitespace-token>" },
-          { type: "<(-token>" },
-          { type: "<)-token>" },
-          { type: "<)-token>" },
+          { type: "(" },
+          { type: "ident", value: "not" },
+          { type: "whitespace" },
+          { type: "(" },
+          { type: ")" },
+          { type: ")" },
         ] as const
       ).map((token) => ({ ...token, wsBefore: true, wsAfter: true }))
     )
@@ -980,10 +972,10 @@ test("coverage misses", () => {
     tokenizeRange(
       (
         [
-          { type: "<(-token>" },
-          { type: "<ident-token>", value: "width" },
-          { type: "<delim-token>", value: 0x003c },
-          { type: "<number-token>", value: 100, flag: "number" },
+          { type: "(" },
+          { type: "ident", value: "width" },
+          { type: "delim", value: 0x003c },
+          { type: "number", value: 100, flag: "number" },
         ] as const
       ).map((token) => ({ ...token, wsBefore: true, wsAfter: true }))
     )
@@ -1000,14 +992,14 @@ test("coverage misses", () => {
               leftOp: ">=",
               leftToken: {
                 flag: "number",
-                type: "<dimension-token>",
+                type: "dimension",
                 unit: "px",
                 value: 200,
               },
               rightOp: ">=",
               rightToken: {
                 flag: "number",
-                type: "<dimension-token>",
+                type: "dimension",
                 unit: "px",
                 value: 100,
               },
@@ -1032,7 +1024,7 @@ test("coverage misses", () => {
               leftOp: "=",
               leftToken: {
                 flag: "number",
-                type: "<dimension-token>",
+                type: "dimension",
                 unit: "px",
                 value: 200,
               },
@@ -1061,7 +1053,7 @@ test("coverage misses", () => {
               rightOp: ">=",
               rightToken: {
                 flag: "number",
-                type: "<dimension-token>",
+                type: "dimension",
                 unit: "px",
                 value: 200,
               },
