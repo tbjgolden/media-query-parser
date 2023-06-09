@@ -1,4 +1,4 @@
-import { TextEncoder as TextEncoderType } from "node:util";
+import type { TextEncoder as TextEncoderType } from "node:util";
 
 const NULL_CODEPOINT = 0x0;
 const LINE_FEED_CODEPOINT = 0xa;
@@ -24,8 +24,7 @@ export const readCodepoints = (cssStr: string): number[] => {
   const codepoints: number[] = [];
   const len = utf8Bytes.length;
   for (let i = 0; i < len; i += 1) {
-    // eslint-disable-next-line security/detect-object-injection
-    const byte = utf8Bytes[i];
+    const byte = utf8Bytes.at(i) as number;
     if (byte < 0x80) {
       // is ascii
       switch (byte) {

@@ -67318,5 +67318,5 @@
   { "type": "whitespace", "start": 192832, "end": 192832 },
   { "type": "}", "start": 192833, "end": 192833 },
   { "type": "whitespace", "start": 192834, "end": 192880 },
-  { "type": "EOF" }
+  { "type": "EOF", "start": 192881, "end": 192881 }
 ]

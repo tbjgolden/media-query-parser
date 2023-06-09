@@ -20,12 +20,8 @@ const l = (cssStr: string) => {
   const result = lexer(cssStr);
   if (result) {
     return result.map((token) => {
-      if (token.type === "EOF") {
-        return token;
-      } else {
-        const { start: _0, end: _1, ...t } = token;
-        return t;
-      }
+      const { start: _0, end: _1, ...t } = token;
+      return t;
     });
   } else {
     return result;
@@ -242,7 +238,7 @@ test("old bugs", () => {
     { end: 18, start: 18, type: "whitespace" },
     { end: 24, flag: "number", start: 19, type: "dimension", unit: "px", value: -100 },
     { end: 25, start: 25, type: ")" },
-    { type: "EOF" },
+    { end: 26, start: 26, type: "EOF" },
   ]);
 
   expect(l(".dropdown-item:hover{color:#1e2125;background-color:#e9ecef}")).toEqual([

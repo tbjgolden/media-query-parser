@@ -1,118 +1,4 @@
-interface GenericToken {
-  type: string;
-  start: number;
-  end: number;
-}
-
-export type Token =
-  | WhitespaceToken
-  | StringToken
-  | HashToken
-  | DelimToken
-  | CommaToken
-  | LeftParenToken
-  | RightParenToken
-  | DimensionToken
-  | NumberToken
-  | PercentageToken
-  | IdentToken
-  | FunctionToken
-  | UrlToken
-  | CDCToken
-  | ColonToken
-  | SemicolonToken
-  | CDOToken
-  | AtKeywordToken
-  | LeftBracketToken
-  | RightBracketToken
-  | LeftCurlyToken
-  | RightCurlyToken
-  | EOFToken;
-
-export interface WhitespaceToken extends GenericToken {
-  type: "whitespace";
-}
-export interface StringToken extends GenericToken {
-  type: "string";
-  value: string;
-}
-export interface HashToken extends GenericToken {
-  type: "hash";
-  value: string;
-  flag: "id" | "unrestricted";
-}
-export interface DelimToken extends GenericToken {
-  type: "delim";
-  value: number;
-}
-export interface CommaToken extends GenericToken {
-  type: "comma";
-}
-export interface LeftParenToken extends GenericToken {
-  type: "(";
-}
-export interface RightParenToken extends GenericToken {
-  type: ")";
-}
-export interface DimensionToken extends GenericToken {
-  type: "dimension";
-  value: number;
-  unit: string;
-  flag: "number";
-}
-export interface NumberToken extends GenericToken {
-  type: "number";
-  value: number;
-  flag: "number" | "integer";
-}
-export interface PercentageToken extends GenericToken {
-  type: "percentage";
-  value: number;
-  flag: "number";
-}
-export interface CDCToken extends GenericToken {
-  type: "CDC";
-}
-export interface ColonToken extends GenericToken {
-  type: "colon";
-}
-export interface SemicolonToken extends GenericToken {
-  type: "semicolon";
-}
-export interface CDOToken extends GenericToken {
-  type: "CDO";
-}
-export interface AtKeywordToken extends GenericToken {
-  type: "at-keyword";
-  value: string;
-}
-export interface LeftBracketToken extends GenericToken {
-  type: "[";
-}
-export interface RightBracketToken extends GenericToken {
-  type: "]";
-}
-export interface LeftCurlyToken extends GenericToken {
-  type: "{";
-}
-export interface RightCurlyToken extends GenericToken {
-  type: "}";
-}
-export interface IdentToken extends GenericToken {
-  type: "ident";
-  value: string;
-}
-export interface FunctionToken extends GenericToken {
-  type: "function";
-  value: string;
-}
-export interface UrlToken extends GenericToken {
-  type: "url";
-  value: string;
-}
-export interface EOFToken {
-  type: "EOF";
-}
+import type { Token } from "./types.js";
 
 const TAB_CODEPOINT = 0x00_09;
 const NEWLINE_CODEPOINT = 0x00_0a;
@@ -458,7 +344,7 @@ export const codepointsToTokens = (codepoints: number[], index = 0): Token[] | n
       tokens.push({ type: "delim", value: c, start, end: index });
     }
   }
-  tokens.push({ type: "EOF" });
+  tokens.push({ type: "EOF", start: index, end: index });
   return tokens;
 };
 
