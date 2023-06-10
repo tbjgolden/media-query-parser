@@ -1,11 +1,10 @@
-import { AST, toUnflattenedAST as _toUnflattenedAST } from "./syntacticAnalysis.js";
-import { simplifyAST } from "./simplifyAST.js";
+import { simplifyMediaQueryList } from "./simplifyAST.js";
 
 // 92.85 | 55-59
 
 const asSimpleAST = (str: string): AST | string => {
   try {
-    return simplifyAST(_toUnflattenedAST(str));
+    return simplifyMediaQueryList(_toUnflattenedAST(str));
   } catch (error) {
     return error instanceof Error ? error.message : "Error";
   }

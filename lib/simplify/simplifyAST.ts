@@ -1,21 +1,21 @@
-import { AST, MediaCondition, MediaFeature, MediaQuery } from "./syntacticAnalysis.js";
+import { MediaCondition, MediaFeature, MediaQuery } from "../ast/types.js";
 
 // Mutates, assumes AST represents a valid media query
-export const simplifyAST = (ast: AST): AST => {
-  for (let i = ast.length - 1; i >= 0; i--) {
+export const simplifyMediaQueryList = (mediaQueryList: MediaQuery[]): MediaQuery[] => {
+  for (let i = mediaQueryList.length - 1; i >= 0; i--) {
     // eslint-disable-next-line security/detect-object-injection
-    ast[i] = simplifyMediaQuery(ast[i]);
+    mediaQueryList[i] = simplifyMediaQuery(mediaQueryList[i]);
   }
 
-  return ast;
+  return mediaQueryList;
 };
 
 const simplifyMediaQuery = (mediaQuery: MediaQuery): MediaQuery => {
-  if (mediaQuery.mediaCondition === null) return mediaQuery;
+  if (mediaQuery.mediaCondition === undefined) return mediaQuery;
 
   let mediaCondition = simplifyMediaCondition(mediaQuery.mediaCondition);
   if (
-    mediaCondition.operator === null &&
+    mediaCondition.operator === undefined &&
     mediaCondition.children.length === 1 &&
     "children" in mediaCondition.children[0]
   ) {
@@ -35,7 +35,7 @@ const simplifyMediaCondition = (mediaCondition: MediaCondition): MediaCondition 
     const unsimplifiedChild = mediaCondition.children[i] as MediaCondition | MediaFeature;
     if (!("context" in unsimplifiedChild)) {
       const child = simplifyMediaCondition(unsimplifiedChild) as MediaCondition;
-      if (child.operator === null && child.children.length === 1) {
+      if (child.operator === undefined && child.children.length === 1) {
         // eslint-disable-next-line security/detect-object-injection
         mediaCondition.children[i] = child.children[0];
       } else if (

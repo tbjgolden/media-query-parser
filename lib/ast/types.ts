@@ -20,8 +20,6 @@ export type ParsingError = {
   child?: ParsingError;
 };
 
-export type AST = MediaQuery[];
-
 export type MediaQuery = {
   mediaPrefix?: "not" | "only";
   mediaType: "all" | "screen" | "print";
