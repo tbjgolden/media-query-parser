@@ -1,16 +1,16 @@
-import { MediaCondition, MediaFeature, MediaQuery } from "../ast/types.js";
+import {
+  SimpleMediaCondition,
+  SimpleMediaFeature,
+  SimpleMediaQuery,
+  MediaQueryList,
+} from "../ast/types.js";
 
-// Mutates, assumes AST represents a valid media query
-export const simplifyMediaQueryList = (mediaQueryList: MediaQuery[]): MediaQuery[] => {
-  for (let i = mediaQueryList.length - 1; i >= 0; i--) {
-    // eslint-disable-next-line security/detect-object-injection
-    mediaQueryList[i] = simplifyMediaQuery(mediaQueryList[i]);
-  }
+export const simplifyMediaQueryList = (mediaQueryList: MediaQueryList): MediaQueryList => ({
+  type: "query-list",
+  mediaQueries: mediaQueryList.mediaQueries.map((mediaQuery) => simplifyMediaQuery(mediaQuery)),
+});
 
-  return mediaQueryList;
-};
-
-const simplifyMediaQuery = (mediaQuery: MediaQuery): MediaQuery => {
+export const simplifyMediaQuery = (mediaQuery: SimpleMediaQuery): SimpleMediaQuery => {
   if (mediaQuery.mediaCondition === undefined) return mediaQuery;
 
   let mediaCondition = simplifyMediaCondition(mediaQuery.mediaCondition);
@@ -23,18 +23,24 @@ const simplifyMediaQuery = (mediaQuery: MediaQuery): MediaQuery => {
   }
 
   return {
+    type: "query",
     mediaPrefix: mediaQuery.mediaPrefix,
     mediaType: mediaQuery.mediaType,
     mediaCondition,
   };
 };
 
-const simplifyMediaCondition = (mediaCondition: MediaCondition): MediaCondition => {
+// TODO: remove mutation
+export const simplifyMediaCondition = (
+  mediaCondition: SimpleMediaCondition
+): SimpleMediaCondition => {
   for (let i = mediaCondition.children.length - 1; i >= 0; i--) {
     // eslint-disable-next-line security/detect-object-injection
-    const unsimplifiedChild = mediaCondition.children[i] as MediaCondition | MediaFeature;
+    const unsimplifiedChild = mediaCondition.children[i] as
+      | SimpleMediaCondition
+      | SimpleMediaFeature;
     if (!("context" in unsimplifiedChild)) {
-      const child = simplifyMediaCondition(unsimplifiedChild) as MediaCondition;
+      const child = simplifyMediaCondition(unsimplifiedChild) as SimpleMediaCondition;
       if (child.operator === undefined && child.children.length === 1) {
         // eslint-disable-next-line security/detect-object-injection
         mediaCondition.children[i] = child.children[0];
@@ -45,7 +51,7 @@ const simplifyMediaCondition = (mediaCondition: MediaCondition): MediaCondition 
         const spliceArgs: [
           start: number,
           deleteCount: number,
-          ...args: Array<MediaCondition | MediaFeature>
+          ...args: Array<SimpleMediaCondition | SimpleMediaFeature>
         ] = [i, 1];
         for (let i = 0; i < child.children.length; i++) {
           // eslint-disable-next-line security/detect-object-injection

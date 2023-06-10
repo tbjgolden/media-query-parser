@@ -3,6 +3,7 @@ import type {
   MediaCondition,
   MediaFeature,
   MediaQuery,
+  MediaQueryList,
   ParsingError,
   ParsingToken,
   RatioToken,
@@ -56,7 +57,7 @@ export const convertToParsingTokens = (tokenList: Token[]): ParsingToken[] => {
   return normalTokens;
 };
 
-export const parseMediaQueryList = (tokens: ParsingToken[]): MediaQuery[] => {
+export const parseMediaQueryList = (tokens: ParsingToken[]): MediaQueryList => {
   const mediaQueriesParsingTokens: ParsingToken[][] = [[]];
   for (const token of tokens) {
     if (token.type === "comma") {
@@ -68,19 +69,17 @@ export const parseMediaQueryList = (tokens: ParsingToken[]): MediaQuery[] => {
 
   if (mediaQueriesParsingTokens.length === 1 && mediaQueriesParsingTokens[0].length === 0) {
     // '@media {' is fine, treat as all
-    return [{ mediaType: "all" }];
+    return { type: "query-list", mediaQueries: [{ type: "query", mediaType: "all" }] };
   } else {
-    const mediaQueryList: MediaQuery[] = [];
-
+    const mediaQueries: MediaQuery[] = [];
     for (const mediaQueryParsingTokens of mediaQueriesParsingTokens) {
       const mediaQuery = parseMediaQuery(mediaQueryParsingTokens);
       // note: a media query list can contain an invalid media query
       if (!isParsingError(mediaQuery)) {
-        mediaQueryList.push(mediaQuery);
+        mediaQueries.push(mediaQuery);
       }
     }
-
-    return mediaQueryList;
+    return { type: "query-list", mediaQueries };
   }
 };
 
@@ -91,7 +90,7 @@ export const parseMediaQuery = (tokens: ParsingToken[]): MediaQuery | ParsingErr
       const mediaCondition = parseMediaCondition(tokens, true);
       return isParsingError(mediaCondition)
         ? createError("Expected media condition after '('")
-        : { mediaType: "all", mediaCondition };
+        : { type: "query", mediaType: "all", mediaCondition };
     } else if (firstToken.type === "ident") {
       let mediaPrefix: "not" | "only" | undefined;
       let mediaType: "all" | "print" | "screen";
@@ -140,8 +139,9 @@ export const parseMediaQuery = (tokens: ParsingToken[]): MediaQuery | ParsingErr
           return createError("Expected media condition after '('");
         } else {
           return {
+            type: "query",
             mediaType: "all",
-            mediaCondition: { operator: "not", children: [mediaCondition] },
+            mediaCondition: { type: "condition", operator: "not", children: [mediaCondition] },
           };
         }
       } else {
@@ -149,7 +149,7 @@ export const parseMediaQuery = (tokens: ParsingToken[]): MediaQuery | ParsingErr
       }
 
       if (firstIndex + 1 === tokens.length) {
-        return { mediaPrefix, mediaType };
+        return { type: "query", mediaPrefix, mediaType };
       } else if (firstIndex + 4 < tokens.length) {
         const secondNonUnaryToken = tokens[firstIndex + 1];
         if (secondNonUnaryToken.type === "ident" && secondNonUnaryToken.value === "and") {
@@ -157,7 +157,7 @@ export const parseMediaQuery = (tokens: ParsingToken[]): MediaQuery | ParsingErr
 
           return isParsingError(mediaCondition)
             ? createError("Expected media condition after 'and'")
-            : { mediaPrefix, mediaType, mediaCondition };
+            : { type: "query", mediaPrefix, mediaType, mediaCondition };
         } else {
           return createError("Expected 'and' after media prefix");
         }
@@ -217,10 +217,7 @@ export const parseMediaCondition = (
   }
 
   if (endIndexOfFirstFeature === tokens.length - 1) {
-    return {
-      operator: previousOperator,
-      children: [child],
-    };
+    return { type: "condition", operator: previousOperator, children: [child] };
   } else {
     // read for a boolean op "and", "not", "or"
     const nextToken = tokens[endIndexOfFirstFeature + 1];
@@ -244,7 +241,11 @@ export const parseMediaCondition = (
 
     return isParsingError(mediaCondition)
       ? mediaCondition
-      : { operator: nextToken.value, children: [child, ...mediaCondition.children] };
+      : {
+          type: "condition",
+          operator: nextToken.value,
+          children: [child, ...mediaCondition.children],
+        };
   }
 };
 
@@ -292,10 +293,7 @@ export const parseMediaFeature = (rawTokens: ParsingToken[]): MediaFeature | Par
 
   const nextToken = tokens[1];
   if (nextToken.type === "ident" && tokens.length === 3) {
-    return {
-      context: "boolean",
-      feature: nextToken.value,
-    };
+    return { type: "feature", context: "boolean", feature: nextToken.value };
   } else if (tokens.length === 5 && tokens[1].type === "ident" && tokens[2].type === "colon") {
     const valueToken = tokens[3];
     if (
@@ -319,24 +317,13 @@ export const parseMediaFeature = (rawTokens: ParsingToken[]): MediaFeature | Par
 
       const { hasSpaceBefore: _0, hasSpaceAfter: _1, start: _2, end: _3, ...value } = valueToken;
 
-      return {
-        context: "value",
-        prefix,
-        feature,
-        value,
-      };
+      return { type: "feature", context: "value", prefix, feature, value };
     }
   } else if (tokens.length >= 5) {
     const range = parseRange(tokens);
-    if (isParsingError(range)) {
-      return createError("Invalid media feature");
-    } else {
-      return {
-        context: "range",
-        feature: range.featureName,
-        range,
-      };
-    }
+    return isParsingError(range)
+      ? createError("Invalid media feature")
+      : { type: "feature", context: "range", feature: range.featureName, range };
   }
 
   return createError("Invalid media feature");

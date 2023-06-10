@@ -1,100 +1,20 @@
-import {
-  convertToParsingTokens,
-  isParsingError,
-  parseMediaFeature,
-  parseMediaQuery,
-  parseMediaQueryList,
-  parseRange,
-} from "./ast.js";
-import type { DelimToken, EOFToken, IdentToken, NumberToken, Token } from "../lexer/types.js";
-import type { ParsingToken } from "./types.js";
-import { lexer } from "../lexer/index.js";
-
-const l = (strings: TemplateStringsArray): ParsingToken[] =>
-  convertToParsingTokens(lexer(strings[0]) as Token[]);
-const t = (...tokens: Omit<Exclude<Token, EOFToken>, "start" | "end">[]) =>
-  tokens.map((token) => ({ ...token, start: -1, end: -1 } as Exclude<Token, EOFToken>));
-const simplify = (parsingTokens: ParsingToken[]): Token[] =>
-  parsingTokens.map((parsingToken) => {
-    const { hasSpaceBefore: _0, hasSpaceAfter: _1, ...token } = parsingToken;
-    return token;
-  });
-
-test("convertToParsingTokens", async () => {
-  expect(simplify(convertToParsingTokens(t()))).toEqual(t());
-  expect(simplify(convertToParsingTokens(t({ type: "colon" })))).toEqual(t({ type: "colon" }));
-  expect(simplify(convertToParsingTokens(t({ type: "whitespace" })))).toEqual([]);
-  expect(
-    simplify(convertToParsingTokens(t({ type: "whitespace" }, { type: "whitespace" })))
-  ).toEqual([]);
-  expect(simplify(convertToParsingTokens(t({ type: "colon" }, { type: "whitespace" })))).toEqual(
-    t({ type: "colon" })
-  );
-  expect(simplify(convertToParsingTokens(t({ type: "whitespace" }, { type: "colon" })))).toEqual(
-    t({ type: "colon" })
-  );
-  expect(
-    simplify(
-      convertToParsingTokens(
-        t(
-          { type: "whitespace" },
-          { type: "colon" },
-          { type: "whitespace" },
-          { type: "colon" },
-          { type: "whitespace" }
-        )
-      )
-    )
-  ).toEqual(t({ type: "colon" }, { type: "colon" }));
-
-  // validate ws hints
-  expect(
-    simplify(
-      convertToParsingTokens(
-        t(
-          { type: "whitespace" },
-          { type: "colon" },
-          { type: "whitespace" },
-          { type: "colon" },
-          { type: "whitespace" }
-        )
-      )
-    )
-  ).toEqual(t({ type: "colon" }, { type: "colon" }));
-  expect(
-    simplify(
-      convertToParsingTokens(
-        t({ type: "whitespace" }, { type: "colon" }, { type: "colon" }, { type: "whitespace" })
-      )
-    )
-  ).toEqual(t({ type: "colon" }, { type: "colon" }));
-  expect(
-    simplify(
-      convertToParsingTokens(t({ type: "colon" }, { type: "whitespace" }, { type: "colon" }))
-    )
-  ).toEqual(t({ type: "colon" }, { type: "colon" }));
-});
+import { expectMQ, expectMQL } from "./test-helpers.js";
 
 test("parseMediaQueryList parses media query", async () => {
-  expect(parseMediaQueryList(l``)).toEqual([{ mediaType: "all" }]);
-  expect(isParsingError(parseMediaQuery(l``))).toBe(true);
-  expect(parseMediaQueryList(l`,`)).toEqual([]);
-  expect(parseMediaQueryList(l`all,`)).toEqual([{ mediaType: "all" }]);
-  expect(parseMediaQueryList(l`all, all, all`)).toEqual([
-    { mediaType: "all" },
-    { mediaType: "all" },
-    { mediaType: "all" },
-  ]);
-  expect(parseMediaQueryList(l`only screen and (color)`)).toEqual([
+  expectMQL("", [{ mediaType: "all" }]);
+  expectMQL(``, [{ mediaType: "all" }]);
+  expectMQ(``, false);
+  expectMQL(`,`, []);
+  expectMQL(`all,`, [{ mediaType: "all" }]);
+  expectMQL(`all, all, all`, [{ mediaType: "all" }, { mediaType: "all" }, { mediaType: "all" }]);
+  expectMQL(`only screen and (color)`, [
     {
-      mediaCondition: {
-        children: [{ context: "boolean", feature: "color" }],
-      },
+      mediaCondition: { children: [{ context: "boolean", feature: "color" }] },
       mediaPrefix: "only",
       mediaType: "screen",
     },
   ]);
-  expect(parseMediaQueryList(l`not print and (min-width: 10px)`)).toEqual([
+  expectMQL(`not print and (min-width: 10px)`, [
     {
       mediaCondition: {
         children: [
@@ -102,12 +22,7 @@ test("parseMediaQueryList parses media query", async () => {
             context: "value",
             feature: "width",
             prefix: "min",
-            value: {
-              flag: "number",
-              type: "dimension",
-              unit: "px",
-              value: 10,
-            },
+            value: { flag: "number", type: "dimension", unit: "px", value: 10 },
           },
         ],
       },
@@ -115,7 +30,7 @@ test("parseMediaQueryList parses media query", async () => {
       mediaType: "print",
     },
   ]);
-  expect(parseMediaQueryList(l`not print, screen, (max-width: 1000px)`)).toEqual([
+  expectMQL(`not print, screen, (max-width: 1000px)`, [
     { mediaPrefix: "not", mediaType: "print" },
     { mediaType: "screen" },
     {
@@ -125,25 +40,18 @@ test("parseMediaQueryList parses media query", async () => {
             context: "value",
             feature: "width",
             prefix: "max",
-            value: {
-              flag: "number",
-              type: "dimension",
-              unit: "px",
-              value: 1000,
-            },
+            value: { flag: "number", type: "dimension", unit: "px", value: 1000 },
           },
         ],
       },
-
       mediaType: "all",
     },
   ]);
-  expect(parseMediaQueryList(l`all,, all`)).toEqual([{ mediaType: "all" }, { mediaType: "all" }]);
-  expect(parseMediaQueryList(l`,all, all`)).toEqual([{ mediaType: "all" }, { mediaType: "all" }]);
-  expect(parseMediaQueryList(l`(all, all), all`)).toEqual([{ mediaType: "all" }]);
-  expect(parseMediaQueryList(l`((min-width: -100px)`)).toEqual([]);
-
-  expect(parseMediaQueryList(l`(min-width: -100px)`)).toEqual([
+  expectMQL(`all,, all`, [{ mediaType: "all" }, { mediaType: "all" }]);
+  expectMQL(`,all, all`, [{ mediaType: "all" }, { mediaType: "all" }]);
+  expectMQL(`(all, all), all`, [{ mediaType: "all" }]);
+  expectMQL(`((min-width: -100px)`, []);
+  expectMQL(`(min-width: -100px)`, [
     {
       mediaCondition: {
         children: [
@@ -151,20 +59,14 @@ test("parseMediaQueryList parses media query", async () => {
             context: "value",
             feature: "width",
             prefix: "min",
-            value: {
-              flag: "number",
-              type: "dimension",
-              unit: "px",
-              value: -100,
-            },
+            value: { flag: "number", type: "dimension", unit: "px", value: -100 },
           },
         ],
       },
-
       mediaType: "all",
     },
   ]);
-  expect(parseMediaQueryList(l`(max-width:1199.98px)`)).toEqual([
+  expectMQL(`(max-width:1199.98px)`, [
     {
       mediaCondition: {
         children: [
@@ -172,20 +74,14 @@ test("parseMediaQueryList parses media query", async () => {
             context: "value",
             feature: "width",
             prefix: "max",
-            value: {
-              flag: "number",
-              type: "dimension",
-              unit: "px",
-              value: 1199.98,
-            },
+            value: { flag: "number", type: "dimension", unit: "px", value: 1199.98 },
           },
         ],
       },
-
       mediaType: "all",
     },
   ]);
-  expect(parseMediaQueryList(l`(max-width:1399.98px)`)).toEqual([
+  expectMQL(`(max-width:1399.98px)`, [
     {
       mediaCondition: {
         children: [
@@ -193,20 +89,14 @@ test("parseMediaQueryList parses media query", async () => {
             context: "value",
             feature: "width",
             prefix: "max",
-            value: {
-              flag: "number",
-              type: "dimension",
-              unit: "px",
-              value: 1399.98,
-            },
+            value: { flag: "number", type: "dimension", unit: "px", value: 1399.98 },
           },
         ],
       },
-
       mediaType: "all",
     },
   ]);
-  expect(parseMediaQueryList(l`(max-width:575.98px)`)).toEqual([
+  expectMQL(`(max-width:575.98px)`, [
     {
       mediaCondition: {
         children: [
@@ -214,20 +104,14 @@ test("parseMediaQueryList parses media query", async () => {
             context: "value",
             feature: "width",
             prefix: "max",
-            value: {
-              flag: "number",
-              type: "dimension",
-              unit: "px",
-              value: 575.98,
-            },
+            value: { flag: "number", type: "dimension", unit: "px", value: 575.98 },
           },
         ],
       },
-
       mediaType: "all",
     },
   ]);
-  expect(parseMediaQueryList(l`(max-width:767.98px)`)).toEqual([
+  expectMQL(`(max-width:767.98px)`, [
     {
       mediaCondition: {
         children: [
@@ -235,20 +119,14 @@ test("parseMediaQueryList parses media query", async () => {
             context: "value",
             feature: "width",
             prefix: "max",
-            value: {
-              flag: "number",
-              type: "dimension",
-              unit: "px",
-              value: 767.98,
-            },
+            value: { flag: "number", type: "dimension", unit: "px", value: 767.98 },
           },
         ],
       },
-
       mediaType: "all",
     },
   ]);
-  expect(parseMediaQueryList(l`(max-width:991.98px)`)).toEqual([
+  expectMQL(`(max-width:991.98px)`, [
     {
       mediaCondition: {
         children: [
@@ -256,20 +134,14 @@ test("parseMediaQueryList parses media query", async () => {
             context: "value",
             feature: "width",
             prefix: "max",
-            value: {
-              flag: "number",
-              type: "dimension",
-              unit: "px",
-              value: 991.98,
-            },
+            value: { flag: "number", type: "dimension", unit: "px", value: 991.98 },
           },
         ],
       },
-
       mediaType: "all",
     },
   ]);
-  expect(parseMediaQueryList(l`(min-width:1200px)`)).toEqual([
+  expectMQL(`(min-width:1200px)`, [
     {
       mediaCondition: {
         children: [
@@ -277,20 +149,14 @@ test("parseMediaQueryList parses media query", async () => {
             context: "value",
             feature: "width",
             prefix: "min",
-            value: {
-              flag: "number",
-              type: "dimension",
-              unit: "px",
-              value: 1200,
-            },
+            value: { flag: "number", type: "dimension", unit: "px", value: 1200 },
           },
         ],
       },
-
       mediaType: "all",
     },
   ]);
-  expect(parseMediaQueryList(l`(min-width:1400px)`)).toEqual([
+  expectMQL(`(min-width:1400px)`, [
     {
       mediaCondition: {
         children: [
@@ -298,20 +164,14 @@ test("parseMediaQueryList parses media query", async () => {
             context: "value",
             feature: "width",
             prefix: "min",
-            value: {
-              flag: "number",
-              type: "dimension",
-              unit: "px",
-              value: 1400,
-            },
+            value: { flag: "number", type: "dimension", unit: "px", value: 1400 },
           },
         ],
       },
-
       mediaType: "all",
     },
   ]);
-  expect(parseMediaQueryList(l`(min-width:576px)`)).toEqual([
+  expectMQL(`(min-width:576px)`, [
     {
       mediaCondition: {
         children: [
@@ -319,20 +179,14 @@ test("parseMediaQueryList parses media query", async () => {
             context: "value",
             feature: "width",
             prefix: "min",
-            value: {
-              flag: "number",
-              type: "dimension",
-              unit: "px",
-              value: 576,
-            },
+            value: { flag: "number", type: "dimension", unit: "px", value: 576 },
           },
         ],
       },
-
       mediaType: "all",
     },
   ]);
-  expect(parseMediaQueryList(l`(min-width:768px)`)).toEqual([
+  expectMQL(`(min-width:768px)`, [
     {
       mediaCondition: {
         children: [
@@ -340,20 +194,14 @@ test("parseMediaQueryList parses media query", async () => {
             context: "value",
             feature: "width",
             prefix: "min",
-            value: {
-              flag: "number",
-              type: "dimension",
-              unit: "px",
-              value: 768,
-            },
+            value: { flag: "number", type: "dimension", unit: "px", value: 768 },
           },
         ],
       },
-
       mediaType: "all",
     },
   ]);
-  expect(parseMediaQueryList(l`(min-width:992px)`)).toEqual([
+  expectMQL(`(min-width:992px)`, [
     {
       mediaCondition: {
         children: [
@@ -361,156 +209,101 @@ test("parseMediaQueryList parses media query", async () => {
             context: "value",
             feature: "width",
             prefix: "min",
-            value: {
-              flag: "number",
-              type: "dimension",
-              unit: "px",
-              value: 992,
-            },
+            value: { flag: "number", type: "dimension", unit: "px", value: 992 },
           },
         ],
       },
-
       mediaType: "all",
     },
   ]);
-  expect(parseMediaQueryList(l`(prefers-reduced-motion:no-preference)`)).toEqual([
+  expectMQL(`(prefers-reduced-motion:no-preference)`, [
     {
       mediaCondition: {
         children: [
           {
             context: "value",
             feature: "prefers-reduced-motion",
-
-            value: {
-              type: "ident",
-              value: "no-preference",
-            },
+            value: { type: "ident", value: "no-preference" },
           },
         ],
       },
-
       mediaType: "all",
     },
   ]);
-  expect(parseMediaQueryList(l`(any-hover:hover)`)).toEqual([
+  expectMQL(`(any-hover:hover)`, [
     {
       mediaCondition: {
         children: [
-          {
-            context: "value",
-            feature: "any-hover",
-
-            value: {
-              type: "ident",
-              value: "hover",
-            },
-          },
+          { context: "value", feature: "any-hover", value: { type: "ident", value: "hover" } },
         ],
       },
-
       mediaType: "all",
     },
   ]);
-  expect(parseMediaQueryList(l`(any-hover:none)`)).toEqual([
+  expectMQL(`(any-hover:none)`, [
     {
       mediaCondition: {
         children: [
-          {
-            context: "value",
-            feature: "any-hover",
-
-            value: {
-              type: "ident",
-              value: "none",
-            },
-          },
+          { context: "value", feature: "any-hover", value: { type: "ident", value: "none" } },
         ],
       },
-
       mediaType: "all",
     },
   ]);
-  expect(parseMediaQueryList(l`(any-hover:anything)`)).toEqual([
+  expectMQL(`(any-hover:anything)`, [
     {
       mediaCondition: {
         children: [
-          {
-            context: "value",
-            feature: "any-hover",
-
-            value: {
-              type: "ident",
-              value: "anything",
-            },
-          },
+          { context: "value", feature: "any-hover", value: { type: "ident", value: "anything" } },
         ],
       },
-
       mediaType: "all",
     },
   ]);
-  expect(parseMediaQueryList(l`(grid:0)`)).toEqual([
+  expectMQL(`(grid:0)`, [
     {
       mediaCondition: {
         children: [
           {
             context: "value",
             feature: "grid",
-
-            value: {
-              flag: "integer",
-              type: "number",
-              value: 0,
-            },
+            value: { flag: "integer", type: "number", value: 0 },
           },
         ],
       },
-
       mediaType: "all",
     },
   ]);
-  expect(parseMediaQueryList(l`(aspect-ratio:16/9)`)).toEqual([
+  expectMQL(`(aspect-ratio:16/9)`, [
     {
       mediaCondition: {
         children: [
           {
             context: "value",
             feature: "aspect-ratio",
-
             value: { denominator: 9, numerator: 16, type: "ratio" },
           },
         ],
       },
-
       mediaType: "all",
     },
   ]);
-  expect(parseMediaQueryList(l`(prefers-reduced-motion:reduce)`)).toEqual([
+  expectMQL(`(prefers-reduced-motion:reduce)`, [
     {
       mediaCondition: {
         children: [
           {
             context: "value",
             feature: "prefers-reduced-motion",
-
-            value: {
-              type: "ident",
-              value: "reduce",
-            },
+            value: { type: "ident", value: "reduce" },
           },
         ],
       },
-
       mediaType: "all",
     },
   ]);
-  expect(parseMediaQueryList(l`print`)).toEqual([
-    {
-      mediaType: "print",
-    },
-  ]);
-  expect(parseMediaQueryList(l`(height > 600px)`)).toEqual([
+  expectMQL(`print`, [{ mediaType: "print" }]);
+  expectMQL(`(height > 600px)`, [
     {
       mediaCondition: {
         children: [
@@ -519,23 +312,16 @@ test("parseMediaQueryList parses media query", async () => {
             feature: "height",
             range: {
               featureName: "height",
-
               rightOp: ">",
-              rightToken: {
-                flag: "number",
-                type: "dimension",
-                unit: "px",
-                value: 600,
-              },
+              rightToken: { flag: "number", type: "dimension", unit: "px", value: 600 },
             },
           },
         ],
       },
-
       mediaType: "all",
     },
   ]);
-  expect(parseMediaQueryList(l`(600px < height)`)).toEqual([
+  expectMQL(`(600px < height)`, [
     {
       mediaCondition: {
         children: [
@@ -545,21 +331,15 @@ test("parseMediaQueryList parses media query", async () => {
             range: {
               featureName: "height",
               leftOp: "<",
-              leftToken: {
-                flag: "number",
-                type: "dimension",
-                unit: "px",
-                value: 600,
-              },
+              leftToken: { flag: "number", type: "dimension", unit: "px", value: 600 },
             },
           },
         ],
       },
-
       mediaType: "all",
     },
   ]);
-  expect(parseMediaQueryList(l`(600px > width)`)).toEqual([
+  expectMQL(`(600px > width)`, [
     {
       mediaCondition: {
         children: [
@@ -569,21 +349,15 @@ test("parseMediaQueryList parses media query", async () => {
             range: {
               featureName: "width",
               leftOp: ">",
-              leftToken: {
-                flag: "number",
-                type: "dimension",
-                unit: "px",
-                value: 600,
-              },
+              leftToken: { flag: "number", type: "dimension", unit: "px", value: 600 },
             },
           },
         ],
       },
-
       mediaType: "all",
     },
   ]);
-  expect(parseMediaQueryList(l`(width < 600px)`)).toEqual([
+  expectMQL(`(width < 600px)`, [
     {
       mediaCondition: {
         children: [
@@ -592,43 +366,28 @@ test("parseMediaQueryList parses media query", async () => {
             feature: "width",
             range: {
               featureName: "width",
-
               rightOp: "<",
-              rightToken: {
-                flag: "number",
-                type: "dimension",
-                unit: "px",
-                value: 600,
-              },
+              rightToken: { flag: "number", type: "dimension", unit: "px", value: 600 },
             },
           },
         ],
       },
-
       mediaType: "all",
     },
   ]);
-  expect(parseMediaQueryList(l`((not (color))) or (hover)`)).toEqual([
+  expectMQL(`((not (color))) or (hover)`, [
     {
       mediaCondition: {
         children: [
-          {
-            children: [
-              {
-                children: [{ context: "boolean", feature: "color" }],
-                operator: "not",
-              },
-            ],
-          },
+          { children: [{ children: [{ context: "boolean", feature: "color" }], operator: "not" }] },
           { context: "boolean", feature: "hover" },
         ],
         operator: "or",
       },
-
       mediaType: "all",
     },
   ]);
-  expect(parseMediaQueryList(l`screen and (100px <= width <= 200px)`)).toEqual([
+  expectMQL(`screen and (100px <= width <= 200px)`, [
     {
       mediaCondition: {
         children: [
@@ -638,28 +397,17 @@ test("parseMediaQueryList parses media query", async () => {
             range: {
               featureName: "width",
               leftOp: "<=",
-              leftToken: {
-                flag: "number",
-                type: "dimension",
-                unit: "px",
-                value: 100,
-              },
+              leftToken: { flag: "number", type: "dimension", unit: "px", value: 100 },
               rightOp: "<=",
-              rightToken: {
-                flag: "number",
-                type: "dimension",
-                unit: "px",
-                value: 200,
-              },
+              rightToken: { flag: "number", type: "dimension", unit: "px", value: 200 },
             },
           },
         ],
       },
-
       mediaType: "screen",
     },
   ]);
-  expect(parseMediaQueryList(l`(100px <= width) and (width <= 200px)`)).toEqual([
+  expectMQL(`(100px <= width) and (width <= 200px)`, [
     {
       mediaCondition: {
         children: [
@@ -669,12 +417,7 @@ test("parseMediaQueryList parses media query", async () => {
             range: {
               featureName: "width",
               leftOp: "<=",
-              leftToken: {
-                flag: "number",
-                type: "dimension",
-                unit: "px",
-                value: 100,
-              },
+              leftToken: { flag: "number", type: "dimension", unit: "px", value: 100 },
             },
           },
           {
@@ -682,24 +425,17 @@ test("parseMediaQueryList parses media query", async () => {
             feature: "width",
             range: {
               featureName: "width",
-
               rightOp: "<=",
-              rightToken: {
-                flag: "number",
-                type: "dimension",
-                unit: "px",
-                value: 200,
-              },
+              rightToken: { flag: "number", type: "dimension", unit: "px", value: 200 },
             },
           },
         ],
         operator: "and",
       },
-
       mediaType: "all",
     },
   ]);
-  expect(parseMediaQueryList(l`(1/2 < aspect-ratio < 1/1)`)).toEqual([
+  expectMQL(`(1/2 < aspect-ratio < 1/1)`, [
     {
       mediaCondition: {
         children: [
@@ -709,26 +445,17 @@ test("parseMediaQueryList parses media query", async () => {
             range: {
               featureName: "aspect-ratio",
               leftOp: "<",
-              leftToken: {
-                denominator: 2,
-                numerator: 1,
-                type: "ratio",
-              },
+              leftToken: { denominator: 2, numerator: 1, type: "ratio" },
               rightOp: "<",
-              rightToken: {
-                denominator: 1,
-                numerator: 1,
-                type: "ratio",
-              },
+              rightToken: { denominator: 1, numerator: 1, type: "ratio" },
             },
           },
         ],
       },
-
       mediaType: "all",
     },
   ]);
-  expect(parseMediaQueryList(l`(100px <= width <= 200px)`)).toEqual([
+  expectMQL(`(100px <= width <= 200px)`, [
     {
       mediaCondition: {
         children: [
@@ -738,37 +465,24 @@ test("parseMediaQueryList parses media query", async () => {
             range: {
               featureName: "width",
               leftOp: "<=",
-              leftToken: {
-                flag: "number",
-                type: "dimension",
-                unit: "px",
-                value: 100,
-              },
+              leftToken: { flag: "number", type: "dimension", unit: "px", value: 100 },
               rightOp: "<=",
-              rightToken: {
-                flag: "number",
-                type: "dimension",
-                unit: "px",
-                value: 200,
-              },
+              rightToken: { flag: "number", type: "dimension", unit: "px", value: 200 },
             },
           },
         ],
       },
-
       mediaType: "all",
     },
   ]);
-  expect(parseMediaQueryList(l`only screen and (color)`)).toEqual([
+  expectMQL(`only screen and (color)`, [
     {
-      mediaCondition: {
-        children: [{ context: "boolean", feature: "color" }],
-      },
+      mediaCondition: { children: [{ context: "boolean", feature: "color" }] },
       mediaPrefix: "only",
       mediaType: "screen",
     },
   ]);
-  expect(parseMediaQueryList(l`not ((color) and (hover) and (min-width: 1px))`)).toEqual([
+  expectMQL(`not ((color) and (hover) and (min-width: 1px))`, [
     {
       mediaCondition: {
         children: [
@@ -776,24 +490,13 @@ test("parseMediaQueryList parses media query", async () => {
             children: [
               {
                 children: [
-                  {
-                    context: "boolean",
-                    feature: "color",
-                  },
-                  {
-                    context: "boolean",
-                    feature: "hover",
-                  },
+                  { context: "boolean", feature: "color" },
+                  { context: "boolean", feature: "hover" },
                   {
                     context: "value",
                     feature: "width",
                     prefix: "min",
-                    value: {
-                      flag: "number",
-                      type: "dimension",
-                      unit: "px",
-                      value: 1,
-                    },
+                    value: { flag: "number", type: "dimension", unit: "px", value: 1 },
                   },
                 ],
                 operator: "and",
@@ -803,30 +506,19 @@ test("parseMediaQueryList parses media query", async () => {
         ],
         operator: "not",
       },
-
       mediaType: "all",
     },
   ]);
-  expect(parseMediaQueryList(l`not (hover)`)).toEqual([
+  expectMQL(`not (hover)`, [
     {
       mediaCondition: {
-        children: [
-          {
-            children: [
-              {
-                context: "boolean",
-                feature: "hover",
-              },
-            ],
-          },
-        ],
+        children: [{ children: [{ context: "boolean", feature: "hover" }] }],
         operator: "not",
       },
-
       mediaType: "all",
     },
   ]);
-  expect(parseMediaQueryList(l`not ((hover) or (color))`)).toEqual([
+  expectMQL(`not ((hover) or (color))`, [
     {
       mediaCondition: {
         children: [
@@ -834,14 +526,8 @@ test("parseMediaQueryList parses media query", async () => {
             children: [
               {
                 children: [
-                  {
-                    context: "boolean",
-                    feature: "hover",
-                  },
-                  {
-                    context: "boolean",
-                    feature: "color",
-                  },
+                  { context: "boolean", feature: "hover" },
+                  { context: "boolean", feature: "color" },
                 ],
                 operator: "or",
               },
@@ -850,68 +536,35 @@ test("parseMediaQueryList parses media query", async () => {
         ],
         operator: "not",
       },
-
       mediaType: "all",
     },
   ]);
+
   // 'only' requires a media type
-  expect(isParsingError(parseMediaQuery(l`only (hover)`))).toBe(true);
+  expectMQ(`only (hover)`, false);
   // 'or' can not appear on the right hand side of a media type (e.g. all/screen/print)
-  expect(isParsingError(parseMediaQuery(l`screen and (not (color)) or (hover)`))).toBe(true);
-  expect(isParsingError(parseMediaQuery(l`only ((hover) or (color))`))).toBe(true);
-  expect(isParsingError(parseMediaQuery(l`screen and ((hover) or (color))`))).toBe(false);
+  expectMQ(`screen and (not (color)) or (hover)`, false);
+  expectMQ(`only ((hover) or (color))`, false);
+  expectMQ(`screen and ((hover) or (color))`, true);
   // 'not' should not be a valid binary operator
-  expect(isParsingError(parseMediaQuery(l`(color) not (hover)`))).toBe(true);
-  expect(isParsingError(parseMediaQuery(l`screen and ((color) not (hover))`))).toBe(true);
+  expectMQ(`(color) not (hover)`, false);
+  expectMQ(`screen and ((color) not (hover))`, false);
 });
 
 test("coverage misses", () => {
-  expect(isParsingError(parseMediaQuery(l`not`))).toBe(true);
-  expect(parseMediaQuery(l`only tty`)).toEqual({ mediaPrefix: "not", mediaType: "all" });
-  expect(parseMediaQuery(l`not tty`)).toEqual({ mediaType: "all" });
-  expect(isParsingError(parseMediaQuery(l`not mediatype`))).toBe(true);
-  expect(isParsingError(parseMediaQuery(l`not print or (hover)`))).toBe(true);
-  expect(isParsingError(parseMediaQuery(l`print or`))).toBe(true);
-  expect(isParsingError(parseMediaQuery(l`not print and`))).toBe(true);
-  expect(isParsingError(parseMediaQuery(l`not print and`))).toBe(true);
-  expect(isParsingError(parseMediaQuery(l`(monochrome) | (hover)`))).toBe(true);
-  expect(isParsingError(parseMediaQuery(l`*`))).toBe(true);
-  expect(
-    isParsingError(
-      parseMediaFeature([
-        { type: "(", start: 0, end: 0, hasSpaceAfter: false, hasSpaceBefore: false },
-      ])
-    )
-  ).toBe(true);
-  expect(
-    isParsingError(
-      parseMediaFeature(
-        t(
-          { type: "(" },
-          { type: "ident", value: "not" } as IdentToken,
-          { type: "whitespace" },
-          { type: "(" },
-          { type: ")" },
-          { type: ")" }
-        ).map((token) => ({ ...token, hasSpaceBefore: true, hasSpaceAfter: true }))
-      )
-    )
-  ).toBe(true);
-  expect(isParsingError(parseMediaQuery(l`(100px < width > 100px)`))).toBe(true);
-  expect(isParsingError(parseMediaQuery(l`(100px width)`))).toBe(true);
-  expect(
-    isParsingError(
-      parseRange(
-        t(
-          { type: "(" },
-          { type: "ident", value: "width" } as IdentToken,
-          { type: "delim", value: 0x003c } as DelimToken,
-          { type: "number", value: 100, flag: "number" } as NumberToken
-        ).map((token) => ({ ...token, hasSpaceBefore: true, hasSpaceAfter: true }))
-      )
-    )
-  ).toBe(true);
-  expect(parseMediaQuery(l`(200px >= width >= 100px)`)).toEqual({
+  expectMQ(`not`, false);
+  expectMQ(`only tty`, { mediaPrefix: "not", mediaType: "all" });
+  expectMQ(`not tty`, { mediaType: "all" });
+  expectMQ(`not mediatype`, false);
+  expectMQ(`not print or (hover)`, false);
+  expectMQ(`print or`, false);
+  expectMQ(`not print and`, false);
+  expectMQ(`not print and`, false);
+  expectMQ(`(monochrome) | (hover)`, false);
+  expectMQ(`*`, false);
+  expectMQ(`(100px < width > 100px)`, false);
+  expectMQ(`(100px width)`, false);
+  expectMQ(`(200px >= width >= 100px)`, {
     mediaCondition: {
       children: [
         {
@@ -920,26 +573,16 @@ test("coverage misses", () => {
           range: {
             featureName: "width",
             leftOp: ">=",
-            leftToken: {
-              flag: "number",
-              type: "dimension",
-              unit: "px",
-              value: 200,
-            },
+            leftToken: { flag: "number", type: "dimension", unit: "px", value: 200 },
             rightOp: ">=",
-            rightToken: {
-              flag: "number",
-              type: "dimension",
-              unit: "px",
-              value: 100,
-            },
+            rightToken: { flag: "number", type: "dimension", unit: "px", value: 100 },
           },
         },
       ],
     },
     mediaType: "all",
   });
-  expect(parseMediaQuery(l`(200px = width)`)).toEqual({
+  expectMQ(`(200px = width)`, {
     mediaCondition: {
       children: [
         {
@@ -948,19 +591,14 @@ test("coverage misses", () => {
           range: {
             featureName: "width",
             leftOp: "=",
-            leftToken: {
-              flag: "number",
-              type: "dimension",
-              unit: "px",
-              value: 200,
-            },
+            leftToken: { flag: "number", type: "dimension", unit: "px", value: 200 },
           },
         },
       ],
     },
     mediaType: "all",
   });
-  expect(parseMediaQuery(l`(width >= 200px)`)).toEqual({
+  expectMQ(`(width >= 200px)`, {
     mediaCondition: {
       children: [
         {
@@ -969,31 +607,25 @@ test("coverage misses", () => {
           range: {
             featureName: "width",
             rightOp: ">=",
-            rightToken: {
-              flag: "number",
-              type: "dimension",
-              unit: "px",
-              value: 200,
-            },
+            rightToken: { flag: "number", type: "dimension", unit: "px", value: 200 },
           },
         },
       ],
     },
     mediaType: "all",
   });
-  expect(isParsingError(parseMediaQuery(l`(1px @ width)`))).toBe(true);
-  expect(isParsingError(parseMediaQuery(l`(# < width < 3)`))).toBe(true);
-  expect(isParsingError(parseMediaQuery(l`(1px = width < 1)`))).toBe(true);
-  expect(isParsingError(parseMediaQuery(l`(width = 1px)`))).toBe(false);
-  expect(isParsingError(parseMediaQuery(l`(1px = width)`))).toBe(false);
-  expect(isParsingError(parseMediaQuery(l`(1px < width = infinite)`))).toBe(true);
-  expect(isParsingError(parseMediaQuery(l`(1px < width : infinite)`))).toBe(true);
-  expect(isParsingError(parseMediaQuery(l`(1px < width : )`))).toBe(true);
-  expect(isParsingError(parseMediaQuery(l`(1px < < 2px)`))).toBe(true);
-  expect(isParsingError(parseRange(convertToParsingTokens(l`(width)`.slice(0, -1))))).toBe(true);
-  expect(isParsingError(parseMediaQuery(l`(infinity < width < infinity)`))).toBe(true);
-  expect(isParsingError(parseMediaQuery(l`(infinite < width < infinity)`))).toBe(true);
-  expect(isParsingError(parseMediaQuery(l`(infinity < width < infinite)`))).toBe(true);
-  expect(isParsingError(parseMediaQuery(l`(infinite < width < infinite)`))).toBe(false);
-  expect(isParsingError(parseMediaQuery(l`(infinite < width < infinite any)`))).toBe(true);
+  expectMQ(`(1px @ width)`, false);
+  expectMQ(`(# < width < 3)`, false);
+  expectMQ(`(1px = width < 1)`, false);
+  expectMQ(`(width = 1px)`, true);
+  expectMQ(`(1px = width)`, true);
+  expectMQ(`(1px < width = infinite)`, false);
+  expectMQ(`(1px < width : infinite)`, false);
+  expectMQ(`(1px < width : )`, false);
+  expectMQ(`(1px < < 2px)`, false);
+  expectMQ(`(infinity < width < infinity)`, false);
+  expectMQ(`(infinite < width < infinity)`, false);
+  expectMQ(`(infinity < width < infinite)`, false);
+  expectMQ(`(infinite < width < infinite)`, true);
+  expectMQ(`(infinite < width < infinite any)`, false);
 });
