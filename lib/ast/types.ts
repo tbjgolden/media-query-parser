@@ -1,5 +1,4 @@
 import type { DimensionToken, EOFToken, IdentToken, NumberToken, Token } from "../lexer/types.js";
-import type { ValidRange } from "./ast.js";
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 type Simplify<T> = { [KeyType in keyof T]: T[KeyType] } & {};
@@ -8,7 +7,27 @@ export type ParsingToken = Simplify<
   Exclude<Token, EOFToken> & { hasSpaceBefore: boolean; hasSpaceAfter: boolean }
 >;
 
-export type ParsingErrId = "MEDIA_QUERY_LIST";
+export type ParsingErrId =
+  | "EXPECT_LPAREN_OR_TYPE"
+  | "EXPECT_TYPE"
+  | "EXPECT_CONDITION"
+  | "EXPECT_AND"
+  | "EXPECT_LPAREN_OR_TYPE_OR_MODIFIER"
+  | "EXPECT_LPAREN"
+  | "EXPECT_FEATURE_OR_CONDITION"
+  | "EXPECT_AND_OR_OR"
+  | "EXPECT_RPAREN"
+  | "EXPECT_VALUE"
+  | "EXPECT_RANGE"
+  | "MIX_AND_WITH_OR"
+  | "OR_AT_TOP_LEVEL"
+  | "MISMATCH_PARENS"
+  | "EMPTY_QUERY"
+  | "EMPTY_CONDITION"
+  | "EMPTY_FEATURE"
+  // TODO: better errors
+  | "INVALID_FEATURE"
+  | "INVALID_RANGE";
 
 export type ParsingError = {
   errid: ParsingErrId;
@@ -29,11 +48,21 @@ export type MediaQuery = {
   mediaCondition?: MediaCondition;
 };
 
-export type MediaCondition = {
-  type: "condition";
-  operator?: "and" | "or" | "not";
-  children: Array<MediaCondition | MediaFeature>;
-};
+export type MediaCondition =
+  | {
+      type: "condition";
+      operator?: "not";
+      children: [child: MediaCondition | MediaFeature];
+    }
+  | {
+      type: "condition";
+      operator: "and" | "or";
+      children: [
+        child1: MediaCondition | MediaFeature,
+        child2: MediaCondition | MediaFeature,
+        ...rest: Array<MediaCondition | MediaFeature>
+      ];
+    };
 
 export type MediaFeature = Simplify<
   { type: "feature" } & (MediaFeatureBoolean | MediaFeatureValue | MediaFeatureRange)
@@ -59,7 +88,35 @@ export type ValidValueToken = Simplify<
   | Omit<RatioToken, "start" | "end">
   | Omit<IdentToken, "start" | "end">
 >;
-
+export type ValidRange =
+  | {
+      leftToken: ValidRangeToken;
+      leftOp: "<" | "<=";
+      featureName: string;
+      rightOp: "<" | "<=";
+      rightToken: ValidRangeToken;
+    }
+  | {
+      leftToken: ValidRangeToken;
+      leftOp: ">" | ">=";
+      featureName: string;
+      rightOp: ">" | ">=";
+      rightToken: ValidRangeToken;
+    }
+  | {
+      leftToken: ValidRangeToken;
+      leftOp: ">" | ">=" | "<" | "<=" | "=";
+      featureName: string;
+      rightOp?: undefined;
+      rightToken?: undefined;
+    }
+  | {
+      leftToken?: undefined;
+      leftOp?: undefined;
+      featureName: string;
+      rightOp: ">" | ">=" | "<" | "<=" | "=";
+      rightToken: ValidRangeToken;
+    };
 export type RatioToken = {
   type: "ratio";
   numerator: number;

@@ -7,6 +7,7 @@ import type {
   ParsingError,
   ParsingToken,
   RatioToken,
+  ValidRange,
   ValidRangeToken,
 } from "./types.js";
 
@@ -24,14 +25,6 @@ type UncheckedRange = {
 
 export const isParsingError = (value: unknown): value is ParsingError => {
   return typeof value === "object" && value !== null && "errid" in value;
-};
-
-const createError = (message: string): ParsingError => {
-  return {
-    errid: message as ParsingError["errid"],
-    start: -1,
-    end: -1,
-  };
 };
 
 export const convertToParsingTokens = (tokenList: Token[]): ParsingToken[] => {
@@ -88,29 +81,30 @@ export const parseMediaQuery = (tokens: ParsingToken[]): MediaQuery | ParsingErr
   if (firstToken) {
     if (firstToken.type === "(") {
       const mediaCondition = parseMediaCondition(tokens, true);
-      return isParsingError(mediaCondition)
-        ? createError("Expected media condition after '('")
-        : { type: "query", mediaType: "all", mediaCondition };
+      if (isParsingError(mediaCondition)) {
+        const { start, end } = tokens.at(1) ?? firstToken;
+        return { errid: "EXPECT_FEATURE_OR_CONDITION", start, end, child: mediaCondition };
+      } else {
+        return { type: "query", mediaType: "all", mediaCondition };
+      }
     } else if (firstToken.type === "ident") {
       let mediaPrefix: "not" | "only" | undefined;
       let mediaType: "all" | "print" | "screen";
 
-      const { value } = firstToken;
+      const { value, end } = firstToken;
       if (value === "only" || value === "not") {
         mediaPrefix = value;
       }
 
       const firstIndex = mediaPrefix === undefined ? 0 : 1;
 
-      if (tokens.length <= firstIndex) {
-        return createError(`Expected extra token in media query`);
+      const firstNonUnaryToken = tokens.at(firstIndex);
+      if (!firstNonUnaryToken) {
+        return { errid: "EXPECT_LPAREN_OR_TYPE", start: end, end };
       }
 
-      // eslint-disable-next-line security/detect-object-injection
-      const firstNonUnaryToken = tokens[firstIndex];
-
       if (firstNonUnaryToken.type === "ident") {
-        const { value } = firstNonUnaryToken;
+        const { value, start, end } = firstNonUnaryToken;
 
         if (value === "all") {
           mediaType = "all";
@@ -130,13 +124,14 @@ export const parseMediaQuery = (tokens: ParsingToken[]): MediaQuery | ParsingErr
           mediaPrefix = mediaPrefix === "not" ? undefined : "not";
           mediaType = "all";
         } else {
-          return createError(`Unknown ident '${value}' in media query`);
+          return { errid: "EXPECT_TYPE", start, end };
         }
       } else if (mediaPrefix === "not" && firstNonUnaryToken.type === "(") {
         const mediaCondition = parseMediaCondition(tokens.slice(firstIndex), true);
 
         if (isParsingError(mediaCondition)) {
-          return createError("Expected media condition after '('");
+          const { start, end } = tokens.at(firstIndex + 1) ?? firstNonUnaryToken;
+          return { errid: "EXPECT_CONDITION", start, end, child: mediaCondition };
         } else {
           return {
             type: "query",
@@ -144,31 +139,46 @@ export const parseMediaQuery = (tokens: ParsingToken[]): MediaQuery | ParsingErr
             mediaCondition: { type: "condition", operator: "not", children: [mediaCondition] },
           };
         }
+      } else if (mediaPrefix === undefined) {
+        const { start, end } = firstNonUnaryToken;
+        return { errid: "EXPECT_LPAREN_OR_TYPE", start, end };
       } else {
-        return createError("Invalid media query");
+        const { start, end } = firstNonUnaryToken;
+        return { errid: "EXPECT_TYPE", start, end };
       }
 
       if (firstIndex + 1 === tokens.length) {
         return { type: "query", mediaPrefix, mediaType };
-      } else if (firstIndex + 4 < tokens.length) {
+      } else {
         const secondNonUnaryToken = tokens[firstIndex + 1];
         if (secondNonUnaryToken.type === "ident" && secondNonUnaryToken.value === "and") {
           const mediaCondition = parseMediaCondition(tokens.slice(firstIndex + 2), false);
+          const lastToken = tokens.at(-1) as ParsingToken;
+          const { start, end } = tokens.at(firstIndex + 2) ?? {
+            start: lastToken.end + 1,
+            end: lastToken.end + 1,
+          };
 
           return isParsingError(mediaCondition)
-            ? createError("Expected media condition after 'and'")
+            ? { errid: "EXPECT_CONDITION", start, end, child: mediaCondition }
             : { type: "query", mediaPrefix, mediaType, mediaCondition };
         } else {
-          return createError("Expected 'and' after media prefix");
+          return {
+            errid: "EXPECT_AND",
+            start: secondNonUnaryToken.start,
+            end: secondNonUnaryToken.end,
+          };
         }
-      } else {
-        return createError("Expected media condition after media prefix");
       }
     } else {
-      return createError("Expected media condition or media prefix");
+      return {
+        errid: "EXPECT_LPAREN_OR_TYPE_OR_MODIFIER",
+        start: firstToken.start,
+        end: firstToken.end,
+      };
     }
   } else {
-    return createError("Empty media query");
+    return { errid: "EMPTY_QUERY", start: 0, end: 0 };
   }
 };
 
@@ -177,187 +187,200 @@ export const parseMediaCondition = (
   mayContainOr: boolean,
   previousOperator?: "and" | "or" | "not" | undefined
 ): MediaCondition | ParsingError => {
-  if (tokens.length < 3 || tokens[0].type !== "(" || tokens[tokens.length - 1].type !== ")") {
-    return createError("Invalid media condition");
-  }
-
-  let endIndexOfFirstFeature = tokens.length - 1;
-  let maxDepth = 0;
-  let count = 0;
-  for (const [i, token] of tokens.entries()) {
-    if (token.type === "(") {
-      count += 1;
-      maxDepth = Math.max(maxDepth, count);
-    } else if (token.type === ")") {
-      count -= 1;
+  const firstToken = tokens.at(0);
+  if (firstToken) {
+    if (firstToken.type !== "(") {
+      return { errid: "EXPECT_LPAREN", start: firstToken.start, end: firstToken.end };
     }
-    if (count === 0) {
-      endIndexOfFirstFeature = i;
-      break;
+
+    let endIndexOfFirstFeature = tokens.length - 1;
+    let maxDepth = 0;
+    let count = 0;
+    for (const [i, token] of tokens.entries()) {
+      if (token.type === "(") {
+        count += 1;
+        maxDepth = Math.max(maxDepth, count);
+      } else if (token.type === ")") {
+        count -= 1;
+      }
+      if (count === 0) {
+        endIndexOfFirstFeature = i;
+        break;
+      }
     }
-  }
 
-  if (count !== 0) {
-    return createError("Mismatched parens\nInvalid media condition");
-  }
+    if (count !== 0) {
+      return {
+        errid: "MISMATCH_PARENS",
+        start: firstToken.start,
+        end: tokens[tokens.length - 1].end,
+      };
+    }
 
-  let child: MediaCondition | MediaFeature | ParsingError;
-  const featureTokens = tokens.slice(0, endIndexOfFirstFeature + 1);
-  if (maxDepth === 1) {
-    child = parseMediaFeature(featureTokens);
-  } else {
-    child =
-      featureTokens[1].type === "ident" && featureTokens[1].value === "not"
-        ? parseMediaCondition(featureTokens.slice(2, -1), true, "not")
-        : parseMediaCondition(featureTokens.slice(1, -1), true);
-  }
+    let child: MediaCondition | MediaFeature | ParsingError;
+    const featureTokens = tokens.slice(0, endIndexOfFirstFeature + 1);
+    if (maxDepth === 1) {
+      child = parseMediaFeature(featureTokens);
+    } else {
+      child =
+        featureTokens[1].type === "ident" && featureTokens[1].value === "not"
+          ? parseMediaCondition(featureTokens.slice(2, -1), true, "not")
+          : parseMediaCondition(featureTokens.slice(1, -1), true);
+    }
 
-  if (isParsingError(child)) {
-    return child;
-  }
+    if (isParsingError(child)) {
+      return {
+        errid: "EXPECT_FEATURE_OR_CONDITION",
+        start: firstToken.start,
+        end: featureTokens[featureTokens.length - 1].end,
+        child,
+      };
+    }
 
-  if (endIndexOfFirstFeature === tokens.length - 1) {
-    return { type: "condition", operator: previousOperator, children: [child] };
-  } else {
-    // read for a boolean op "and", "not", "or"
-    const nextToken = tokens[endIndexOfFirstFeature + 1];
-    if (nextToken.type !== "ident") {
-      return createError("Invalid operator\nInvalid media condition");
-    } else if (previousOperator !== undefined && previousOperator !== nextToken.value) {
-      return createError(
-        `'${nextToken.value}' and '${previousOperator}' must not be at same level\nInvalid media condition`
+    if (endIndexOfFirstFeature === tokens.length - 1) {
+      return { type: "condition", operator: previousOperator, children: [child] } as MediaCondition;
+    } else {
+      // read for a boolean op "and", "not", "or"
+      const nextToken = tokens[endIndexOfFirstFeature + 1];
+      if (nextToken.type !== "ident" || (nextToken.value !== "and" && nextToken.value !== "or")) {
+        return { errid: "EXPECT_AND_OR_OR", start: nextToken.start, end: nextToken.end };
+      } else if (previousOperator !== undefined && previousOperator !== nextToken.value) {
+        return { errid: "MIX_AND_WITH_OR", start: nextToken.start, end: nextToken.end };
+      } else if (nextToken.value === "or" && !mayContainOr) {
+        return { errid: "OR_AT_TOP_LEVEL", start: nextToken.start, end: nextToken.end };
+      }
+
+      const mediaCondition = parseMediaCondition(
+        tokens.slice(endIndexOfFirstFeature + 2),
+        mayContainOr,
+        nextToken.value
       );
-    } else if (nextToken.value === "or" && !mayContainOr) {
-      return createError("Cannot use 'or' at top level of a media query\nInvalid media condition");
-    } else if (nextToken.value !== "and" && nextToken.value !== "or") {
-      return createError(`Invalid operator: '${nextToken.value}'\nInvalid media condition`);
+
+      return isParsingError(mediaCondition)
+        ? mediaCondition
+        : {
+            type: "condition",
+            operator: nextToken.value,
+            children: [child, ...mediaCondition.children],
+          };
     }
-
-    const mediaCondition = parseMediaCondition(
-      tokens.slice(endIndexOfFirstFeature + 2),
-      mayContainOr,
-      nextToken.value
-    );
-
-    return isParsingError(mediaCondition)
-      ? mediaCondition
-      : {
-          type: "condition",
-          operator: nextToken.value,
-          children: [child, ...mediaCondition.children],
-        };
+  } else {
+    return { errid: "EMPTY_CONDITION", start: 0, end: 0 };
   }
 };
 
 export const parseMediaFeature = (rawTokens: ParsingToken[]): MediaFeature | ParsingError => {
-  if (
-    rawTokens.length < 3 ||
-    rawTokens[0].type !== "(" ||
-    rawTokens[rawTokens.length - 1].type !== ")"
-  ) {
-    return createError("Invalid media feature");
-  }
+  const firstToken = rawTokens.at(0);
+  if (firstToken) {
+    if (firstToken.type !== "(") {
+      return { errid: "EXPECT_LPAREN", start: firstToken.start, end: firstToken.end };
+    }
+    const lastToken = rawTokens[rawTokens.length - 1];
+    if (lastToken.type !== ")") {
+      return { errid: "EXPECT_RPAREN", start: lastToken.start, end: lastToken.end };
+    }
 
-  const tokens: ConvenientToken[] = [rawTokens[0]];
+    const tokens: ConvenientToken[] = [rawTokens[0]];
 
-  for (let i = 1; i < rawTokens.length; i++) {
-    if (i < rawTokens.length - 2) {
+    // convert ratios to single tokens for convenience
+    for (let i = 1; i < rawTokens.length; i++) {
+      if (i < rawTokens.length - 2) {
+        // eslint-disable-next-line security/detect-object-injection
+        const a = rawTokens[i];
+        const b = rawTokens[i + 1];
+        const c = rawTokens[i + 2];
+        if (
+          a.type === "number" &&
+          a.value > 0 &&
+          b.type === "delim" &&
+          b.value === 0x002f &&
+          c.type === "number" &&
+          c.value > 0
+        ) {
+          tokens.push({
+            type: "ratio",
+            numerator: a.value,
+            denominator: c.value,
+            hasSpaceBefore: a.hasSpaceBefore,
+            hasSpaceAfter: c.hasSpaceAfter,
+            start: a.start,
+            end: c.end,
+          });
+          i += 2;
+          continue;
+        }
+      }
       // eslint-disable-next-line security/detect-object-injection
-      const a = rawTokens[i];
-      const b = rawTokens[i + 1];
-      const c = rawTokens[i + 2];
+      tokens.push(rawTokens[i]);
+    }
+
+    const nextToken = tokens[1];
+    if (nextToken.type === "ident" && tokens.length === 3) {
+      return { type: "feature", context: "boolean", feature: nextToken.value };
+    } else if (tokens.length === 5 && tokens[1].type === "ident" && tokens[2].type === "colon") {
+      const valueToken = tokens[3];
       if (
-        a.type === "number" &&
-        a.value > 0 &&
-        b.type === "delim" &&
-        b.value === 0x002f &&
-        c.type === "number" &&
-        c.value > 0
+        valueToken.type === "number" ||
+        valueToken.type === "dimension" ||
+        valueToken.type === "ratio" ||
+        valueToken.type === "ident"
       ) {
-        tokens.push({
-          type: "ratio",
-          numerator: a.value,
-          denominator: c.value,
-          hasSpaceBefore: a.hasSpaceBefore,
-          hasSpaceAfter: c.hasSpaceAfter,
-          start: a.start,
-          end: c.end,
-        });
-        i += 2;
-        continue;
+        let feature = tokens[1].value;
+
+        let prefix: "min" | "max" | undefined;
+
+        const slice = feature.slice(0, 4);
+        if (slice === "min-") {
+          prefix = "min";
+          feature = feature.slice(4);
+        } else if (slice === "max-") {
+          prefix = "max";
+          feature = feature.slice(4);
+        }
+
+        const { hasSpaceBefore: _0, hasSpaceAfter: _1, start: _2, end: _3, ...value } = valueToken;
+
+        return { type: "feature", context: "value", prefix, feature, value };
+      } else {
+        return { errid: "EXPECT_VALUE", start: valueToken.start, end: valueToken.end };
       }
+    } else if (tokens.length >= 5) {
+      const range = parseRange(tokens);
+
+      return isParsingError(range)
+        ? {
+            errid: "EXPECT_RANGE",
+            start: firstToken.start,
+            end: tokens[tokens.length - 1].end,
+            child: range,
+          }
+        : { type: "feature", context: "range", feature: range.featureName, range };
     }
-    // eslint-disable-next-line security/detect-object-injection
-    tokens.push(rawTokens[i]);
+
+    return {
+      errid: "INVALID_FEATURE",
+      start: firstToken.start,
+      end: rawTokens[rawTokens.length - 1].end,
+    };
+  } else {
+    return { errid: "EMPTY_FEATURE", start: 0, end: 0 };
   }
-
-  const nextToken = tokens[1];
-  if (nextToken.type === "ident" && tokens.length === 3) {
-    return { type: "feature", context: "boolean", feature: nextToken.value };
-  } else if (tokens.length === 5 && tokens[1].type === "ident" && tokens[2].type === "colon") {
-    const valueToken = tokens[3];
-    if (
-      valueToken.type === "number" ||
-      valueToken.type === "dimension" ||
-      valueToken.type === "ratio" ||
-      valueToken.type === "ident"
-    ) {
-      let feature = tokens[1].value;
-
-      let prefix: "min" | "max" | undefined;
-
-      const slice = feature.slice(0, 4);
-      if (slice === "min-") {
-        prefix = "min";
-        feature = feature.slice(4);
-      } else if (slice === "max-") {
-        prefix = "max";
-        feature = feature.slice(4);
-      }
-
-      const { hasSpaceBefore: _0, hasSpaceAfter: _1, start: _2, end: _3, ...value } = valueToken;
-
-      return { type: "feature", context: "value", prefix, feature, value };
-    }
-  } else if (tokens.length >= 5) {
-    const range = parseRange(tokens);
-    return isParsingError(range)
-      ? createError("Invalid media feature")
-      : { type: "feature", context: "range", feature: range.featureName, range };
-  }
-
-  return createError("Invalid media feature");
 };
 
-export type ValidRange =
-  | {
-      leftToken: ValidRangeToken;
-      leftOp: "<" | "<=";
-      featureName: string;
-      rightOp: "<" | "<=";
-      rightToken: ValidRangeToken;
-    }
-  | {
-      leftToken: ValidRangeToken;
-      leftOp: ">" | ">=";
-      featureName: string;
-      rightOp: ">" | ">=";
-      rightToken: ValidRangeToken;
-    }
-  | {
-      leftToken: ValidRangeToken;
-      leftOp: ">" | ">=" | "<" | "<=" | "=";
-      featureName: string;
-    }
-  | {
-      featureName: string;
-      rightOp: ">" | ">=" | "<" | "<=" | "=";
-      rightToken: ValidRangeToken;
-    };
-
 export const parseRange = (tokens: ConvenientToken[]): ValidRange | ParsingError => {
-  if (tokens.length < 5 || tokens[0].type !== "(" || tokens[tokens.length - 1].type !== ")") {
-    return createError("Invalid range");
+  if (tokens.length < 5) {
+    return {
+      errid: "INVALID_RANGE",
+      start: tokens.at(0)?.start ?? 0,
+      end: tokens.at(-1)?.end ?? 0,
+    };
+  }
+  if (tokens[0].type !== "(") {
+    return { errid: "EXPECT_LPAREN", start: tokens[0].start, end: tokens[0].end };
+  }
+  const lastToken = tokens[tokens.length - 1];
+  if (lastToken.type !== ")") {
+    return { errid: "EXPECT_RPAREN", start: lastToken.start, end: lastToken.end };
   }
 
   // range form
@@ -387,7 +410,7 @@ export const parseRange = (tokens: ConvenientToken[]): ValidRange | ParsingError
     } else if (tokens[2].value === 0x003d) {
       range[hasLeft ? "leftOp" : "rightOp"] = "=";
     } else {
-      return createError("Invalid range");
+      return { errid: "INVALID_RANGE", start: tokens[0].start, end: lastToken.end };
     }
 
     if (hasLeft) {
@@ -395,7 +418,7 @@ export const parseRange = (tokens: ConvenientToken[]): ValidRange | ParsingError
     } else if (tokens[1].type === "ident") {
       range.featureName = tokens[1].value;
     } else {
-      return createError("Invalid range");
+      return { errid: "INVALID_RANGE", start: tokens[0].start, end: lastToken.end };
     }
 
     const tokenIndexAfterFirstOp = 2 + (range[hasLeft ? "leftOp" : "rightOp"]?.length ?? 0);
@@ -433,7 +456,7 @@ export const parseRange = (tokens: ConvenientToken[]): ValidRange | ParsingError
                 range.rightOp = ">";
               }
             } else {
-              return createError("Invalid range");
+              return { errid: "INVALID_RANGE", start: tokens[0].start, end: lastToken.end };
             }
 
             const indexAfterSecondOp = tokenIndexAfterFirstOp + 1 + (range.rightOp?.length ?? 0);
@@ -441,16 +464,16 @@ export const parseRange = (tokens: ConvenientToken[]): ValidRange | ParsingError
             if (indexAfterSecondOp + 2 === tokens.length) {
               range.rightToken = tokenAfterSecondOp;
             } else {
-              return createError("Invalid range");
+              return { errid: "INVALID_RANGE", start: tokens[0].start, end: lastToken.end };
             }
           } else {
-            return createError("Invalid range");
+            return { errid: "INVALID_RANGE", start: tokens[0].start, end: lastToken.end };
           }
         } else if (tokenIndexAfterFirstOp + 2 !== tokens.length) {
-          return createError("Invalid range");
+          return { errid: "INVALID_RANGE", start: tokens[0].start, end: lastToken.end };
         }
       } else {
-        return createError("Invalid range");
+        return { errid: "INVALID_RANGE", start: tokens[0].start, end: lastToken.end };
       }
     } else {
       range.rightToken = tokenAfterFirstOp;
@@ -491,7 +514,7 @@ export const parseRange = (tokens: ConvenientToken[]): ValidRange | ParsingError
       } else if ((leftOp === ">" || leftOp === ">=") && (rightOp === ">" || rightOp === ">=")) {
         validRange = { leftToken, leftOp, featureName, rightOp, rightToken };
       } else {
-        return createError("Invalid range");
+        return { errid: "INVALID_RANGE", start: tokens[0].start, end: lastToken.end };
       }
     } else if (
       leftToken === undefined &&
@@ -509,8 +532,8 @@ export const parseRange = (tokens: ConvenientToken[]): ValidRange | ParsingError
       validRange = { leftToken, leftOp, featureName, rightOp, rightToken };
     }
 
-    return validRange ?? createError("Invalid range");
+    return validRange ?? { errid: "INVALID_RANGE", start: tokens[0].start, end: lastToken.end };
   } else {
-    return createError("Invalid range");
+    return { errid: "INVALID_RANGE", start: tokens[0].start, end: lastToken.end };
   }
 };

@@ -1,9 +1,8 @@
 - [x] handle utf16 to utf8 conversion with TextDecoder
 - [x] support `start`, `end` in lexer
-- [ ] come up with a new parsing error shape and method
-  - for the shape, a standard object will do
-  - for the method, presumably we can "expect" tokens to be of certain types or values
-    - each expect would generate an object containing a sensible error message
+- [x] come up with a new parsing error shape and method
+- [x] make the errors actually usable
+  - still might need work tho, give it a think
 - [ ] make it clear in Readme how to use with csstree or postcss
 - [ ] match csstree ast
 - [ ] create generator

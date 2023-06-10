@@ -1,4 +1,4 @@
-import { MediaCondition, MediaQuery, MediaQueryList } from "../ast/types.js";
+import { MediaCondition, MediaFeature, MediaQuery, MediaQueryList } from "../ast/types.js";
 
 export const flattenMediaQueryList = (mediaQueryList: MediaQueryList): MediaQueryList => ({
   type: "query-list",
@@ -26,7 +26,7 @@ export const flattenMediaQuery = (mediaQuery: MediaQuery): MediaQuery => {
 };
 
 export const flattenMediaCondition = (mediaCondition: MediaCondition): MediaCondition => {
-  const children: MediaCondition["children"] = [];
+  const children: Array<MediaCondition | MediaFeature> = [];
   for (const child of mediaCondition.children) {
     if (child.type === "condition") {
       const grandchild = flattenMediaCondition(child);
@@ -44,9 +44,5 @@ export const flattenMediaCondition = (mediaCondition: MediaCondition): MediaCond
       children.push(child);
     }
   }
-  return {
-    type: "condition",
-    operator: mediaCondition.operator,
-    children,
-  };
+  return { type: "condition", operator: mediaCondition.operator, children } as MediaCondition;
 };

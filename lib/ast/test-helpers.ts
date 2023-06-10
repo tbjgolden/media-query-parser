@@ -1,7 +1,6 @@
 import { lexer } from "../lexer/index.js";
 import type { Token } from "../lexer/types.js";
 import {
-  ValidRange,
   convertToParsingTokens,
   isParsingError,
   parseMediaQuery,
@@ -12,6 +11,8 @@ import {
   MediaFeature,
   MediaQuery,
   MediaQueryList,
+  ParsingErrId,
+  ValidRange,
   ValidValueToken,
 } from "./types.js";
 import { deepEqual } from "node:assert/strict";
@@ -88,7 +89,7 @@ export const expectMQL = (str: string, expected: LiteMediaQuery[]) => {
   expect(result.mediaQueries.map((mediaQuery) => toLiteMediaQuery(mediaQuery))).toEqual(expected);
 };
 
-export const expectMQ = (str: string, expected: LiteMediaQuery | string | boolean) => {
+export const expectMQ = (str: string, expected: LiteMediaQuery | ParsingErrId | boolean) => {
   const result = parseMediaQuery(convertToParsingTokens(lexer(str) as Token[]));
   if (typeof expected === "boolean") {
     // for boolean, treat as whether the string parses successfully
