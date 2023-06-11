@@ -8,7 +8,7 @@ import {
   RatioToken,
   ValidRange,
   ValidRangeToken,
-} from "./types.js";
+} from "../shared.js";
 
 type ConvenientToken =
   | ParserToken
@@ -74,7 +74,9 @@ export const readMediaQueryList = (parsingTokens: ParserToken[]): MediaQueryList
     for (const mediaQueryParserTokens of mediaQueriesParserTokens) {
       const mediaQuery = readMediaQuery(mediaQueryParserTokens);
       // note: a media query list can contain an invalid media query
-      if (!isParserError(mediaQuery)) {
+      if (isParserError(mediaQuery)) {
+        mediaQueries.push({ type: "query", mediaPrefix: "not", mediaType: "all" });
+      } else {
         mediaQueries.push(mediaQuery);
       }
     }
@@ -330,20 +332,20 @@ export const readMediaFeature = (parsingTokens: ParserToken[]): MediaFeature | P
       ) {
         let feature = tokens[1].value;
 
-        let prefix: "min" | "max" | undefined;
+        let mediaPrefix: "min" | "max" | undefined;
 
         const slice = feature.slice(0, 4);
         if (slice === "min-") {
-          prefix = "min";
+          mediaPrefix = "min";
           feature = feature.slice(4);
         } else if (slice === "max-") {
-          prefix = "max";
+          mediaPrefix = "max";
           feature = feature.slice(4);
         }
 
         const { hasSpaceBefore: _, hasSpaceAfter: _0, start: _1, end: _2, ...value } = valueToken;
 
-        return { type: "feature", context: "value", prefix, feature, value };
+        return { type: "feature", context: "value", mediaPrefix, feature, value };
       } else {
         return { errid: "EXPECT_VALUE", start: valueToken.start, end: valueToken.end };
       }

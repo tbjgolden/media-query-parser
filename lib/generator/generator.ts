@@ -1,16 +1,18 @@
 import {
+  MediaQueryList,
+  MediaQuery,
   MediaCondition,
   MediaFeature,
   MediaFeatureBoolean,
-  MediaFeatureRange,
   MediaFeatureValue,
-  MediaQuery,
-  MediaQueryList,
-  RatioToken,
-  ValidRangeToken,
+  MediaFeatureRange,
   ValidValueToken,
-} from "../ast/types.js";
-import { DimensionToken, IdentToken, NumberToken } from "../lexer/types.js";
+  ValidRangeToken,
+  RatioToken,
+  NumberToken,
+  DimensionToken,
+  IdentToken,
+} from "../shared.js";
 
 export const generateMediaQueryList = (mediaQueryList: MediaQueryList): string =>
   mediaQueryList.mediaQueries.map((mediaQuery) => generateMediaQuery(mediaQuery)).join(", ");
@@ -78,8 +80,8 @@ export const generateMediaFeatureBoolean = (mediaFeature: MediaFeatureBoolean): 
   return mediaFeature.feature;
 };
 export const generateMediaFeatureValue = (mediaFeature: MediaFeatureValue): string => {
-  const prefix = mediaFeature.prefix ? `${mediaFeature.prefix}-` : "";
-  return prefix + mediaFeature.feature + ": " + generateValidValueToken(mediaFeature.value);
+  const mediaPrefix = mediaFeature.mediaPrefix ? `${mediaFeature.mediaPrefix}-` : "";
+  return mediaPrefix + mediaFeature.feature + ": " + generateValidValueToken(mediaFeature.value);
 };
 export const generateMediaFeatureRange = (mediaFeature: MediaFeatureRange): string => {
   let str = "";

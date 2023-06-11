@@ -1,5 +1,4 @@
-import { lexer } from "../lexer/index.js";
-import { isParserError, readMediaQuery, readMediaQueryList } from "./ast.js";
+import { lexer } from "../lexer/lexer.js";
 import {
   MediaCondition,
   MediaFeature,
@@ -9,7 +8,8 @@ import {
   ParserToken,
   ValidRange,
   ValidValueToken,
-} from "./types.js";
+} from "../shared.js";
+import { isParserError, readMediaQuery, readMediaQueryList } from "./ast.js";
 import { deepEqual } from "node:assert/strict";
 
 export type LiteMediaQueryList = {
@@ -37,7 +37,7 @@ export type LiteMediaFeatureBoolean = {
 };
 export type LiteMediaFeatureValue = {
   context: "value";
-  prefix?: "min" | "max";
+  mediaPrefix?: "min" | "max";
   feature: string;
   value: ValidValueToken;
 };

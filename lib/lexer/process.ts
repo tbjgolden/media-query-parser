@@ -1,5 +1,4 @@
-import { ParserError, ParserToken } from "../ast/types.js";
-import { CSSToken } from "./types.js";
+import { CSSToken, ParserToken, ParserError } from "../shared.js";
 
 export const convertToParserTokens = (cssTokens: CSSToken[]): ParserToken[] | ParserError => {
   const tokens: ParserToken[] = [];

@@ -1,4 +1,4 @@
-import { MediaCondition, MediaFeature, MediaQuery, MediaQueryList } from "../ast/types.js";
+import { MediaQueryList, MediaQuery, MediaCondition, MediaFeature } from "../shared.js";
 
 export const flattenMediaQueryList = (mediaQueryList: MediaQueryList): MediaQueryList => ({
   type: "query-list",

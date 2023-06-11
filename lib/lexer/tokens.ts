@@ -1,5 +1,4 @@
-import { ParserError } from "../ast/types.js";
-import type { CSSToken } from "./types.js";
+import { CSSToken, ParserError } from "../shared.js";
 
 const TAB_CODEPOINT = 0x00_09;
 const NEWLINE_CODEPOINT = 0x00_0a;

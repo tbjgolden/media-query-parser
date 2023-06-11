@@ -1,8 +1,8 @@
 import { readMediaQueryList } from "../ast/ast.js";
-import { ParserToken } from "../ast/types.js";
 import { flattenMediaQueryList } from "../flatten/flatten.js";
 import { generateMediaQueryList } from "../generator/generator.js";
-import { lexer } from "../lexer/index.js";
+import { lexer } from "../lexer/lexer.js";
+import { ParserToken } from "../shared.js";
 
 const expectIdentity = (str: string) => {
   expect(

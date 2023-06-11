@@ -4,8 +4,11 @@ test("parseMediaQueryList parses media query", async () => {
   expectMQ(`((not (color))) or (hover)`, "OR_AT_TOP_LEVEL");
   expectMQL("", [{ mediaType: "all" }]);
   expectMQ(``, "EMPTY_QUERY");
-  expectMQL(`,`, []);
-  expectMQL(`all,`, [{ mediaType: "all" }]);
+  expectMQL(`,`, [
+    { mediaPrefix: "not", mediaType: "all" },
+    { mediaPrefix: "not", mediaType: "all" },
+  ]);
+  expectMQL(`all,`, [{ mediaType: "all" }, { mediaPrefix: "not", mediaType: "all" }]);
   expectMQL(`all, all, all`, [{ mediaType: "all" }, { mediaType: "all" }, { mediaType: "all" }]);
   expectMQL(`only screen and (color)`, [
     {
@@ -21,7 +24,7 @@ test("parseMediaQueryList parses media query", async () => {
           {
             context: "value",
             feature: "width",
-            prefix: "min",
+            mediaPrefix: "min",
             value: { flag: "number", type: "dimension", unit: "px", value: 10 },
           },
         ],
@@ -39,7 +42,7 @@ test("parseMediaQueryList parses media query", async () => {
           {
             context: "value",
             feature: "width",
-            prefix: "max",
+            mediaPrefix: "max",
             value: { flag: "number", type: "dimension", unit: "px", value: 1000 },
           },
         ],
@@ -47,10 +50,18 @@ test("parseMediaQueryList parses media query", async () => {
       mediaType: "all",
     },
   ]);
-  expectMQL(`all,, all`, [{ mediaType: "all" }, { mediaType: "all" }]);
-  expectMQL(`,all, all`, [{ mediaType: "all" }, { mediaType: "all" }]);
-  expectMQL(`(all, all), all`, [{ mediaType: "all" }]);
-  expectMQL(`((min-width: -100px)`, []);
+  expectMQL(`all,, all`, [
+    { mediaType: "all" },
+    { mediaPrefix: "not", mediaType: "all" },
+    { mediaType: "all" },
+  ]);
+  expectMQL(`,all, all`, [
+    { mediaPrefix: "not", mediaType: "all" },
+    { mediaType: "all" },
+    { mediaType: "all" },
+  ]);
+  expectMQL(`(all, all), all`, [{ mediaPrefix: "not", mediaType: "all" }, { mediaType: "all" }]);
+  expectMQL(`((min-width: -100px)`, [{ mediaPrefix: "not", mediaType: "all" }]);
   expectMQL(`(min-width: -100px)`, [
     {
       mediaCondition: {
@@ -58,7 +69,7 @@ test("parseMediaQueryList parses media query", async () => {
           {
             context: "value",
             feature: "width",
-            prefix: "min",
+            mediaPrefix: "min",
             value: { flag: "number", type: "dimension", unit: "px", value: -100 },
           },
         ],
@@ -73,7 +84,7 @@ test("parseMediaQueryList parses media query", async () => {
           {
             context: "value",
             feature: "width",
-            prefix: "max",
+            mediaPrefix: "max",
             value: { flag: "number", type: "dimension", unit: "px", value: 1199.98 },
           },
         ],
@@ -88,7 +99,7 @@ test("parseMediaQueryList parses media query", async () => {
           {
             context: "value",
             feature: "width",
-            prefix: "max",
+            mediaPrefix: "max",
             value: { flag: "number", type: "dimension", unit: "px", value: 1399.98 },
           },
         ],
@@ -103,7 +114,7 @@ test("parseMediaQueryList parses media query", async () => {
           {
             context: "value",
             feature: "width",
-            prefix: "max",
+            mediaPrefix: "max",
             value: { flag: "number", type: "dimension", unit: "px", value: 575.98 },
           },
         ],
@@ -118,7 +129,7 @@ test("parseMediaQueryList parses media query", async () => {
           {
             context: "value",
             feature: "width",
-            prefix: "max",
+            mediaPrefix: "max",
             value: { flag: "number", type: "dimension", unit: "px", value: 767.98 },
           },
         ],
@@ -133,7 +144,7 @@ test("parseMediaQueryList parses media query", async () => {
           {
             context: "value",
             feature: "width",
-            prefix: "max",
+            mediaPrefix: "max",
             value: { flag: "number", type: "dimension", unit: "px", value: 991.98 },
           },
         ],
@@ -148,7 +159,7 @@ test("parseMediaQueryList parses media query", async () => {
           {
             context: "value",
             feature: "width",
-            prefix: "min",
+            mediaPrefix: "min",
             value: { flag: "number", type: "dimension", unit: "px", value: 1200 },
           },
         ],
@@ -163,7 +174,7 @@ test("parseMediaQueryList parses media query", async () => {
           {
             context: "value",
             feature: "width",
-            prefix: "min",
+            mediaPrefix: "min",
             value: { flag: "number", type: "dimension", unit: "px", value: 1400 },
           },
         ],
@@ -178,7 +189,7 @@ test("parseMediaQueryList parses media query", async () => {
           {
             context: "value",
             feature: "width",
-            prefix: "min",
+            mediaPrefix: "min",
             value: { flag: "number", type: "dimension", unit: "px", value: 576 },
           },
         ],
@@ -193,7 +204,7 @@ test("parseMediaQueryList parses media query", async () => {
           {
             context: "value",
             feature: "width",
-            prefix: "min",
+            mediaPrefix: "min",
             value: { flag: "number", type: "dimension", unit: "px", value: 768 },
           },
         ],
@@ -208,7 +219,7 @@ test("parseMediaQueryList parses media query", async () => {
           {
             context: "value",
             feature: "width",
-            prefix: "min",
+            mediaPrefix: "min",
             value: { flag: "number", type: "dimension", unit: "px", value: 992 },
           },
         ],
@@ -483,7 +494,7 @@ test("parseMediaQueryList parses media query", async () => {
                   {
                     context: "value",
                     feature: "width",
-                    prefix: "min",
+                    mediaPrefix: "min",
                     value: { flag: "number", type: "dimension", unit: "px", value: 1 },
                   },
                 ],
