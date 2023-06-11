@@ -85,7 +85,7 @@ export const readMediaQuery = (parsingTokens: ParserToken[]): MediaQuery | Parse
   const firstToken = parsingTokens.at(0);
   if (firstToken) {
     if (firstToken.type === "(") {
-      const mediaCondition = readMediaCondition(parsingTokens, true);
+      const mediaCondition = readMediaCondition(parsingTokens, false);
       if (isParserError(mediaCondition)) {
         const { start, end } = parsingTokens.at(1) ?? firstToken;
         return { errid: "EXPECT_FEATURE_OR_CONDITION", start, end, child: mediaCondition };

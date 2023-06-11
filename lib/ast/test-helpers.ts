@@ -93,7 +93,15 @@ export const expectMQ = (str: string, expected: LiteMediaQuery | ParserErrId | b
     // for string, expect the string to be parsed as an error...
     expect(isParserError(result)).toBe(true);
     // ...and for the error id to be the string passed
-    if (isParserError(result)) expect(result.errid).toBe(expected);
+    if (isParserError(result)) {
+      let parserError = result.child;
+      let output: string = result.errid;
+      while (parserError) {
+        output = parserError.errid;
+        parserError = parserError.child;
+      }
+      expect(output).toBe(expected);
+    }
   } else {
     // for object, expect the string *not* to be parsed as an error...
     expect(!isParserError(result)).toBe(true);

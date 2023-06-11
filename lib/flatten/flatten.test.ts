@@ -26,8 +26,8 @@ test("wrapper flattens valueless layers", () => {
 test("wrapper does not flatten useful layers", () => {
   expectFlattenEq("(not (hover)) and (color)", "not (hover) and (color)", false);
   expectFlattenEq(
-    "((hover) and (color)) or (aspect-ratio > 2/1)",
-    "(hover) and (color) or (aspect-ratio > 2/1)",
+    "((hover) or (color)) and (aspect-ratio > 2/1)",
+    "(hover) or (color) and (aspect-ratio > 2/1)",
     false
   );
   expectFlattenEq("((hover) and (not (color)))", "(hover) and (not (color))");

@@ -1,6 +1,7 @@
 import { expectMQ, expectMQL } from "./test-helpers.js";
 
 test("parseMediaQueryList parses media query", async () => {
+  expectMQ(`((not (color))) or (hover)`, "OR_AT_TOP_LEVEL");
   expectMQL("", [{ mediaType: "all" }]);
   expectMQ(``, "EMPTY_QUERY");
   expectMQL(`,`, []);
@@ -374,7 +375,6 @@ test("parseMediaQueryList parses media query", async () => {
       mediaType: "all",
     },
   ]);
-  expectMQ(`((not (color))) or (hover)`, "OR_AT_TOP_LEVEL");
   expectMQL(`screen and (100px <= width <= 200px)`, [
     {
       mediaCondition: {
@@ -531,13 +531,13 @@ test("parseMediaQueryList parses media query", async () => {
   // 'only' requires a media type
   expectMQ(`only (hover)`, "EXPECT_TYPE");
   // 'or' can not appear on the right hand side of a media type (e.g. all/screen/print)
-  expectMQ(`screen and (not (color)) or (hover)`, "EXPECT_CONDITION");
+  expectMQ(`screen and (not (color)) or (hover)`, "OR_AT_TOP_LEVEL");
 
   expectMQ(`only ((hover) or (color))`, "EXPECT_TYPE");
   expectMQ(`screen and ((hover) or (color))`, true);
   // 'not' should not be a valid binary operator
-  expectMQ(`(color) not (hover)`, "EXPECT_FEATURE_OR_CONDITION");
-  expectMQ(`screen and ((color) not (hover))`, "EXPECT_CONDITION");
+  expectMQ(`(color) not (hover)`, "EXPECT_AND_OR_OR");
+  expectMQ(`screen and ((color) not (hover))`, "EXPECT_AND_OR_OR");
 });
 
 test("coverage misses", () => {
@@ -547,11 +547,11 @@ test("coverage misses", () => {
   expectMQ(`not mediatype`, "EXPECT_TYPE");
   expectMQ(`not print or (hover)`, "EXPECT_AND");
   expectMQ(`print or`, "EXPECT_AND");
-  expectMQ(`not print and`, "EXPECT_CONDITION");
-  expectMQ(`(monochrome) | (hover)`, "EXPECT_FEATURE_OR_CONDITION");
+  expectMQ(`not print and`, "EMPTY_CONDITION");
+  expectMQ(`(monochrome) | (hover)`, "EXPECT_AND_OR_OR");
   expectMQ(`*`, "EXPECT_LPAREN_OR_TYPE_OR_MODIFIER");
-  expectMQ(`(100px < width > 100px)`, "EXPECT_FEATURE_OR_CONDITION");
-  expectMQ(`(100px width)`, "EXPECT_FEATURE_OR_CONDITION");
+  expectMQ(`(100px < width > 100px)`, "INVALID_RANGE");
+  expectMQ(`(100px width)`, "INVALID_FEATURE");
   expectMQ(`(200px >= width >= 100px)`, {
     mediaCondition: {
       children: [
@@ -602,18 +602,18 @@ test("coverage misses", () => {
     },
     mediaType: "all",
   });
-  expectMQ(`(1px @ width)`, "EXPECT_FEATURE_OR_CONDITION");
-  expectMQ(`(# < width < 3)`, "EXPECT_FEATURE_OR_CONDITION");
-  expectMQ(`(1px = width < 1)`, "EXPECT_FEATURE_OR_CONDITION");
+  expectMQ(`(1px @ width)`, "INVALID_RANGE");
+  expectMQ(`(# < width < 3)`, "INVALID_RANGE");
+  expectMQ(`(1px = width < 1)`, "INVALID_RANGE");
   expectMQ(`(width = 1px)`, true);
   expectMQ(`(1px = width)`, true);
-  expectMQ(`(1px < width = infinite)`, "EXPECT_FEATURE_OR_CONDITION");
-  expectMQ(`(1px < width : infinite)`, "EXPECT_FEATURE_OR_CONDITION");
-  expectMQ(`(1px < width : )`, "EXPECT_FEATURE_OR_CONDITION");
-  expectMQ(`(1px < < 2px)`, "EXPECT_FEATURE_OR_CONDITION");
-  expectMQ(`(infinity < width < infinity)`, "EXPECT_FEATURE_OR_CONDITION");
-  expectMQ(`(infinite < width < infinity)`, "EXPECT_FEATURE_OR_CONDITION");
-  expectMQ(`(infinity < width < infinite)`, "EXPECT_FEATURE_OR_CONDITION");
+  expectMQ(`(1px < width = infinite)`, "INVALID_RANGE");
+  expectMQ(`(1px < width : infinite)`, "INVALID_RANGE");
+  expectMQ(`(1px < width : )`, "INVALID_RANGE");
+  expectMQ(`(1px < < 2px)`, "INVALID_RANGE");
+  expectMQ(`(infinity < width < infinity)`, "INVALID_RANGE");
+  expectMQ(`(infinite < width < infinity)`, "INVALID_RANGE");
+  expectMQ(`(infinity < width < infinite)`, "INVALID_RANGE");
   expectMQ(`(infinite < width < infinite)`, true);
-  expectMQ(`(infinite < width < infinite any)`, "EXPECT_FEATURE_OR_CONDITION");
+  expectMQ(`(infinite < width < infinite any)`, "INVALID_RANGE");
 });
