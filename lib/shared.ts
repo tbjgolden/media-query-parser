@@ -169,6 +169,11 @@ export type ValidRangeToken = Simplify<
   | { type: "ident"; value: "infinite" }
 >;
 
+/**
+ * a type guard that asserts whether `value` is of type ParserError
+ *
+ * tolerant of any input type, you can assume it will be true if (and only if) it is a ParserError
+ */
 export const isParserError = (value: unknown): value is ParserError => {
   return typeof value === "object" && value !== null && "errid" in value;
 };

@@ -1,4 +1,4 @@
-import { parseMediaQueryList } from "./index.js";
+import { ParserError, isParserError, parseMediaQueryList, stringify } from "./index.js";
 
 test("parseMediaQueryList", () => {
   // sanity check
@@ -240,4 +240,13 @@ test("previously discovered bugs", () => {
       },
     ],
   });
+});
+
+const s = (ast: Parameters<typeof stringify>[0] | ParserError): unknown => {
+  return isParserError(ast) ? ast : stringify(ast);
+};
+
+test("stringify", () => {
+  expect(s(parseMediaQueryList("(((((hover)) and (((color))))))"))).toEqual("(hover) and (color)");
+  expect(s(parseMediaQueryList("( width < 10px )"))).toEqual("(width < 10px)");
 });

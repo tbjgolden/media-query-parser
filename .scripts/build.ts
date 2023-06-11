@@ -1,6 +1,9 @@
-import { readFile, writeFile, rm, mkdir } from "node:fs/promises";
+import { readFile, writeFile, rm, mkdir, readdir } from "node:fs/promises";
 import { spawn } from "node:child_process";
+import { join } from "node:path";
 import { checkDirectory, readJSON } from "./lib/utils.js";
+import { minify } from "terser";
+import { format } from "prettier";
 
 checkDirectory();
 
@@ -29,3 +32,36 @@ await new Promise<void>((resolve, reject) => {
   });
 });
 await rm("tsconfig.tmp.json");
+
+const toSearch = ["dist"];
+let directory: string | undefined;
+while ((directory = toSearch.pop())) {
+  const entries = await readdir(directory, { withFileTypes: true });
+  for (const entry of entries) {
+    if (entry.isDirectory()) {
+      toSearch.push(join(directory, entry.name));
+    } else if (entry.isFile() && entry.name.endsWith(".js")) {
+      const filePath = join(directory, entry.name);
+      const code = await readFile(filePath, "utf8");
+      const result = await minify(code, { ecma: 2020, module: true });
+      if (result.code) {
+        await writeFile(
+          filePath,
+          format(result.code, {
+            printWidth: 100,
+            useTabs: true,
+            parser: "babel",
+            semi: false,
+            singleQuote: true,
+            trailingComma: "none",
+            bracketSpacing: false,
+            proseWrap: "always",
+            arrowParens: "avoid",
+            endOfLine: "lf",
+            quoteProps: "as-needed",
+          })
+        );
+      }
+    }
+  }
+}

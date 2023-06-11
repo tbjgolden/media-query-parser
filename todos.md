@@ -7,5 +7,6 @@
 - [x] fix bugs
   - [x] mq list parsing
   - [x] failing tests
-- [ ] finish exported api
+- [x] finish exported api
+- [ ] add jsdoc documentation
 - [ ] make it clear in Readme how to use with csstree or postcss
