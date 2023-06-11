@@ -1,6 +1,12 @@
+import { isParserError } from "../ast/ast.js";
+import { ParserError, ParserToken } from "../ast/types.js";
 import { readCodepoints } from "./codepoints.js";
+import { convertToParserTokens } from "./process.js";
 import { codepointsToTokens } from "./tokens.js";
 
-export const lexer = (cssStr: string) => codepointsToTokens(readCodepoints(cssStr));
+export const lexer = (cssStr: string): ParserToken[] | ParserError => {
+  const cssTokens = codepointsToTokens(readCodepoints(cssStr));
+  return isParserError(cssTokens) ? cssTokens : convertToParserTokens(cssTokens);
+};
 
 export * from "./types.js";

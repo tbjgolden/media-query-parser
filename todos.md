@@ -2,7 +2,11 @@
 - [x] support `start`, `end` in lexer
 - [x] come up with a new parsing error shape and method
 - [x] make the errors actually usable
-  - still might need work tho, give it a think
+  - [ ] release a beta without changing the errors
+- [x] fix bugs
+  - [x] mq list parsing
+  - [x] don't allow `codepointsToTokens` to return null
+    - every set of codepoints should generate tokens or a ParserError
 - [ ] make it clear in Readme how to use with csstree or postcss
 - [ ] match csstree ast
 - [ ] create generator

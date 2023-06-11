@@ -1,13 +1,19 @@
-import type { DimensionToken, EOFToken, IdentToken, NumberToken, Token } from "../lexer/types.js";
+import type {
+  DimensionToken,
+  EOFToken,
+  IdentToken,
+  NumberToken,
+  CSSToken,
+} from "../lexer/types.js";
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 type Simplify<T> = { [KeyType in keyof T]: T[KeyType] } & {};
 
-export type ParsingToken = Simplify<
-  Exclude<Token, EOFToken> & { hasSpaceBefore: boolean; hasSpaceAfter: boolean }
+export type ParserToken = Simplify<
+  Exclude<CSSToken, EOFToken> & { hasSpaceBefore: boolean; hasSpaceAfter: boolean }
 >;
 
-export type ParsingErrId =
+export type ParserErrId =
   | "EXPECT_LPAREN_OR_TYPE"
   | "EXPECT_TYPE"
   | "EXPECT_CONDITION"
@@ -25,15 +31,17 @@ export type ParsingErrId =
   | "EMPTY_QUERY"
   | "EMPTY_CONDITION"
   | "EMPTY_FEATURE"
-  // TODO: better errors
+  | "NO_LCURLY"
+  | "NO_SEMICOLON"
   | "INVALID_FEATURE"
-  | "INVALID_RANGE";
+  | "INVALID_RANGE"
+  | "INVALID_STRING";
 
-export type ParsingError = {
-  errid: ParsingErrId;
+export type ParserError = {
+  errid: ParserErrId;
   start: number;
   end: number;
-  child?: ParsingError;
+  child?: ParserError;
 };
 
 export type MediaQueryList = {

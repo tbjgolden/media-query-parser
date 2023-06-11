@@ -1,4 +1,5 @@
-import type { Token } from "./types.js";
+import { ParserError } from "../ast/types.js";
+import type { CSSToken } from "./types.js";
 
 const TAB_CODEPOINT = 0x00_09;
 const NEWLINE_CODEPOINT = 0x00_0a;
@@ -39,8 +40,8 @@ const LEFT_CURLY_CODEPOINT = 0x00_7b;
 const RIGHT_CURLY_CODEPOINT = 0x00_7d;
 const FIRST_NON_ASCII_CODEPOINT = 0x00_80;
 
-export const codepointsToTokens = (codepoints: number[], index = 0): Token[] | null => {
-  const tokens: Token[] = [];
+export const codepointsToTokens = (codepoints: number[], index = 0): CSSToken[] | ParserError => {
+  const tokens: CSSToken[] = [];
 
   for (; index < codepoints.length; index += 1) {
     const c = codepoints.at(index) as number;
@@ -71,7 +72,7 @@ export const codepointsToTokens = (codepoints: number[], index = 0): Token[] | n
     } else if (c === DOUBLE_QUOTE_CODEPOINT) {
       const result = consumeString(codepoints, index);
       if (result === null) {
-        return null;
+        return { errid: "INVALID_STRING", start: index, end: index };
       }
       const [lastIndex, value] = result;
       index = lastIndex;
@@ -109,7 +110,7 @@ export const codepointsToTokens = (codepoints: number[], index = 0): Token[] | n
     } else if (c === SINGLE_QUOTE_CODEPOINT) {
       const result = consumeString(codepoints, index);
       if (result === null) {
-        return null;
+        return { errid: "INVALID_STRING", start: index, end: index };
       }
       const [lastIndex, value] = result;
       index = lastIndex;
@@ -329,16 +330,12 @@ export const codepointsToTokens = (codepoints: number[], index = 0): Token[] | n
       } else {
         const result = consumeIdentLike(codepoints, index);
         if (result === null) {
-          return null;
+          tokens.push({ type: "delim", value: c, start, end: index });
+        } else {
+          const [lastIndex, value, type] = result;
+          index = lastIndex;
+          tokens.push({ type, value, start, end: index });
         }
-        const [lastIndex, value, type] = result;
-        index = lastIndex;
-        tokens.push({
-          type,
-          value,
-          start,
-          end: index,
-        });
       }
     } else {
       tokens.push({ type: "delim", value: c, start, end: index });

@@ -1,13 +1,12 @@
-import { convertToParsingTokens, parseMediaQueryList } from "../ast/ast.js";
+import { readMediaQueryList } from "../ast/ast.js";
+import { ParserToken } from "../ast/types.js";
 import { flattenMediaQueryList } from "../flatten/flatten.js";
 import { generateMediaQueryList } from "../generator/generator.js";
-import { Token, lexer } from "../lexer/index.js";
+import { lexer } from "../lexer/index.js";
 
 const expectIdentity = (str: string) => {
   expect(
-    generateMediaQueryList(
-      flattenMediaQueryList(parseMediaQueryList(convertToParsingTokens(lexer(str) as Token[])))
-    )
+    generateMediaQueryList(flattenMediaQueryList(readMediaQueryList(lexer(str) as ParserToken[])))
   ).toBe(str);
 };
 

@@ -1,11 +1,12 @@
-import { convertToParsingTokens, parseMediaQueryList } from "../ast/ast.js";
+import { readMediaQueryList } from "../ast/ast.js";
 import { LiteMediaQueryList, isEqualish, toLiteMediaQueryList } from "../ast/test-helpers.js";
-import { Token, lexer } from "../lexer/index.js";
+import { ParserToken } from "../ast/types.js";
+import { lexer } from "../lexer/index.js";
 import { flattenMediaQueryList } from "./flatten.js";
 
 const flattenMQL = (str: string): LiteMediaQueryList => {
   return toLiteMediaQueryList(
-    flattenMediaQueryList(parseMediaQueryList(convertToParsingTokens(lexer(str) as Token[])))
+    flattenMediaQueryList(readMediaQueryList(lexer(str) as ParserToken[]))
   );
 };
 

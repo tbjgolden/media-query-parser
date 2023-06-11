@@ -1,17 +1,12 @@
 import { lexer } from "../lexer/index.js";
-import type { Token } from "../lexer/types.js";
-import {
-  convertToParsingTokens,
-  isParsingError,
-  parseMediaQuery,
-  parseMediaQueryList,
-} from "./ast.js";
+import { isParserError, readMediaQuery, readMediaQueryList } from "./ast.js";
 import {
   MediaCondition,
   MediaFeature,
   MediaQuery,
   MediaQueryList,
-  ParsingErrId,
+  ParserErrId,
+  ParserToken,
   ValidRange,
   ValidValueToken,
 } from "./types.js";
@@ -81,28 +76,28 @@ export const toLiteMediaQueryList = (mediaQueryList: MediaQueryList): LiteMediaQ
 };
 
 export const parseLiteMediaQueryList = (str: string): LiteMediaQueryList => {
-  return toLiteMediaQueryList(parseMediaQueryList(convertToParsingTokens(lexer(str) as Token[])));
+  return toLiteMediaQueryList(readMediaQueryList(lexer(str) as ParserToken[]));
 };
 
 export const expectMQL = (str: string, expected: LiteMediaQuery[]) => {
-  const result = parseMediaQueryList(convertToParsingTokens(lexer(str) as Token[]));
+  const result = readMediaQueryList(lexer(str) as ParserToken[]);
   expect(result.mediaQueries.map((mediaQuery) => toLiteMediaQuery(mediaQuery))).toEqual(expected);
 };
 
-export const expectMQ = (str: string, expected: LiteMediaQuery | ParsingErrId | boolean) => {
-  const result = parseMediaQuery(convertToParsingTokens(lexer(str) as Token[]));
+export const expectMQ = (str: string, expected: LiteMediaQuery | ParserErrId | boolean) => {
+  const result = readMediaQuery(lexer(str) as ParserToken[]);
   if (typeof expected === "boolean") {
     // for boolean, treat as whether the string parses successfully
-    expect(isParsingError(result)).not.toBe(expected);
+    expect(isParserError(result)).not.toBe(expected);
   } else if (typeof expected === "string") {
     // for string, expect the string to be parsed as an error...
-    expect(isParsingError(result)).toBe(true);
+    expect(isParserError(result)).toBe(true);
     // ...and for the error id to be the string passed
-    if (isParsingError(result)) expect(result.errid).toBe(expected);
+    if (isParserError(result)) expect(result.errid).toBe(expected);
   } else {
     // for object, expect the string *not* to be parsed as an error...
-    expect(!isParsingError(result)).toBe(true);
-    if (!isParsingError(result)) expect(toLiteMediaQuery(result)).toEqual(expected);
+    expect(!isParserError(result)).toBe(true);
+    if (!isParserError(result)) expect(toLiteMediaQuery(result)).toEqual(expected);
   }
 };
 

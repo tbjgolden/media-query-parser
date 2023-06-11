@@ -1,3 +1,4 @@
+import { isParserError } from "../ast/ast.js";
 import { readCodepoints } from "./codepoints.js";
 import { lexer } from "./index.js";
 import {
@@ -10,21 +11,19 @@ import {
   consumeString,
   consumeUrl,
 } from "./tokens.js";
-import fs from "node:fs";
-import path from "node:path";
 
 // codepoints
 const c = (strings: TemplateStringsArray): number[] => readCodepoints(strings[0]);
 // lexer without indexes
 const l = (cssStr: string) => {
   const result = lexer(cssStr);
-  if (result) {
+  if (isParserError(result)) {
+    return result;
+  } else {
     return result.map((token) => {
-      const { start: _0, end: _1, ...t } = token;
+      const { start: _0, end: _1, hasSpaceBefore: _2, hasSpaceAfter: _3, ...t } = token;
       return t;
     });
-  } else {
-    return result;
   }
 };
 
@@ -229,191 +228,91 @@ test("consumeIdentUnsafe", () => {
 });
 
 test("old bugs", () => {
-  expect(lexer("@media (min-width: -100px)")).toEqual([
-    { end: 5, start: 0, type: "at-keyword", value: "media" },
-    { end: 6, start: 6, type: "whitespace" },
-    { end: 7, start: 7, type: "(" },
-    { end: 16, start: 8, type: "ident", value: "min-width" },
-    { end: 17, start: 17, type: "colon" },
-    { end: 18, start: 18, type: "whitespace" },
-    { end: 24, flag: "number", start: 19, type: "dimension", unit: "px", value: -100 },
-    { end: 25, start: 25, type: ")" },
-    { end: 26, start: 26, type: "EOF" },
+  expect(l("(min-width: -100px)")).toEqual([
+    { type: "(" },
+    { type: "ident", value: "min-width" },
+    { type: "colon" },
+    { flag: "number", type: "dimension", unit: "px", value: -100 },
+    { type: ")" },
+  ]);
+  expect(lexer("(min-width: -100px)")).toEqual([
+    { end: 0, start: 0, type: "(", hasSpaceBefore: false, hasSpaceAfter: false },
+    {
+      end: 9,
+      start: 1,
+      type: "ident",
+      value: "min-width",
+      hasSpaceBefore: false,
+      hasSpaceAfter: false,
+    },
+    { end: 10, start: 10, type: "colon", hasSpaceBefore: false, hasSpaceAfter: true },
+    {
+      end: 17,
+      flag: "number",
+      start: 12,
+      type: "dimension",
+      unit: "px",
+      value: -100,
+      hasSpaceBefore: true,
+      hasSpaceAfter: false,
+    },
+    { end: 18, start: 18, type: ")", hasSpaceBefore: false, hasSpaceAfter: false },
   ]);
 
-  expect(l(".dropdown-item:hover{color:#1e2125;background-color:#e9ecef}")).toEqual([
-    { type: "delim", value: 46 },
-    { type: "ident", value: "dropdown-item" },
-    { type: "colon" },
-    { type: "ident", value: "hover" },
-    { type: "{" },
-    { type: "ident", value: "color" },
-    { type: "colon" },
-    {
-      flag: "unrestricted",
-      type: "hash",
-      value: "1e2125",
-    },
-    { type: "semicolon" },
-    { type: "ident", value: "background-color" },
-    { type: "colon" },
-    {
-      flag: "id",
-      type: "hash",
-      value: "e9ecef",
-    },
-    { type: "}" },
-    { type: "EOF" },
-  ]);
-  expect(l("@media (1/2 < aspect-ratio < 1/1) { }")).toEqual([
-    { type: "at-keyword", value: "media" },
-    { type: "whitespace" },
+  expect(l(".dropdown-item:hover{color:#1e2125;background-color:#e9ecef}")).toEqual({
+    end: 20,
+    errid: "NO_LCURLY",
+    start: 20,
+  });
+  expect(l("(1/2 < aspect-ratio < 1/1)")).toEqual([
     { type: "(" },
-    {
-      flag: "integer",
-      type: "number",
-      value: 1,
-    },
+    { flag: "integer", type: "number", value: 1 },
     { type: "delim", value: 47 },
-    {
-      flag: "integer",
-      type: "number",
-      value: 2,
-    },
-    { type: "whitespace" },
+    { flag: "integer", type: "number", value: 2 },
     { type: "delim", value: 60 },
-    { type: "whitespace" },
     { type: "ident", value: "aspect-ratio" },
-    { type: "whitespace" },
     { type: "delim", value: 60 },
-    { type: "whitespace" },
-    {
-      flag: "integer",
-      type: "number",
-      value: 1,
-    },
+    { flag: "integer", type: "number", value: 1 },
     { type: "delim", value: 47 },
-    {
-      flag: "integer",
-      type: "number",
-      value: 1,
-    },
+    { flag: "integer", type: "number", value: 1 },
     { type: ")" },
-    { type: "whitespace" },
-    { type: "{" },
-    { type: "whitespace" },
-    { type: "}" },
-    { type: "EOF" },
   ]);
 });
 
 test("missing coverage", () => {
-  expect(l('"\n"')).toEqual(null);
-  expect(l("'\n'")).toEqual(null);
-  expect(l("#")).toEqual([{ type: "delim", value: 35 }, { type: "EOF" }]);
+  expect(l('"\n"')).toEqual({ end: 0, errid: "INVALID_STRING", start: 0 });
+  expect(l("'\n'")).toEqual({ end: 0, errid: "INVALID_STRING", start: 0 });
+  expect(l("#")).toEqual([{ type: "delim", value: 35 }]);
   expect(l("+3% +4 +2px")).toEqual([
-    {
-      flag: "number",
-      type: "percentage",
-      value: 3,
-    },
-    { type: "whitespace" },
-    {
-      flag: "integer",
-      type: "number",
-      value: 4,
-    },
-    { type: "whitespace" },
-    {
-      flag: "number",
-      type: "dimension",
-      unit: "px",
-      value: 2,
-    },
-    { type: "EOF" },
+    { flag: "number", type: "percentage", value: 3 },
+    { flag: "integer", type: "number", value: 4 },
+    { flag: "number", type: "dimension", unit: "px", value: 2 },
   ]);
   expect(l("-3% -4 -2px")).toEqual([
-    {
-      flag: "number",
-      type: "percentage",
-      value: -3,
-    },
-    { type: "whitespace" },
-    {
-      flag: "integer",
-      type: "number",
-      value: -4,
-    },
-    { type: "whitespace" },
-    {
-      flag: "number",
-      type: "dimension",
-      unit: "px",
-      value: -2,
-    },
-    { type: "EOF" },
+    { flag: "number", type: "percentage", value: -3 },
+    { flag: "integer", type: "number", value: -4 },
+    { flag: "number", type: "dimension", unit: "px", value: -2 },
   ]);
   expect(l(".3% .4 .2px")).toEqual([
-    {
-      flag: "number",
-      type: "percentage",
-      value: 0.3,
-    },
-    { type: "whitespace" },
-    {
-      flag: "number",
-      type: "number",
-      value: 0.4,
-    },
-    { type: "whitespace" },
-    {
-      flag: "number",
-      type: "dimension",
-      unit: "px",
-      value: 0.2,
-    },
-    { type: "EOF" },
+    { flag: "number", type: "percentage", value: 0.3 },
+    { flag: "number", type: "number", value: 0.4 },
+    { flag: "number", type: "dimension", unit: "px", value: 0.2 },
   ]);
   expect(l("+2.")).toEqual([
-    {
-      flag: "integer",
-      type: "number",
-      value: 2,
-    },
+    { flag: "integer", type: "number", value: 2 },
     { type: "delim", value: 46 },
-    { type: "EOF" },
   ]);
-  expect(l("<!-- -->")).toEqual([
-    { type: "CDO" },
-    { type: "whitespace" },
-    { type: "CDC" },
-    { type: "EOF" },
-  ]);
-  expect(l("@")).toEqual([{ type: "delim", value: 64 }, { type: "EOF" }]);
+  expect(l("<!-- -->")).toEqual([{ type: "CDO" }, { type: "CDC" }]);
+  expect(l("@")).toEqual([{ type: "delim", value: 64 }]);
   expect(l("\\ \\\n")).toEqual([
     { type: "ident", value: " " },
     { type: "delim", value: 92 },
-    { type: "whitespace" },
-    { type: "EOF" },
   ]);
   expect(l("a/**/b")).toEqual([
     { type: "ident", value: "a" },
     { type: "ident", value: "b" },
-    { type: "EOF" },
   ]);
-  expect(l("a/*b")).toEqual([{ type: "ident", value: "a" }, { type: "EOF" }]);
-  expect(l("a/**b")).toEqual([{ type: "ident", value: "a" }, { type: "EOF" }]);
-  expect(l("/* * / * */b")).toEqual([{ type: "ident", value: "b" }, { type: "EOF" }]);
-});
-
-test("lexer", () => {
-  const input = fs.readFileSync(
-    path.join(process.cwd(), "lib/__fixtures__/bootstrap.css.txt"),
-    "utf8"
-  );
-  const output = JSON.parse(
-    fs.readFileSync(path.join(process.cwd(), "lib/__fixtures__/bootstrap.json"), "utf8")
-  );
-
-  expect(lexer(input)).toEqual(output);
+  expect(l("a/*b")).toEqual([{ type: "ident", value: "a" }]);
+  expect(l("a/**b")).toEqual([{ type: "ident", value: "a" }]);
+  expect(l("/* * / * */b")).toEqual([{ type: "ident", value: "b" }]);
 });
