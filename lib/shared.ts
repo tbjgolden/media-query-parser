@@ -95,7 +95,7 @@ export type MediaQueryList = { type: "query-list"; mediaQueries: MediaQuery[] };
 export type MediaQuery = {
   type: "query";
   mediaPrefix?: "not" | "only";
-  mediaType: "all" | "screen" | "print";
+  mediaType?: "screen" | "print";
   mediaCondition?: MediaCondition;
 };
 

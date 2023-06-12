@@ -2,14 +2,11 @@ import { expectMQ, expectMQL } from "./test-helpers.js";
 
 test("parseMediaQueryList parses media query", async () => {
   expectMQ(`((not (color))) or (hover)`, "OR_AT_TOP_LEVEL");
-  expectMQL("", [{ mediaType: "all" }]);
+  expectMQL("", [{}]);
   expectMQ(``, "EMPTY_QUERY");
-  expectMQL(`,`, [
-    { mediaPrefix: "not", mediaType: "all" },
-    { mediaPrefix: "not", mediaType: "all" },
-  ]);
-  expectMQL(`all,`, [{ mediaType: "all" }, { mediaPrefix: "not", mediaType: "all" }]);
-  expectMQL(`all, all, all`, [{ mediaType: "all" }, { mediaType: "all" }, { mediaType: "all" }]);
+  expectMQL(`,`, [{ mediaPrefix: "not" }, { mediaPrefix: "not" }]);
+  expectMQL(`all,`, [{}, { mediaPrefix: "not" }]);
+  expectMQL(`all, all, all`, [{}, {}, {}]);
   expectMQL(`only screen and (color)`, [
     {
       mediaCondition: { children: [{ context: "boolean", feature: "color" }] },
@@ -47,21 +44,12 @@ test("parseMediaQueryList parses media query", async () => {
           },
         ],
       },
-      mediaType: "all",
     },
   ]);
-  expectMQL(`all,, all`, [
-    { mediaType: "all" },
-    { mediaPrefix: "not", mediaType: "all" },
-    { mediaType: "all" },
-  ]);
-  expectMQL(`,all, all`, [
-    { mediaPrefix: "not", mediaType: "all" },
-    { mediaType: "all" },
-    { mediaType: "all" },
-  ]);
-  expectMQL(`(all, all), all`, [{ mediaPrefix: "not", mediaType: "all" }, { mediaType: "all" }]);
-  expectMQL(`((min-width: -100px)`, [{ mediaPrefix: "not", mediaType: "all" }]);
+  expectMQL(`all,, all`, [{}, { mediaPrefix: "not" }, {}]);
+  expectMQL(`,all, all`, [{ mediaPrefix: "not" }, {}, {}]);
+  expectMQL(`(all, all), all`, [{ mediaPrefix: "not" }, {}]);
+  expectMQL(`((min-width: -100px)`, [{ mediaPrefix: "not" }]);
   expectMQL(`(min-width: -100px)`, [
     {
       mediaCondition: {
@@ -74,7 +62,6 @@ test("parseMediaQueryList parses media query", async () => {
           },
         ],
       },
-      mediaType: "all",
     },
   ]);
   expectMQL(`(max-width:1199.98px)`, [
@@ -89,7 +76,6 @@ test("parseMediaQueryList parses media query", async () => {
           },
         ],
       },
-      mediaType: "all",
     },
   ]);
   expectMQL(`(max-width:1399.98px)`, [
@@ -104,7 +90,6 @@ test("parseMediaQueryList parses media query", async () => {
           },
         ],
       },
-      mediaType: "all",
     },
   ]);
   expectMQL(`(max-width:575.98px)`, [
@@ -119,7 +104,6 @@ test("parseMediaQueryList parses media query", async () => {
           },
         ],
       },
-      mediaType: "all",
     },
   ]);
   expectMQL(`(max-width:767.98px)`, [
@@ -134,7 +118,6 @@ test("parseMediaQueryList parses media query", async () => {
           },
         ],
       },
-      mediaType: "all",
     },
   ]);
   expectMQL(`(max-width:991.98px)`, [
@@ -149,7 +132,6 @@ test("parseMediaQueryList parses media query", async () => {
           },
         ],
       },
-      mediaType: "all",
     },
   ]);
   expectMQL(`(min-width:1200px)`, [
@@ -164,7 +146,6 @@ test("parseMediaQueryList parses media query", async () => {
           },
         ],
       },
-      mediaType: "all",
     },
   ]);
   expectMQL(`(min-width:1400px)`, [
@@ -179,7 +160,6 @@ test("parseMediaQueryList parses media query", async () => {
           },
         ],
       },
-      mediaType: "all",
     },
   ]);
   expectMQL(`(min-width:576px)`, [
@@ -194,7 +174,6 @@ test("parseMediaQueryList parses media query", async () => {
           },
         ],
       },
-      mediaType: "all",
     },
   ]);
   expectMQL(`(min-width:768px)`, [
@@ -209,7 +188,6 @@ test("parseMediaQueryList parses media query", async () => {
           },
         ],
       },
-      mediaType: "all",
     },
   ]);
   expectMQL(`(min-width:992px)`, [
@@ -224,7 +202,6 @@ test("parseMediaQueryList parses media query", async () => {
           },
         ],
       },
-      mediaType: "all",
     },
   ]);
   expectMQL(`(prefers-reduced-motion:no-preference)`, [
@@ -238,7 +215,6 @@ test("parseMediaQueryList parses media query", async () => {
           },
         ],
       },
-      mediaType: "all",
     },
   ]);
   expectMQL(`(any-hover:hover)`, [
@@ -248,7 +224,6 @@ test("parseMediaQueryList parses media query", async () => {
           { context: "value", feature: "any-hover", value: { type: "ident", value: "hover" } },
         ],
       },
-      mediaType: "all",
     },
   ]);
   expectMQL(`(any-hover:none)`, [
@@ -258,7 +233,6 @@ test("parseMediaQueryList parses media query", async () => {
           { context: "value", feature: "any-hover", value: { type: "ident", value: "none" } },
         ],
       },
-      mediaType: "all",
     },
   ]);
   expectMQL(`(any-hover:anything)`, [
@@ -268,7 +242,6 @@ test("parseMediaQueryList parses media query", async () => {
           { context: "value", feature: "any-hover", value: { type: "ident", value: "anything" } },
         ],
       },
-      mediaType: "all",
     },
   ]);
   expectMQL(`(grid:0)`, [
@@ -282,7 +255,6 @@ test("parseMediaQueryList parses media query", async () => {
           },
         ],
       },
-      mediaType: "all",
     },
   ]);
   expectMQL(`(aspect-ratio:16/9)`, [
@@ -296,7 +268,6 @@ test("parseMediaQueryList parses media query", async () => {
           },
         ],
       },
-      mediaType: "all",
     },
   ]);
   expectMQL(`(prefers-reduced-motion:reduce)`, [
@@ -310,7 +281,6 @@ test("parseMediaQueryList parses media query", async () => {
           },
         ],
       },
-      mediaType: "all",
     },
   ]);
   expectMQL(`print`, [{ mediaType: "print" }]);
@@ -329,7 +299,6 @@ test("parseMediaQueryList parses media query", async () => {
           },
         ],
       },
-      mediaType: "all",
     },
   ]);
   expectMQL(`(600px < height)`, [
@@ -347,7 +316,6 @@ test("parseMediaQueryList parses media query", async () => {
           },
         ],
       },
-      mediaType: "all",
     },
   ]);
   expectMQL(`(600px > width)`, [
@@ -365,7 +333,6 @@ test("parseMediaQueryList parses media query", async () => {
           },
         ],
       },
-      mediaType: "all",
     },
   ]);
   expectMQL(`(width < 600px)`, [
@@ -383,7 +350,6 @@ test("parseMediaQueryList parses media query", async () => {
           },
         ],
       },
-      mediaType: "all",
     },
   ]);
   expectMQL(`screen and (100px <= width <= 200px)`, [
@@ -431,7 +397,6 @@ test("parseMediaQueryList parses media query", async () => {
         ],
         operator: "and",
       },
-      mediaType: "all",
     },
   ]);
   expectMQL(`(1/2 < aspect-ratio < 1/1)`, [
@@ -451,7 +416,6 @@ test("parseMediaQueryList parses media query", async () => {
           },
         ],
       },
-      mediaType: "all",
     },
   ]);
   expectMQL(`(100px <= width <= 200px)`, [
@@ -471,7 +435,6 @@ test("parseMediaQueryList parses media query", async () => {
           },
         ],
       },
-      mediaType: "all",
     },
   ]);
   expectMQL(`only screen and (color)`, [
@@ -505,7 +468,6 @@ test("parseMediaQueryList parses media query", async () => {
         ],
         operator: "not",
       },
-      mediaType: "all",
     },
   ]);
   expectMQL(`not (hover)`, [
@@ -514,7 +476,6 @@ test("parseMediaQueryList parses media query", async () => {
         children: [{ children: [{ context: "boolean", feature: "hover" }] }],
         operator: "not",
       },
-      mediaType: "all",
     },
   ]);
   expectMQL(`not ((hover) or (color))`, [
@@ -535,7 +496,6 @@ test("parseMediaQueryList parses media query", async () => {
         ],
         operator: "not",
       },
-      mediaType: "all",
     },
   ]);
 
@@ -553,8 +513,8 @@ test("parseMediaQueryList parses media query", async () => {
 
 test("coverage misses", () => {
   expectMQ(`not`, "EXPECT_LPAREN_OR_TYPE");
-  expectMQ(`only tty`, { mediaPrefix: "not", mediaType: "all" });
-  expectMQ(`not tty`, { mediaType: "all" });
+  expectMQ(`only tty`, { mediaPrefix: "not" });
+  expectMQ(`not tty`, {});
   expectMQ(`not mediatype`, "EXPECT_TYPE");
   expectMQ(`not print or (hover)`, "EXPECT_AND");
   expectMQ(`print or`, "EXPECT_AND");
@@ -579,7 +539,6 @@ test("coverage misses", () => {
         },
       ],
     },
-    mediaType: "all",
   });
   expectMQ(`(200px = width)`, {
     mediaCondition: {
@@ -595,7 +554,6 @@ test("coverage misses", () => {
         },
       ],
     },
-    mediaType: "all",
   });
   expectMQ(`(width >= 200px)`, {
     mediaCondition: {
@@ -611,7 +569,6 @@ test("coverage misses", () => {
         },
       ],
     },
-    mediaType: "all",
   });
   expectMQ(`(1px @ width)`, "INVALID_RANGE");
   expectMQ(`(# < width < 3)`, "INVALID_RANGE");

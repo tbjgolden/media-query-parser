@@ -68,14 +68,14 @@ export const readMediaQueryList = (parsingTokens: ParserToken[]): MediaQueryList
 
   if (mediaQueriesParserTokens.length === 1 && mediaQueriesParserTokens[0].length === 0) {
     // '@media {' is fine, treat as all
-    return { type: "query-list", mediaQueries: [{ type: "query", mediaType: "all" }] };
+    return { type: "query-list", mediaQueries: [{ type: "query" }] };
   } else {
     const mediaQueries: MediaQuery[] = [];
     for (const mediaQueryParserTokens of mediaQueriesParserTokens) {
       const mediaQuery = readMediaQuery(mediaQueryParserTokens);
       // note: a media query list can contain an invalid media query
       if (isParserError(mediaQuery)) {
-        mediaQueries.push({ type: "query", mediaPrefix: "not", mediaType: "all" });
+        mediaQueries.push({ type: "query", mediaPrefix: "not" });
       } else {
         mediaQueries.push(mediaQuery);
       }
@@ -92,11 +92,11 @@ export const readMediaQuery = (parsingTokens: ParserToken[]): MediaQuery | Parse
         const { start, end } = parsingTokens.at(1) ?? firstToken;
         return { errid: "EXPECT_FEATURE_OR_CONDITION", start, end, child: mediaCondition };
       } else {
-        return { type: "query", mediaType: "all", mediaCondition };
+        return { type: "query", mediaCondition };
       }
     } else if (firstToken.type === "ident") {
       let mediaPrefix: "not" | "only" | undefined;
-      let mediaType: "all" | "print" | "screen";
+      let mediaType: "print" | "screen" | undefined;
 
       const { value, end } = firstToken;
       if (value === "only" || value === "not") {
@@ -114,7 +114,7 @@ export const readMediaQuery = (parsingTokens: ParserToken[]): MediaQuery | Parse
         const { value, start, end } = firstNonUnaryToken;
 
         if (value === "all") {
-          mediaType = "all";
+          mediaType = undefined;
         } else if (value === "print" || value === "screen") {
           mediaType = value;
         } else if (
@@ -129,7 +129,7 @@ export const readMediaQuery = (parsingTokens: ParserToken[]): MediaQuery | Parse
         ) {
           // these are treated as equivalent to 'not all'
           mediaPrefix = mediaPrefix === "not" ? undefined : "not";
-          mediaType = "all";
+          mediaType = undefined;
         } else {
           return { errid: "EXPECT_TYPE", start, end };
         }
@@ -142,7 +142,6 @@ export const readMediaQuery = (parsingTokens: ParserToken[]): MediaQuery | Parse
         } else {
           return {
             type: "query",
-            mediaType: "all",
             mediaCondition: { type: "condition", operator: "not", children: [mediaCondition] },
           };
         }

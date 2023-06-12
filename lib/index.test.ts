@@ -6,12 +6,14 @@ import {
   ParserError,
   ValidValueToken,
   isParserError,
+  parseMediaCondition,
+  parseMediaFeature,
+  parseMediaQuery,
   parseMediaQueryList,
   stringify,
 } from "./index.js";
 
 test("parseMediaQueryList", () => {
-  // sanity check
   expect(parseMediaQueryList("(((((hover)) and (((color))))))")).toEqual({
     type: "query-list",
     mediaQueries: [
@@ -25,13 +27,9 @@ test("parseMediaQueryList", () => {
           ],
           operator: "and",
         },
-        mediaType: "all",
       },
     ],
   });
-});
-
-test("previously discovered bugs", () => {
   expect(
     parseMediaQueryList(
       "not screen and ((not ((min-width: 1000px) and (orientation: landscape))) or (color))"
@@ -60,7 +58,6 @@ test("previously discovered bugs", () => {
                     {
                       context: "value",
                       feature: "orientation",
-                      mediaPrefix: undefined,
                       type: "feature",
                       value: {
                         type: "ident",
@@ -87,13 +84,11 @@ test("previously discovered bugs", () => {
     ],
     type: "query-list",
   });
-
   // invalid (color-index <= 128)
   expect(parseMediaQueryList("invalid (color-index <= 128)")).toEqual({
     type: "query-list",
-    mediaQueries: [{ type: "query", mediaPrefix: "not", mediaType: "all" }],
+    mediaQueries: [{ type: "query", mediaPrefix: "not" }],
   });
-
   // not print and (110px <= width <= 220px) should have mediaPrefix
   expect(parseMediaQueryList("not print and (110px <= width <= 220px)")).toEqual({
     type: "query-list",
@@ -175,11 +170,9 @@ test("previously discovered bugs", () => {
           ],
           operator: "not",
         },
-        mediaType: "all",
       },
     ],
   });
-
   // not (min-width: 100px) and (max-width: 200px) should fail
   expect(parseMediaQueryList("not (min-width: 100px) and (max-width: 200px)")).toEqual({
     mediaQueries: [
@@ -210,19 +203,16 @@ test("previously discovered bugs", () => {
           operator: "not",
           type: "condition",
         },
-        mediaType: "all",
         type: "query",
       },
     ],
     type: "query-list",
   });
-
   // other media types like tty should never match, but not break query
   expect(parseMediaQueryList("not tty")).toEqual({
     type: "query-list",
-    mediaQueries: [{ type: "query", mediaType: "all" }],
+    mediaQueries: [{ type: "query" }],
   });
-
   // negative numbers should parse correctly
   expect(parseMediaQueryList("(min-height: -100px)")).toEqual({
     type: "query-list",
@@ -246,9 +236,79 @@ test("previously discovered bugs", () => {
             },
           ],
         },
-        mediaType: "all",
       },
     ],
+  });
+});
+
+test("parseMediaQuery", () => {
+  expect(parseMediaQuery("( width < 10px )")).toEqual({
+    type: "query",
+    mediaCondition: {
+      type: "condition",
+      children: [
+        {
+          type: "feature",
+          context: "range",
+          feature: "width",
+          range: {
+            featureName: "width",
+            rightOp: "<",
+            rightToken: { type: "dimension", value: 10, unit: "px", flag: "number" },
+          },
+        },
+      ],
+    },
+  });
+  expect(parseMediaQuery("vr and (orientation: landscape)")).toEqual({
+    errid: "EXPECT_TYPE",
+    start: 0,
+    end: 1,
+  });
+  expect(parseMediaQuery("vr and '\n")).toEqual({
+    errid: "INVALID_STRING",
+    start: 7,
+    end: 7,
+  });
+});
+
+test("parseMediaCondition", () => {
+  expect(parseMediaCondition("((hover) and (color))")).toEqual({
+    type: "condition",
+    operator: "and",
+    children: [
+      { type: "feature", context: "boolean", feature: "hover" },
+      { type: "feature", context: "boolean", feature: "color" },
+    ],
+  });
+  expect(parseMediaCondition("(width: 100px) not (monochrome)")).toEqual({
+    errid: "EXPECT_AND_OR_OR",
+    start: 15,
+    end: 17,
+  });
+  expect(parseMediaCondition("vr and '\n")).toEqual({
+    errid: "INVALID_STRING",
+    start: 7,
+    end: 7,
+  });
+});
+
+test("parseMediaFeature", () => {
+  expect(parseMediaFeature("(hover)")).toEqual({
+    type: "feature",
+    context: "boolean",
+    feature: "hover",
+  });
+  expect(parseMediaFeature("(1px < 0)")).toEqual({
+    errid: "EXPECT_RANGE",
+    start: 0,
+    end: 8,
+    child: { errid: "INVALID_RANGE", start: 0, end: 8 },
+  });
+  expect(parseMediaFeature("vr and '\n")).toEqual({
+    errid: "INVALID_STRING",
+    start: 7,
+    end: 7,
   });
 });
 
@@ -261,4 +321,11 @@ const s = (
 test("stringify", () => {
   expect(s(parseMediaQueryList("(((((hover)) and (((color))))))"))).toEqual("(hover) and (color)");
   expect(s(parseMediaQueryList("( width < 10px )"))).toEqual("(width < 10px)");
+  expect(s(parseMediaQuery("( width < 10px )"))).toEqual("(width < 10px)");
+  expect(s(parseMediaCondition("( width < 10px )"))).toEqual("((width < 10px))");
+  expect(s(parseMediaFeature("( width < 10px )"))).toEqual("(width < 10px)");
+  expect(s({ type: "number", value: 1, flag: "integer" })).toEqual("1");
+  expect(s({ type: "dimension", value: 2, unit: "px", flag: "number" })).toEqual("2px");
+  expect(s({ type: "ratio", numerator: 3, denominator: 4 })).toEqual("3/4");
+  expect(s({ type: "ident", value: "five" })).toEqual("five");
 });

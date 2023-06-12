@@ -22,8 +22,8 @@ export const generateMediaQuery = (mediaQuery: MediaQuery): string => {
     str += mediaQuery.mediaPrefix + " ";
   }
   const doesNeedAll = mediaQuery.mediaPrefix !== undefined || !mediaQuery.mediaCondition;
-  if (doesNeedAll || mediaQuery.mediaType !== "all") {
-    str += mediaQuery.mediaType;
+  if (doesNeedAll || mediaQuery.mediaType !== undefined) {
+    str += mediaQuery.mediaType ?? "all";
     if (mediaQuery.mediaCondition) {
       str += " and";
     }
@@ -32,27 +32,27 @@ export const generateMediaQuery = (mediaQuery: MediaQuery): string => {
     if (str !== "") {
       str += " ";
     }
-    const conditionStr = generateMediaCondition(mediaQuery.mediaCondition);
-    if (
-      mediaQuery.mediaCondition.operator === undefined ||
-      mediaQuery.mediaCondition.operator === "and" ||
-      (mediaQuery.mediaCondition.operator === "not" && str === "")
-    ) {
-      str += conditionStr.slice(1, -1);
-    } else {
-      str += conditionStr;
-    }
+
+    const condition = mediaQuery.mediaCondition;
+
+    const canTrimParentheses =
+      condition.operator === undefined ||
+      condition.operator === "and" ||
+      (condition.operator === "not" && !str);
+
+    str += canTrimParentheses
+      ? generateMediaCondition(mediaQuery.mediaCondition).slice(1, -1)
+      : generateMediaCondition(mediaQuery.mediaCondition);
   }
   return str;
 };
 export const generateMediaCondition = (mediaCondition: MediaCondition): string => {
   let str = "(";
-  if (mediaCondition.operator === undefined || mediaCondition.operator === "not") {
-    if (mediaCondition.operator === "not") {
-      str += "not ";
-    }
+  if (mediaCondition.operator === "not") {
     const child = mediaCondition.children[0];
-    str += child.type === "feature" ? generateMediaFeature(child) : generateMediaCondition(child);
+    str +=
+      "not " +
+      (child.type === "feature" ? generateMediaFeature(child) : generateMediaCondition(child));
   } else {
     for (const child of mediaCondition.children) {
       if (str.length > 1) {

@@ -9,6 +9,7 @@ export const flattenMediaQuery = (mediaQuery: MediaQuery): MediaQuery => {
   if (mediaQuery.mediaCondition === undefined) return mediaQuery;
 
   let mediaCondition = flattenMediaCondition(mediaQuery.mediaCondition);
+
   if (
     mediaCondition.operator === undefined &&
     mediaCondition.children.length === 1 &&
@@ -26,23 +27,43 @@ export const flattenMediaQuery = (mediaQuery: MediaQuery): MediaQuery => {
 };
 
 export const flattenMediaCondition = (mediaCondition: MediaCondition): MediaCondition => {
-  const children: Array<MediaCondition | MediaFeature> = [];
+  const flatChildren: Array<MediaCondition | MediaFeature> = [];
   for (const child of mediaCondition.children) {
     if (child.type === "condition") {
-      const grandchild = flattenMediaCondition(child);
-      if (grandchild.operator === undefined && grandchild.children.length === 1) {
-        children.push(grandchild.children[0]);
+      const flatChild = flattenMediaCondition(child);
+      if (flatChild.operator === undefined && flatChild.children.length === 1) {
+        flatChildren.push(flatChild.children[0]);
       } else if (
-        grandchild.operator === mediaCondition.operator &&
-        (grandchild.operator === "and" || grandchild.operator === "or")
+        flatChild.operator === mediaCondition.operator &&
+        (flatChild.operator === "and" || flatChild.operator === "or")
       ) {
-        children.push(...grandchild.children);
+        flatChildren.push(...flatChild.children);
       } else {
-        children.push(grandchild);
+        flatChildren.push(flatChild);
       }
     } else {
-      children.push(child);
+      flatChildren.push(child);
     }
   }
-  return { type: "condition", operator: mediaCondition.operator, children } as MediaCondition;
+
+  if (flatChildren.length === 1) {
+    const flatChild = flatChildren[0];
+    if (flatChild.type === "condition") {
+      if (mediaCondition.operator === undefined) {
+        return flatChild;
+      } else if (mediaCondition.operator === "not") {
+        // can flatten if child has 'not' or undefined
+        if (flatChild.operator === undefined) {
+          return { type: "condition", operator: "not", children: flatChild.children };
+        } else if (flatChild.operator === "not") {
+          return { type: "condition", children: flatChild.children };
+        }
+      }
+    }
+  }
+  return {
+    type: "condition",
+    operator: mediaCondition.operator,
+    children: flatChildren,
+  } as MediaCondition;
 };

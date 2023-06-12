@@ -18,7 +18,7 @@ export type LiteMediaQueryList = {
 
 export type LiteMediaQuery = {
   mediaPrefix?: "not" | "only";
-  mediaType: "all" | "screen" | "print";
+  mediaType?: "screen" | "print";
   mediaCondition?: LiteMediaCondition;
 };
 

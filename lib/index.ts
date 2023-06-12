@@ -42,8 +42,8 @@ import {
  * //   type: "query-list",
  * //   mediaQueries: [
  * //     {type: "query", mediaType: "print"},
- * //     {type: "query", mediaPrefix: "not", mediaType: "all"},
- * //     {type: "query", mediaType: "all", mediaCondition: ...}
+ * //     {type: "query", mediaPrefix: "not"},
+ * //     {type: "query", mediaCondition: ...}
  * //   ],
  * // }
  * ```
@@ -64,7 +64,6 @@ export const parseMediaQueryList = (str: string): MediaQueryList | ParserError =
  * //     type: "condition",
  * //     children: [{ type: "feature", context: "boolean", feature: "monochrome" }],
  * //   },
- * //   mediaType: "all",
  * // }
  * ```
  */
@@ -79,7 +78,7 @@ export const parseMediaQuery = (str: string): MediaQuery | ParserError => {
 };
 
 /**
- * creates an AST from a **media-condition** string - including parentheses
+ * creates an AST from a **media-condition** string
  *
  * @example
  * ```ts
@@ -143,21 +142,24 @@ export const parseMediaFeature = (str: string): MediaFeature | ParserError => {
  *
  * @example
  * ```ts
- * console.log(stringify(parseMediaFeature(`(min-width: 768px)`)));
- * // "(min-width: 768px)"
- * ```
- *
- * @example
- * ```ts
  * console.log(stringify({
  *   type: "query",
- *   mediaType: "all",
  *   mediaCondition: {
  *     type: "condition",
  *     children: [{ type: "feature", context: "boolean", feature: "monochrome" }],
  *   },
  * }));
  * // "(monochrome)"
+ * ```
+ *
+ * note: stringifying a MediaCondition directly will always wrap the condition with parentheses.
+ * sometimes they are redundant, but calling this with a MediaQuery will remove them for you.
+ * e.g. `stringify({ type: 'query', mediaType: 'all', mediaCondition: <your condition> })`
+ *
+ * @example
+ * ```ts
+ * console.log(stringify(parseMediaFeature(`(min-width: 768px)`)));
+ * // "(min-width: 768px)"
  * ```
  */
 export const stringify = (
