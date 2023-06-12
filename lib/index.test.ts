@@ -1,4 +1,14 @@
-import { ParserError, isParserError, parseMediaQueryList, stringify } from "./index.js";
+import {
+  MediaCondition,
+  MediaFeature,
+  MediaQuery,
+  MediaQueryList,
+  ParserError,
+  ValidValueToken,
+  isParserError,
+  parseMediaQueryList,
+  stringify,
+} from "./index.js";
 
 test("parseMediaQueryList", () => {
   // sanity check
@@ -242,7 +252,9 @@ test("previously discovered bugs", () => {
   });
 });
 
-const s = (ast: Parameters<typeof stringify>[0] | ParserError): unknown => {
+const s = (
+  ast: MediaQueryList | MediaQuery | MediaCondition | MediaFeature | ValidValueToken | ParserError
+): string | ParserError => {
   return isParserError(ast) ? ast : stringify(ast);
 };
 

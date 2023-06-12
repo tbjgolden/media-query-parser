@@ -25,25 +25,16 @@ if (await isDirectory("lib")) {
     console.log(`entrypoint file "${entrypoint}" doesn't exist`);
     process.exit(1);
   }
-  const { toAST } = await import(process.cwd() + "/" + entrypoint);
-  const result = JSON.stringify(toAST("@media (min-width: 123px)"));
-  const expected = JSON.stringify([
-    {
-      mediaPrefix: null,
-      mediaType: "all",
-      mediaCondition: {
-        operator: null,
-        children: [
-          {
-            context: "value",
-            prefix: "min",
-            feature: "width",
-            value: { type: "dimension", value: 123, unit: "px", flag: "number" },
-          },
-        ],
-      },
+  const { parseMediaQuery } = await import(process.cwd() + "/" + entrypoint);
+  const result = JSON.stringify(parseMediaQuery("(monochrome)"));
+  const expected = JSON.stringify({
+    type: "query",
+    mediaType: "all",
+    mediaCondition: {
+      type: "condition",
+      children: [{ type: "feature", context: "boolean", feature: "monochrome" }],
     },
-  ]);
+  });
   if (result !== expected) {
     console.log("expected:");
     console.log(expected);

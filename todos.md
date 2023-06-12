@@ -8,5 +8,5 @@
   - [x] mq list parsing
   - [x] failing tests
 - [x] finish exported api
-- [ ] add jsdoc documentation
+- [x] add jsdoc documentation
 - [ ] make it clear in Readme how to use with csstree or postcss
