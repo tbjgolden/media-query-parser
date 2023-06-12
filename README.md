@@ -1,5 +1,9 @@
 # `media-query-parser`
 
+> This package's v3 (currently in beta) involves a complete overhaul from v2 to a more sustainable
+> shape.
+> [See v2 API docs instead](https://github.com/tbjgolden/media-query-parser/tree/v2.0.2/docs/api#functions)
+
 ![npm](https://img.shields.io/npm/v/media-query-parser)
 ![npm type definitions](https://img.shields.io/npm/types/media-query-parser)
 ![license](https://img.shields.io/npm/l/media-query-parser)
