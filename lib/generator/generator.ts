@@ -12,7 +12,7 @@ import {
   NumberToken,
   DimensionToken,
   IdentToken,
-} from "../shared.js";
+} from "../utils.js";
 
 export const generateMediaQueryList = (mediaQueryList: MediaQueryList): string =>
   mediaQueryList.mediaQueries.map((mediaQuery) => generateMediaQuery(mediaQuery)).join(", ");

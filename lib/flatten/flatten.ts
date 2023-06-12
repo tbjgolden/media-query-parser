@@ -1,4 +1,4 @@
-import { MediaQueryList, MediaQuery, MediaCondition, MediaFeature } from "../shared.js";
+import { MediaQueryList, MediaQuery, MediaCondition, MediaFeature } from "../utils.js";
 
 export const flattenMediaQueryList = (mediaQueryList: MediaQueryList): MediaQueryList => ({
   type: "query-list",

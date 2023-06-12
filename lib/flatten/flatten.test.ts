@@ -1,7 +1,7 @@
 import { readMediaQueryList } from "../ast/ast.js";
 import { LiteMediaQueryList, isEqualish, toLiteMediaQueryList } from "../ast/test-helpers.js";
 import { lexer } from "../lexer/lexer.js";
-import { ParserToken } from "../shared.js";
+import { ParserToken } from "../utils.js";
 import { flattenMediaQueryList } from "./flatten.js";
 
 const flattenMQL = (str: string): LiteMediaQueryList => {

@@ -14,6 +14,7 @@ import {
 } from "./index.js";
 
 test("parseMediaQueryList", () => {
+  expect(parseMediaQueryList("[a, b], {c, d}")).toEqual({ errid: "NO_LCURLY", start: 8, end: 8 });
   expect(parseMediaQueryList("(((((hover)) and (((color))))))")).toEqual({
     type: "query-list",
     mediaQueries: [
@@ -84,12 +85,10 @@ test("parseMediaQueryList", () => {
     ],
     type: "query-list",
   });
-  // invalid (color-index <= 128)
   expect(parseMediaQueryList("invalid (color-index <= 128)")).toEqual({
     type: "query-list",
     mediaQueries: [{ type: "query", mediaPrefix: "not" }],
   });
-  // not print and (110px <= width <= 220px) should have mediaPrefix
   expect(parseMediaQueryList("not print and (110px <= width <= 220px)")).toEqual({
     type: "query-list",
     mediaQueries: [

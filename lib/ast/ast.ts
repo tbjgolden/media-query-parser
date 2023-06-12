@@ -8,7 +8,7 @@ import {
   RatioToken,
   ValidRange,
   ValidRangeToken,
-} from "../shared.js";
+} from "../utils.js";
 
 type ConvenientToken =
   | ParserToken

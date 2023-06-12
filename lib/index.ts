@@ -16,6 +16,7 @@ import {
   generateMediaFeature,
   generateValidValueToken,
 } from "./generator/generator.js";
+import { invertParserError } from "./internals.js";
 import { lexer } from "./lexer/lexer.js";
 import {
   MediaQueryList,
@@ -25,7 +26,7 @@ import {
   MediaCondition,
   MediaFeature,
   ValidValueToken,
-} from "./shared.js";
+} from "./utils.js";
 
 /**
  * creates an AST from a **media-query-list** string; parses comma-separated media queries correctly
@@ -50,7 +51,9 @@ import {
  */
 export const parseMediaQueryList = (str: string): MediaQueryList | ParserError => {
   const tokens = lexer(str);
-  return isParserError(tokens) ? tokens : flattenMediaQueryList(readMediaQueryList(tokens));
+  return isParserError(tokens)
+    ? invertParserError(tokens)
+    : flattenMediaQueryList(readMediaQueryList(tokens));
 };
 
 /**
@@ -70,10 +73,12 @@ export const parseMediaQueryList = (str: string): MediaQueryList | ParserError =
 export const parseMediaQuery = (str: string): MediaQuery | ParserError => {
   const tokens = lexer(str);
   if (isParserError(tokens)) {
-    return tokens;
+    return invertParserError(tokens);
   } else {
     const mediaQuery = readMediaQuery(tokens);
-    return isParserError(mediaQuery) ? mediaQuery : flattenMediaQuery(mediaQuery);
+    return isParserError(mediaQuery)
+      ? invertParserError(mediaQuery)
+      : flattenMediaQuery(mediaQuery);
   }
 };
 
@@ -109,10 +114,12 @@ export const parseMediaQuery = (str: string): MediaQuery | ParserError => {
 export const parseMediaCondition = (str: string): MediaCondition | ParserError => {
   const tokens = lexer(str);
   if (isParserError(tokens)) {
-    return tokens;
+    return invertParserError(tokens);
   } else {
     const mediaCondition = readMediaCondition(tokens, true);
-    return isParserError(mediaCondition) ? mediaCondition : flattenMediaCondition(mediaCondition);
+    return isParserError(mediaCondition)
+      ? invertParserError(mediaCondition)
+      : flattenMediaCondition(mediaCondition);
   }
 };
 
@@ -134,7 +141,7 @@ export const parseMediaCondition = (str: string): MediaCondition | ParserError =
  */
 export const parseMediaFeature = (str: string): MediaFeature | ParserError => {
   const tokens = lexer(str);
-  return isParserError(tokens) ? tokens : readMediaFeature(tokens);
+  return isParserError(tokens) ? invertParserError(tokens) : readMediaFeature(tokens);
 };
 
 /**
@@ -184,4 +191,4 @@ export const stringify = (
   }
 };
 
-export * from "./shared.js";
+export * from "./utils.js";

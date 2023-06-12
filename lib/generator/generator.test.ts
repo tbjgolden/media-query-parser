@@ -6,7 +6,7 @@ import {
   generateMediaQueryList,
 } from "../generator/generator.js";
 import { lexer } from "../lexer/lexer.js";
-import { ParserToken, isParserError } from "../shared.js";
+import { ParserToken, isParserError } from "../utils.js";
 
 const expectIdentity = (str: string) => {
   expect(
