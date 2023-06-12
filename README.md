@@ -1,101 +1,108 @@
 # `media-query-parser`
 
-[![npm version](https://img.shields.io/npm/v/media-query-parser.svg?style=flat-square)](https://www.npmjs.com/package/media-query-parser)
-![npm bundle size](https://img.shields.io/bundlephobia/minzip/media-query-parser?style=flat-square)
-![npm downloads](https://img.shields.io/npm/dw/media-query-parser?style=flat-square)
-[![test coverage](https://img.shields.io/badge/dynamic/json?style=flat-square&color=brightgreen&label=coverage&query=%24.total.branches.pct&url=https%3A%2F%2Fraw.githubusercontent.com%2Ftbjgolden%2Fmedia-query-parser%2Fmain%2Fcoverage%2Fcoverage-summary.json)](https://www.npmjs.com/package/media-query-parser)
-[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/tbjgolden/media-query-parser/release.yml?branch=main&style=flat-square)](https://github.com/tbjgolden/media-query-parser/actions?query=workflow%3ARelease)
+> This package's v3 (currently in beta) involves a complete overhaul from v2 to a more sustainable
+> shape.
+> [See v2 API docs instead](https://github.com/tbjgolden/media-query-parser/tree/v2.0.2/docs/api#functions)
 
-- [x] **Parses correct CSS media queries**
-- [x] **Fails on invalid CSS media queries**
-- [x] **Spec-compliant** - https://www.w3.org/TR/mediaqueries-5/
-  - [x] **All valid queries parsed, even newer ones like  
-         `@media (100px < width < 200px)`**
-- [x] **Zero-dependencies**
-- [x] **TypeScript friendly**
+![npm](https://img.shields.io/npm/v/media-query-parser)
+![npm type definitions](https://img.shields.io/npm/types/media-query-parser)
+![license](https://img.shields.io/npm/l/media-query-parser)
+![npm downloads](https://img.shields.io/npm/dw/media-query-parser)
+[![install size](https://packagephobia.com/badge?p=media-query-parser)](https://packagephobia.com/result?p=media-query-parser)
 
-Notably this is used internally in
-[`vanilla-extract`](https://vanilla-extract.style/).
+- **Create a JS object from a CSS media queries**
+- **Create a CSS media query from a JS object**
+- **Returns a ParserError for invalid CSS media queries**
+- **Spec-compliant** - https://www.w3.org/TR/mediaqueries-5/
+  - **All valid queries parsed; e.g. `(100px < width < 200px)`**
+- **Zero-dependencies**
+- **Well tested**
+- **TypeScript friendly**
 
-## Quickfire examples
+> This repo/package contains only the parser, stringify and isParserError.
+>
+> `media-query-fns` uses this library internally to achieve common use-cases.
 
-```js
-import { toAST } from 'media-query-parser'
+**_[You can try it out!](https://tbjgolden.github.io/media-query-parser/)_**
 
-// Simple responsive media query
-console.log(toAST('(max-width: 768px)'))
-/* [
-  {
-    "mediaPrefix":null,
-    "mediaType":"all",
-    "mediaCondition":{
-      "operator":null,
-      "children":[
-        {"context":"value",
-         "prefix":"max",
-         "feature":"width",
-         "value":{"type":"<dimension-token>","value":768,"unit":"px","flag":"number"}
-        }
-      ]
-    }
-  }
-] */
+![banner](banner.svg)
 
-// Supports comma separated media-query lists
-console.log(toAST('print, (not (color))'))
-// Trims the `@media` if it starts with it, the `{` and anything that follows
-console.log(toAST('@media screen { body { background: #000 } }'))
-// Full support for new range syntax
-console.log(toAST('(100px < width < 200px)'))
-// ...which was no mean feat...
-console.log(toAST('(4/3 <= aspect-ratio <= 16/9)'))
-// Throws an Error with invalid media query syntax
-console.log(toAST('clearly this is not a valid media query')) // => Error
+## Install
 
-// ...even the normal looking but invalid ones:
-console.log(toAST('(max-width: 768px) and screen')) // => Error
-// explanation: screen can only appear at the start of a media query
-console.log(toAST('screen and (max-width: 768px) or (hover)')) // => Error
-// explanation: spec disallows `and` and `or` on same level as ambiguous
+This package is available from the `npm` registry.
+
+```sh
+npm install media-query-parser
 ```
 
-## [Playground](https://tbjgolden.github.io/media-query-parser/)
+## Usage
+
+Supports JavaScript + TypeScript:
+
+```ts
+import { parseMediaQuery } from "media-query-parser";
+
+const mediaQuery = parseMediaQuery("screen and (width <= 768px)");
+if (!isParserError(mediaQuery)) {
+  console.log(mediaQuery);
+  // {
+  //   type: "query",
+  //   mediaType: "screen",
+  //   mediaCondition: {
+  //     type: "condition",
+  //     children: [
+  //       {
+  //         type: "feature",
+  //         feature: "width",
+  //         context: "range",
+  //         range: {
+  //           featureName: "width",
+  //           rightOp: "<=",
+  //           rightToken: {
+  //             type: "dimension",
+  //             value: 768,
+  //             unit: "px",
+  //             flag: "number"
+  //           },
+  //         },
+  //       },
+  //     ],
+  //   },
+  // }
+  console.log(stringify(mediaQuery.mediaCondition.children[0]));
+  // "(width <= 768px)"
+}
+```
+
+Can also be imported via `require("media-query-parser")`.
 
 ## Considerations & Caveats
 
-This library does:
+This library **does**:
 
+- follow the spec's CSS syntax / media query parsing rules
 - remove extra layers from unnecessary parentheses `(((((max-width: 768px)))))`
-- parses units, numbers and other values according to the spec
 - handle unusual whitespace anywhere that the spec allows it
-- contain many a unit test
 
-This library does not:
+This library **will not**:
 
-- sanity check the actual media features or their types `(max-power: infinite)`
-  is as valid as `(hover: none)` - see
-  [media-query-fns](https://github.com/tbjgolden/media-query-fns)
-- contain anything that converts the AST back into a media query - watch this
-  space
+- sanity check the actual media features or their types beyond the parser rules; so
+  `(max-power: infinite)` is as valid as `(min-width: 768px)`
+- support `calc()` or `var()` - functions are disallowed by the spec, even though some browsers seem
+  to support them. If/when the spec allows them they'll be added in a new major version
 
-## Installation
+## Contributing
 
-```sh
-npm install media-query-parser --save
-# yarn add media-query-parser
-```
+- PRs welcome and accepted, simply fork and create
+- Issues also very welcome
+- Treat others with common courtesy and respect 🤝
 
-Alternatively, there are also client web builds available:
+Dev environment (for contributing) requires:
 
-```html
-<!-- window.MediaQueryParser -->
-<script src="https://unpkg.com/media-query-parser/dist/media-query-parser.umd.js"></script>
-```
+- node >= 16.14.0
+- npm >= 6.8.0
+- git >= 2.11
 
-## [`API + AST`](api)
-
-## License
+## Licence
 
 MIT
-
-<!-- Original starter readme: https://github.com/tbjgolden/create-typescript-react-library -->
