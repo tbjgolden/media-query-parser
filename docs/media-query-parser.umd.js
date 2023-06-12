@@ -1,11 +1,11 @@
-/*! @license MediaQueryParser - MIT License - Tom Golden (oss@tom.bio) */
+/*! @license MediaQueryParser - MIT License - Tom Golden (github@tbjgolden.com) */
 
 (function (global, factory) {
   typeof exports === "object" && typeof module !== "undefined"
     ? factory(exports)
     : typeof define === "function" && define.amd
     ? define(["exports"], factory)
-    : ((global = typeof globalThis === "undefined" ? global || self : globalThis),
+    : ((global = typeof globalThis !== "undefined" ? globalThis : global || self),
       factory((global.MediaQueryParser = {})));
 })(this, function (exports) {
   "use strict";
@@ -35,15 +35,16 @@
         }
         return t;
       };
-    return Reflect.apply(__assign, this, arguments);
+    return __assign.apply(this, arguments);
   };
 
   function __rest(s, e) {
     var t = {};
-    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && !e.includes(p)) t[p] = s[p];
+    for (var p in s)
+      if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0) t[p] = s[p];
     if (s != null && typeof Object.getOwnPropertySymbols === "function")
       for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
-        if (!e.includes(p[i]) && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+        if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
           t[p[i]] = s[p[i]];
       }
     return t;
@@ -87,445 +88,380 @@
 
   var weirdNewlines = /(\u000D|\u000C|\u000D\u000A)/g;
   var nullOrSurrogates = /[\u0000\uD800-\uDFFF]/g;
-  var commentRegex = /(\/\*)[\S\s]*?(\*\/)/g;
+  var commentRegex = /(\/\*)[\s\S]*?(\*\/)/g;
   var lexicalAnalysis = function lexicalAnalysis(str, index) {
     if (index === void 0) {
       index = 0;
     }
 
-    str = str.replaceAll(weirdNewlines, "\n").replaceAll(nullOrSurrogates, "\uFFFD");
-    str = str.replaceAll(commentRegex, "");
+    str = str.replace(weirdNewlines, "\n").replace(nullOrSurrogates, "\uFFFD");
+    str = str.replace(commentRegex, "");
     var tokens = [];
 
     for (; index < str.length; index += 1) {
       var code = str.charCodeAt(index);
 
-      switch (code) {
-        case 0x00_09:
-        case 0x00_20:
-        case 0x00_0a: {
-          var code_1 = str.charCodeAt(++index);
+      if (code === 0x0009 || code === 0x0020 || code === 0x000a) {
+        var code_1 = str.charCodeAt(++index);
 
-          while (code_1 === 0x00_09 || code_1 === 0x00_20 || code_1 === 0x00_0a) {
-            code_1 = str.charCodeAt(++index);
-          }
-
-          index -= 1;
-          tokens.push({
-            type: "<whitespace-token>",
-          });
-
-          break;
+        while (code_1 === 0x0009 || code_1 === 0x0020 || code_1 === 0x000a) {
+          code_1 = str.charCodeAt(++index);
         }
-        case 0x00_22: {
-          var result = consumeString(str, index);
 
-          if (result === null) {
-            return null;
-          }
+        index -= 1;
+        tokens.push({
+          type: "<whitespace-token>",
+        });
+      } else if (code === 0x0022) {
+        var result = consumeString(str, index);
 
-          var _a = __read(result, 2),
-            lastIndex = _a[0],
-            value = _a[1];
-
-          tokens.push({
-            type: "<string-token>",
-            value: value,
-          });
-          index = lastIndex;
-
-          break;
+        if (result === null) {
+          return null;
         }
-        case 0x00_23: {
-          if (index + 1 < str.length) {
-            var nextCode = str.charCodeAt(index + 1);
 
-            if (
-              nextCode === 0x00_5f ||
-              (nextCode >= 0x00_41 && nextCode <= 0x00_5a) ||
-              (nextCode >= 0x00_61 && nextCode <= 0x00_7a) ||
-              nextCode >= 0x00_80 ||
-              (nextCode >= 0x00_30 && nextCode <= 0x00_39) ||
-              (nextCode === 0x00_5c &&
-                index + 2 < str.length &&
-                str.charCodeAt(index + 2) !== 0x00_0a)
-            ) {
-              var flag = wouldStartIdentifier(str, index + 1) ? "id" : "unrestricted";
-              var result = consumeIdentUnsafe(str, index + 1);
+        var _a = __read(result, 2),
+          lastIndex = _a[0],
+          value = _a[1];
 
-              if (result !== null) {
-                var _b = __read(result, 2),
-                  lastIndex = _b[0],
-                  value = _b[1];
+        tokens.push({
+          type: "<string-token>",
+          value: value,
+        });
+        index = lastIndex;
+      } else if (code === 0x0023) {
+        if (index + 1 < str.length) {
+          var nextCode = str.charCodeAt(index + 1);
 
-                tokens.push({
-                  type: "<hash-token>",
-                  value: value.toLowerCase(),
-                  flag: flag,
-                });
-                index = lastIndex;
-                continue;
-              }
-            }
-          }
-
-          tokens.push({
-            type: "<delim-token>",
-            value: code,
-          });
-
-          break;
-        }
-        case 0x00_27: {
-          var result = consumeString(str, index);
-
-          if (result === null) {
-            return null;
-          }
-
-          var _c = __read(result, 2),
-            lastIndex = _c[0],
-            value = _c[1];
-
-          tokens.push({
-            type: "<string-token>",
-            value: value,
-          });
-          index = lastIndex;
-
-          break;
-        }
-        case 0x00_28: {
-          tokens.push({
-            type: "<(-token>",
-          });
-
-          break;
-        }
-        case 0x00_29: {
-          tokens.push({
-            type: "<)-token>",
-          });
-
-          break;
-        }
-        case 0x00_2b: {
-          var plusNumeric = consumeNumeric(str, index);
-
-          if (plusNumeric === null) {
-            tokens.push({
-              type: "<delim-token>",
-              value: code,
-            });
-          } else {
-            var _d = __read(plusNumeric, 2),
-              lastIndex = _d[0],
-              tokenTuple = _d[1];
-
-            if (tokenTuple[0] === "<dimension-token>") {
-              tokens.push({
-                type: "<dimension-token>",
-                value: tokenTuple[1],
-                unit: tokenTuple[2].toLowerCase(),
-                flag: "number",
-              });
-            } else if (tokenTuple[0] === "<number-token>") {
-              tokens.push({
-                type: tokenTuple[0],
-                value: tokenTuple[1],
-                flag: tokenTuple[2],
-              });
-            } else {
-              tokens.push({
-                type: tokenTuple[0],
-                value: tokenTuple[1],
-                flag: "number",
-              });
-            }
-
-            index = lastIndex;
-          }
-
-          break;
-        }
-        case 0x00_2c: {
-          tokens.push({
-            type: "<comma-token>",
-          });
-
-          break;
-        }
-        case 0x00_2d: {
-          var minusNumeric = consumeNumeric(str, index);
-
-          if (minusNumeric !== null) {
-            var _e = __read(minusNumeric, 2),
-              lastIndex = _e[0],
-              tokenTuple = _e[1];
-
-            if (tokenTuple[0] === "<dimension-token>") {
-              tokens.push({
-                type: "<dimension-token>",
-                value: tokenTuple[1],
-                unit: tokenTuple[2].toLowerCase(),
-                flag: "number",
-              });
-            } else if (tokenTuple[0] === "<number-token>") {
-              tokens.push({
-                type: tokenTuple[0],
-                value: tokenTuple[1],
-                flag: tokenTuple[2],
-              });
-            } else {
-              tokens.push({
-                type: tokenTuple[0],
-                value: tokenTuple[1],
-                flag: "number",
-              });
-            }
-
-            index = lastIndex;
-            continue;
-          }
-
-          if (index + 2 < str.length) {
-            var nextCode = str.charCodeAt(index + 1);
-            var nextNextCode = str.charCodeAt(index + 2);
-
-            if (nextCode === 0x00_2d && nextNextCode === 0x00_3e) {
-              tokens.push({
-                type: "<CDC-token>",
-              });
-              index += 2;
-              continue;
-            }
-          }
-
-          var result = consumeIdentLike(str, index);
-
-          if (result !== null) {
-            var _f = __read(result, 3),
-              lastIndex = _f[0],
-              value = _f[1],
-              type = _f[2];
-
-            tokens.push({
-              type: type,
-              value: value,
-            });
-            index = lastIndex;
-            continue;
-          }
-
-          tokens.push({
-            type: "<delim-token>",
-            value: code,
-          });
-
-          break;
-        }
-        case 0x00_2e: {
-          var minusNumeric = consumeNumeric(str, index);
-
-          if (minusNumeric === null) {
-            tokens.push({
-              type: "<delim-token>",
-              value: code,
-            });
-          } else {
-            var _g = __read(minusNumeric, 2),
-              lastIndex = _g[0],
-              tokenTuple = _g[1];
-
-            if (tokenTuple[0] === "<dimension-token>") {
-              tokens.push({
-                type: "<dimension-token>",
-                value: tokenTuple[1],
-                unit: tokenTuple[2].toLowerCase(),
-                flag: "number",
-              });
-            } else if (tokenTuple[0] === "<number-token>") {
-              tokens.push({
-                type: tokenTuple[0],
-                value: tokenTuple[1],
-                flag: tokenTuple[2],
-              });
-            } else {
-              tokens.push({
-                type: tokenTuple[0],
-                value: tokenTuple[1],
-                flag: "number",
-              });
-            }
-
-            index = lastIndex;
-            continue;
-          }
-
-          break;
-        }
-        case 0x00_3a: {
-          tokens.push({
-            type: "<colon-token>",
-          });
-
-          break;
-        }
-        case 0x00_3b: {
-          tokens.push({
-            type: "<semicolon-token>",
-          });
-
-          break;
-        }
-        case 0x00_3c: {
-          if (index + 3 < str.length) {
-            var nextCode = str.charCodeAt(index + 1);
-            var nextNextCode = str.charCodeAt(index + 2);
-            var nextNextNextCode = str.charCodeAt(index + 3);
-
-            if (nextCode === 0x00_21 && nextNextCode === 0x00_2d && nextNextNextCode === 0x00_2d) {
-              tokens.push({
-                type: "<CDO-token>",
-              });
-              index += 3;
-              continue;
-            }
-          }
-
-          tokens.push({
-            type: "<delim-token>",
-            value: code,
-          });
-
-          break;
-        }
-        case 0x00_40: {
-          var result = consumeIdent(str, index + 1);
-
-          if (result !== null) {
-            var _h = __read(result, 2),
-              lastIndex = _h[0],
-              value = _h[1];
-
-            tokens.push({
-              type: "<at-keyword-token>",
-              value: value.toLowerCase(),
-            });
-            index = lastIndex;
-            continue;
-          }
-
-          tokens.push({
-            type: "<delim-token>",
-            value: code,
-          });
-
-          break;
-        }
-        case 0x00_5b: {
-          tokens.push({
-            type: "<[-token>",
-          });
-
-          break;
-        }
-        case 0x00_5c: {
-          var result = consumeEscape(str, index);
-
-          if (result === null) {
-            return null;
-          }
-
-          var _j = __read(result, 2),
-            lastIndex = _j[0],
-            value = _j[1];
-
-          str = str.slice(0, index) + value + str.slice(lastIndex + 1);
-          index -= 1;
-
-          break;
-        }
-        case 0x00_5d: {
-          tokens.push({
-            type: "<]-token>",
-          });
-
-          break;
-        }
-        case 0x00_7b: {
-          tokens.push({
-            type: "<{-token>",
-          });
-
-          break;
-        }
-        case 0x00_7d: {
-          tokens.push({
-            type: "<}-token>",
-          });
-
-          break;
-        }
-        default: {
-          if (code >= 0x00_30 && code <= 0x00_39) {
-            var result = consumeNumeric(str, index);
-
-            var _k = __read(result, 2),
-              lastIndex = _k[0],
-              tokenTuple = _k[1];
-
-            if (tokenTuple[0] === "<dimension-token>") {
-              tokens.push({
-                type: "<dimension-token>",
-                value: tokenTuple[1],
-                unit: tokenTuple[2].toLowerCase(),
-                flag: "number",
-              });
-            } else if (tokenTuple[0] === "<number-token>") {
-              tokens.push({
-                type: tokenTuple[0],
-                value: tokenTuple[1],
-                flag: tokenTuple[2],
-              });
-            } else {
-              tokens.push({
-                type: tokenTuple[0],
-                value: tokenTuple[1],
-                flag: "number",
-              });
-            }
-
-            index = lastIndex;
-          } else if (
-            code === 0x00_5f ||
-            (code >= 0x00_41 && code <= 0x00_5a) ||
-            (code >= 0x00_61 && code <= 0x00_7a) ||
-            code >= 0x00_80
+          if (
+            nextCode === 0x005f ||
+            (nextCode >= 0x0041 && nextCode <= 0x005a) ||
+            (nextCode >= 0x0061 && nextCode <= 0x007a) ||
+            nextCode >= 0x0080 ||
+            (nextCode >= 0x0030 && nextCode <= 0x0039) ||
+            (nextCode === 0x005c && index + 2 < str.length && str.charCodeAt(index + 2) !== 0x000a)
           ) {
-            var result = consumeIdentLike(str, index);
+            var flag = wouldStartIdentifier(str, index + 1) ? "id" : "unrestricted";
+            var result = consumeIdentUnsafe(str, index + 1);
 
-            if (result === null) {
-              return null;
+            if (result !== null) {
+              var _b = __read(result, 2),
+                lastIndex = _b[0],
+                value = _b[1];
+
+              tokens.push({
+                type: "<hash-token>",
+                value: value.toLowerCase(),
+                flag: flag,
+              });
+              index = lastIndex;
+              continue;
             }
-
-            var _l = __read(result, 3),
-              lastIndex = _l[0],
-              value = _l[1],
-              type = _l[2];
-
-            tokens.push({
-              type: type,
-              value: value,
-            });
-            index = lastIndex;
-          } else {
-            tokens.push({
-              type: "<delim-token>",
-              value: code,
-            });
           }
         }
+
+        tokens.push({
+          type: "<delim-token>",
+          value: code,
+        });
+      } else if (code === 0x0027) {
+        var result = consumeString(str, index);
+
+        if (result === null) {
+          return null;
+        }
+
+        var _c = __read(result, 2),
+          lastIndex = _c[0],
+          value = _c[1];
+
+        tokens.push({
+          type: "<string-token>",
+          value: value,
+        });
+        index = lastIndex;
+      } else if (code === 0x0028) {
+        tokens.push({
+          type: "<(-token>",
+        });
+      } else if (code === 0x0029) {
+        tokens.push({
+          type: "<)-token>",
+        });
+      } else if (code === 0x002b) {
+        var plusNumeric = consumeNumeric(str, index);
+
+        if (plusNumeric === null) {
+          tokens.push({
+            type: "<delim-token>",
+            value: code,
+          });
+        } else {
+          var _d = __read(plusNumeric, 2),
+            lastIndex = _d[0],
+            tokenTuple = _d[1];
+
+          if (tokenTuple[0] === "<dimension-token>") {
+            tokens.push({
+              type: "<dimension-token>",
+              value: tokenTuple[1],
+              unit: tokenTuple[2].toLowerCase(),
+              flag: "number",
+            });
+          } else if (tokenTuple[0] === "<number-token>") {
+            tokens.push({
+              type: tokenTuple[0],
+              value: tokenTuple[1],
+              flag: tokenTuple[2],
+            });
+          } else {
+            tokens.push({
+              type: tokenTuple[0],
+              value: tokenTuple[1],
+              flag: "number",
+            });
+          }
+
+          index = lastIndex;
+        }
+      } else if (code === 0x002c) {
+        tokens.push({
+          type: "<comma-token>",
+        });
+      } else if (code === 0x002d) {
+        var minusNumeric = consumeNumeric(str, index);
+
+        if (minusNumeric !== null) {
+          var _e = __read(minusNumeric, 2),
+            lastIndex = _e[0],
+            tokenTuple = _e[1];
+
+          if (tokenTuple[0] === "<dimension-token>") {
+            tokens.push({
+              type: "<dimension-token>",
+              value: tokenTuple[1],
+              unit: tokenTuple[2].toLowerCase(),
+              flag: "number",
+            });
+          } else if (tokenTuple[0] === "<number-token>") {
+            tokens.push({
+              type: tokenTuple[0],
+              value: tokenTuple[1],
+              flag: tokenTuple[2],
+            });
+          } else {
+            tokens.push({
+              type: tokenTuple[0],
+              value: tokenTuple[1],
+              flag: "number",
+            });
+          }
+
+          index = lastIndex;
+          continue;
+        }
+
+        if (index + 2 < str.length) {
+          var nextCode = str.charCodeAt(index + 1);
+          var nextNextCode = str.charCodeAt(index + 2);
+
+          if (nextCode === 0x002d && nextNextCode === 0x003e) {
+            tokens.push({
+              type: "<CDC-token>",
+            });
+            index += 2;
+            continue;
+          }
+        }
+
+        var result = consumeIdentLike(str, index);
+
+        if (result !== null) {
+          var _f = __read(result, 3),
+            lastIndex = _f[0],
+            value = _f[1],
+            type = _f[2];
+
+          tokens.push({
+            type: type,
+            value: value,
+          });
+          index = lastIndex;
+          continue;
+        }
+
+        tokens.push({
+          type: "<delim-token>",
+          value: code,
+        });
+      } else if (code === 0x002e) {
+        var minusNumeric = consumeNumeric(str, index);
+
+        if (minusNumeric === null) {
+          tokens.push({
+            type: "<delim-token>",
+            value: code,
+          });
+        } else {
+          var _g = __read(minusNumeric, 2),
+            lastIndex = _g[0],
+            tokenTuple = _g[1];
+
+          if (tokenTuple[0] === "<dimension-token>") {
+            tokens.push({
+              type: "<dimension-token>",
+              value: tokenTuple[1],
+              unit: tokenTuple[2].toLowerCase(),
+              flag: "number",
+            });
+          } else if (tokenTuple[0] === "<number-token>") {
+            tokens.push({
+              type: tokenTuple[0],
+              value: tokenTuple[1],
+              flag: tokenTuple[2],
+            });
+          } else {
+            tokens.push({
+              type: tokenTuple[0],
+              value: tokenTuple[1],
+              flag: "number",
+            });
+          }
+
+          index = lastIndex;
+          continue;
+        }
+      } else if (code === 0x003a) {
+        tokens.push({
+          type: "<colon-token>",
+        });
+      } else if (code === 0x003b) {
+        tokens.push({
+          type: "<semicolon-token>",
+        });
+      } else if (code === 0x003c) {
+        if (index + 3 < str.length) {
+          var nextCode = str.charCodeAt(index + 1);
+          var nextNextCode = str.charCodeAt(index + 2);
+          var nextNextNextCode = str.charCodeAt(index + 3);
+
+          if (nextCode === 0x0021 && nextNextCode === 0x002d && nextNextNextCode === 0x002d) {
+            tokens.push({
+              type: "<CDO-token>",
+            });
+            index += 3;
+            continue;
+          }
+        }
+
+        tokens.push({
+          type: "<delim-token>",
+          value: code,
+        });
+      } else if (code === 0x0040) {
+        var result = consumeIdent(str, index + 1);
+
+        if (result !== null) {
+          var _h = __read(result, 2),
+            lastIndex = _h[0],
+            value = _h[1];
+
+          tokens.push({
+            type: "<at-keyword-token>",
+            value: value.toLowerCase(),
+          });
+          index = lastIndex;
+          continue;
+        }
+
+        tokens.push({
+          type: "<delim-token>",
+          value: code,
+        });
+      } else if (code === 0x005b) {
+        tokens.push({
+          type: "<[-token>",
+        });
+      } else if (code === 0x005c) {
+        var result = consumeEscape(str, index);
+
+        if (result === null) {
+          return null;
+        }
+
+        var _j = __read(result, 2),
+          lastIndex = _j[0],
+          value = _j[1];
+
+        str = str.slice(0, index) + value + str.slice(lastIndex + 1);
+        index -= 1;
+      } else if (code === 0x005d) {
+        tokens.push({
+          type: "<]-token>",
+        });
+      } else if (code === 0x007b) {
+        tokens.push({
+          type: "<{-token>",
+        });
+      } else if (code === 0x007d) {
+        tokens.push({
+          type: "<}-token>",
+        });
+      } else if (code >= 0x0030 && code <= 0x0039) {
+        var result = consumeNumeric(str, index);
+
+        var _k = __read(result, 2),
+          lastIndex = _k[0],
+          tokenTuple = _k[1];
+
+        if (tokenTuple[0] === "<dimension-token>") {
+          tokens.push({
+            type: "<dimension-token>",
+            value: tokenTuple[1],
+            unit: tokenTuple[2].toLowerCase(),
+            flag: "number",
+          });
+        } else if (tokenTuple[0] === "<number-token>") {
+          tokens.push({
+            type: tokenTuple[0],
+            value: tokenTuple[1],
+            flag: tokenTuple[2],
+          });
+        } else {
+          tokens.push({
+            type: tokenTuple[0],
+            value: tokenTuple[1],
+            flag: "number",
+          });
+        }
+
+        index = lastIndex;
+      } else if (
+        code === 0x005f ||
+        (code >= 0x0041 && code <= 0x005a) ||
+        (code >= 0x0061 && code <= 0x007a) ||
+        code >= 0x0080
+      ) {
+        var result = consumeIdentLike(str, index);
+
+        if (result === null) {
+          return null;
+        }
+
+        var _l = __read(result, 3),
+          lastIndex = _l[0],
+          value = _l[1],
+          type = _l[2];
+
+        tokens.push({
+          type: type,
+          value: value,
+        });
+        index = lastIndex;
+      } else {
+        tokens.push({
+          type: "<delim-token>",
+          value: code,
+        });
       }
     }
 
@@ -543,8 +479,8 @@
       var code = str.charCodeAt(i);
 
       if (code === firstCode) {
-        return [i, String.fromCodePoint.apply(null, charCodes)];
-      } else if (code === 0x00_5c) {
+        return [i, String.fromCharCode.apply(null, charCodes)];
+      } else if (code === 0x005c) {
         var result = consumeEscape(str, i);
         if (result === null) return null;
 
@@ -554,7 +490,7 @@
 
         charCodes.push(charCode);
         i = lastIndex;
-      } else if (code === 0x00_0a) {
+      } else if (code === 0x000a) {
         return null;
       } else {
         charCodes.push(code);
@@ -567,51 +503,51 @@
     if (str.length <= index) return false;
     var code = str.charCodeAt(index);
 
-    if (code === 0x00_2d) {
+    if (code === 0x002d) {
       if (str.length <= index + 1) return false;
       var nextCode = str.charCodeAt(index + 1);
 
       if (
-        nextCode === 0x00_2d ||
-        nextCode === 0x00_5f ||
-        (nextCode >= 0x00_41 && nextCode <= 0x00_5a) ||
-        (nextCode >= 0x00_61 && nextCode <= 0x00_7a) ||
-        nextCode >= 0x00_80
+        nextCode === 0x002d ||
+        nextCode === 0x005f ||
+        (nextCode >= 0x0041 && nextCode <= 0x005a) ||
+        (nextCode >= 0x0061 && nextCode <= 0x007a) ||
+        nextCode >= 0x0080
       ) {
         return true;
-      } else if (nextCode === 0x00_5c) {
+      } else if (nextCode === 0x005c) {
         if (str.length <= index + 2) return false;
         var nextNextCode = str.charCodeAt(index + 2);
-        return nextNextCode !== 0x00_0a;
+        return nextNextCode !== 0x000a;
       } else {
         return false;
       }
     } else if (
-      code === 0x00_5f ||
-      (code >= 0x00_41 && code <= 0x00_5a) ||
-      (code >= 0x00_61 && code <= 0x00_7a) ||
-      code >= 0x00_80
+      code === 0x005f ||
+      (code >= 0x0041 && code <= 0x005a) ||
+      (code >= 0x0061 && code <= 0x007a) ||
+      code >= 0x0080
     ) {
       return true;
-    } else if (code === 0x00_5c) {
+    } else if (code === 0x005c) {
       if (str.length <= index + 1) return false;
       var nextCode = str.charCodeAt(index + 1);
-      return nextCode !== 0x00_0a;
+      return nextCode !== 0x000a;
     } else {
       return false;
     }
   };
   var consumeEscape = function consumeEscape(str, index) {
     if (str.length <= index + 1) return null;
-    if (str.charCodeAt(index) !== 0x00_5c) return null;
+    if (str.charCodeAt(index) !== 0x005c) return null;
     var code = str.charCodeAt(index + 1);
 
-    if (code === 0x00_0a) {
+    if (code === 0x000a) {
       return null;
     } else if (
-      (code >= 0x00_30 && code <= 0x00_39) ||
-      (code >= 0x00_41 && code <= 0x00_46) ||
-      (code >= 0x00_61 && code <= 0x00_66)
+      (code >= 0x0030 && code <= 0x0039) ||
+      (code >= 0x0041 && code <= 0x0046) ||
+      (code >= 0x0061 && code <= 0x0066)
     ) {
       var hexCharCodes = [code];
       var min = Math.min(index + 7, str.length);
@@ -621,9 +557,9 @@
         var code_2 = str.charCodeAt(i);
 
         if (
-          (code_2 >= 0x00_30 && code_2 <= 0x00_39) ||
-          (code_2 >= 0x00_41 && code_2 <= 0x00_46) ||
-          (code_2 >= 0x00_61 && code_2 <= 0x00_66)
+          (code_2 >= 0x0030 && code_2 <= 0x0039) ||
+          (code_2 >= 0x0041 && code_2 <= 0x0046) ||
+          (code_2 >= 0x0061 && code_2 <= 0x0066)
         ) {
           hexCharCodes.push(code_2);
         } else {
@@ -634,12 +570,12 @@
       if (i < str.length) {
         var code_3 = str.charCodeAt(i);
 
-        if (code_3 === 0x00_09 || code_3 === 0x00_20 || code_3 === 0x00_0a) {
+        if (code_3 === 0x0009 || code_3 === 0x0020 || code_3 === 0x000a) {
           i += 1;
         }
       }
 
-      return [i - 1, Number.parseInt(String.fromCodePoint.apply(null, hexCharCodes), 16)];
+      return [i - 1, parseInt(String.fromCharCode.apply(null, hexCharCodes), 16)];
     } else {
       return [index + 1, code];
     }
@@ -663,7 +599,7 @@
       return [identEndIndex, ["<dimension-token>", numberValue, identValue]];
     }
 
-    if (numberEndIndex + 1 < str.length && str.charCodeAt(numberEndIndex + 1) === 0x00_25) {
+    if (numberEndIndex + 1 < str.length && str.charCodeAt(numberEndIndex + 1) === 0x0025) {
       return [numberEndIndex + 1, ["<percentage-token>", numberValue]];
     }
 
@@ -675,15 +611,15 @@
     var numberChars = [];
     var firstCode = str.charCodeAt(index);
 
-    if (firstCode === 0x00_2b || firstCode === 0x00_2d) {
+    if (firstCode === 0x002b || firstCode === 0x002d) {
       index += 1;
-      if (firstCode === 0x00_2d) numberChars.push(0x00_2d);
+      if (firstCode === 0x002d) numberChars.push(0x002d);
     }
 
     while (index < str.length) {
       var code = str.charCodeAt(index);
 
-      if (code >= 0x00_30 && code <= 0x00_39) {
+      if (code >= 0x0030 && code <= 0x0039) {
         numberChars.push(code);
         index += 1;
       } else {
@@ -695,7 +631,7 @@
       var nextCode = str.charCodeAt(index);
       var nextNextCode = str.charCodeAt(index + 1);
 
-      if (nextCode === 0x00_2e && nextNextCode >= 0x00_30 && nextNextCode <= 0x00_39) {
+      if (nextCode === 0x002e && nextNextCode >= 0x0030 && nextNextCode <= 0x0039) {
         numberChars.push(nextCode, nextNextCode);
         flag = "number";
         index += 2;
@@ -703,7 +639,7 @@
         while (index < str.length) {
           var code = str.charCodeAt(index);
 
-          if (code >= 0x00_30 && code <= 0x00_39) {
+          if (code >= 0x0030 && code <= 0x0039) {
             numberChars.push(code);
             index += 1;
           } else {
@@ -718,32 +654,32 @@
       var nextNextCode = str.charCodeAt(index + 1);
       var nextNextNextCode = str.charCodeAt(index + 2);
 
-      if (nextCode === 0x00_45 || nextCode === 0x00_65) {
-        var nextNextIsDigit = nextNextCode >= 0x00_30 && nextNextCode <= 0x00_39;
+      if (nextCode === 0x0045 || nextCode === 0x0065) {
+        var nextNextIsDigit = nextNextCode >= 0x0030 && nextNextCode <= 0x0039;
 
         if (
           nextNextIsDigit ||
-          ((nextNextCode === 0x00_2b || nextNextCode === 0x00_2d) &&
-            nextNextNextCode >= 0x00_30 &&
-            nextNextNextCode <= 0x00_39)
+          ((nextNextCode === 0x002b || nextNextCode === 0x002d) &&
+            nextNextNextCode >= 0x0030 &&
+            nextNextNextCode <= 0x0039)
         ) {
           flag = "number";
 
           if (nextNextIsDigit) {
-            numberChars.push(0x00_45, nextNextCode);
+            numberChars.push(0x0045, nextNextCode);
             index += 2;
-          } else if (nextNextCode === 0x00_2d) {
-            numberChars.push(0x00_45, 0x00_2d, nextNextNextCode);
+          } else if (nextNextCode === 0x002d) {
+            numberChars.push(0x0045, 0x002d, nextNextNextCode);
             index += 3;
           } else {
-            numberChars.push(0x00_45, nextNextNextCode);
+            numberChars.push(0x0045, nextNextNextCode);
             index += 3;
           }
 
           while (index < str.length) {
             var code = str.charCodeAt(index);
 
-            if (code >= 0x00_30 && code <= 0x00_39) {
+            if (code >= 0x0030 && code <= 0x0039) {
               numberChars.push(code);
               index += 1;
             } else {
@@ -754,8 +690,8 @@
       }
     }
 
-    var numberString = String.fromCodePoint.apply(null, numberChars);
-    var value = flag === "number" ? Number.parseFloat(numberString) : Number.parseInt(numberString);
+    var numberString = String.fromCharCode.apply(null, numberChars);
+    var value = flag === "number" ? parseFloat(numberString) : parseInt(numberString);
     if (value === -0) value = 0;
     return Number.isNaN(value) ? null : [index - 1, value, flag];
   };
@@ -768,12 +704,12 @@
 
     for (var code = str.charCodeAt(index); index < str.length; code = str.charCodeAt(++index)) {
       if (
-        code === 0x00_2d ||
-        code === 0x00_5f ||
-        (code >= 0x00_41 && code <= 0x00_5a) ||
-        (code >= 0x00_61 && code <= 0x00_7a) ||
-        code >= 0x00_80 ||
-        (code >= 0x00_30 && code <= 0x00_39)
+        code === 0x002d ||
+        code === 0x005f ||
+        (code >= 0x0041 && code <= 0x005a) ||
+        (code >= 0x0061 && code <= 0x007a) ||
+        code >= 0x0080 ||
+        (code >= 0x0030 && code <= 0x0039)
       ) {
         identChars.push(code);
         continue;
@@ -794,7 +730,7 @@
       break;
     }
 
-    return index === 0 ? null : [index - 1, String.fromCodePoint.apply(null, identChars)];
+    return index === 0 ? null : [index - 1, String.fromCharCode.apply(null, identChars)];
   };
   var consumeIdent = function consumeIdent(str, index) {
     if (str.length <= index || !wouldStartIdentifier(str, index)) {
@@ -805,12 +741,12 @@
 
     for (var code = str.charCodeAt(index); index < str.length; code = str.charCodeAt(++index)) {
       if (
-        code === 0x00_2d ||
-        code === 0x00_5f ||
-        (code >= 0x00_41 && code <= 0x00_5a) ||
-        (code >= 0x00_61 && code <= 0x00_7a) ||
-        code >= 0x00_80 ||
-        (code >= 0x00_30 && code <= 0x00_39)
+        code === 0x002d ||
+        code === 0x005f ||
+        (code >= 0x0041 && code <= 0x005a) ||
+        (code >= 0x0061 && code <= 0x007a) ||
+        code >= 0x0080 ||
+        (code >= 0x0030 && code <= 0x0039)
       ) {
         identChars.push(code);
         continue;
@@ -831,12 +767,12 @@
       break;
     }
 
-    return [index - 1, String.fromCodePoint.apply(null, identChars)];
+    return [index - 1, String.fromCharCode.apply(null, identChars)];
   };
   var consumeUrl = function consumeUrl(str, index) {
     var code = str.charCodeAt(index);
 
-    while (code === 0x00_09 || code === 0x00_20 || code === 0x00_0a) {
+    while (code === 0x0009 || code === 0x0020 || code === 0x000a) {
       code = str.charCodeAt(++index);
     }
 
@@ -844,13 +780,13 @@
     var hasFinishedWord = false;
 
     while (index < str.length) {
-      if (code === 0x00_29) {
-        return [index, String.fromCodePoint.apply(null, urlChars)];
-      } else if (code === 0x00_22 || code === 0x00_27 || code === 0x00_28) {
+      if (code === 0x0029) {
+        return [index, String.fromCharCode.apply(null, urlChars)];
+      } else if (code === 0x0022 || code === 0x0027 || code === 0x0028) {
         return null;
-      } else if (code === 0x00_09 || code === 0x00_20 || code === 0x00_0a) {
-        if (!hasFinishedWord && urlChars.length > 0) hasFinishedWord = true;
-      } else if (code === 0x00_5c) {
+      } else if (code === 0x0009 || code === 0x0020 || code === 0x000a) {
+        if (!hasFinishedWord && urlChars.length !== 0) hasFinishedWord = true;
+      } else if (code === 0x005c) {
         var result = consumeEscape(str, index);
         if (result === null || hasFinishedWord) return null;
 
@@ -882,16 +818,16 @@
       if (str.length > lastIndex + 1) {
         var nextCode = str.charCodeAt(lastIndex + 1);
 
-        if (nextCode === 0x00_28) {
+        if (nextCode === 0x0028) {
           for (var offset = 2; lastIndex + offset < str.length; offset += 1) {
             var nextNextCode = str.charCodeAt(lastIndex + offset);
 
-            if (nextNextCode === 0x00_22 || nextNextCode === 0x00_27) {
+            if (nextNextCode === 0x0022 || nextNextCode === 0x0027) {
               return [lastIndex + 1, value.toLowerCase(), "<function-token>"];
             } else if (
-              nextNextCode !== 0x00_09 &&
-              nextNextCode !== 0x00_20 &&
-              nextNextCode !== 0x00_0a
+              nextNextCode !== 0x0009 &&
+              nextNextCode !== 0x0020 &&
+              nextNextCode !== 0x000a
             ) {
               var result_1 = consumeUrl(str, lastIndex + offset);
               if (result_1 === null) return null;
@@ -910,7 +846,7 @@
     } else if (str.length > lastIndex + 1) {
       var nextCode = str.charCodeAt(lastIndex + 1);
 
-      if (nextCode === 0x00_28) {
+      if (nextCode === 0x0028) {
         return [lastIndex + 1, value.toLowerCase(), "<function-token>"];
       }
     }
@@ -973,9 +909,11 @@
   };
 
   var createError = function createError(message, err) {
-    return err instanceof Error
-      ? new Error("".concat(err.message.trim(), "\n").concat(message.trim()))
-      : new Error(message.trim());
+    if (err instanceof Error) {
+      return new Error("".concat(err.message.trim(), "\n").concat(message.trim()));
+    } else {
+      return new Error(message.trim());
+    }
   };
 
   var toAST = function toAST(str) {
@@ -1017,16 +955,16 @@
     var newTokenList = [];
     var before = false;
 
-    for (const element of tokenList) {
-      if (element.type === "<whitespace-token>") {
+    for (var i = 0; i < tokenList.length; i++) {
+      if (tokenList[i].type === "<whitespace-token>") {
         before = true;
 
         if (newTokenList.length > 0) {
-          newTokenList.at(-1).wsAfter = true;
+          newTokenList[newTokenList.length - 1].wsAfter = true;
         }
       } else {
         newTokenList.push(
-          __assign(__assign({}, element), {
+          __assign(__assign({}, tokenList[i]), {
             wsBefore: before,
             wsAfter: false,
           })
@@ -1042,11 +980,13 @@
 
     var mediaQueryList = [[]];
 
-    for (var token of tokenList) {
+    for (var i = 0; i < tokenList.length; i++) {
+      var token = tokenList[i];
+
       if (token.type === "<comma-token>") {
         mediaQueryList.push([]);
       } else {
-        mediaQueryList.at(-1).push(token);
+        mediaQueryList[mediaQueryList.length - 1].push(token);
       }
     }
 
@@ -1062,7 +1002,11 @@
       ];
     } else {
       var mediaQueryTokens = mediaQueries.map(function (mediaQueryTokens) {
-        return mediaQueryTokens.length === 0 ? null : tokenizeMediaQuery(mediaQueryTokens);
+        if (mediaQueryTokens.length === 0) {
+          return null;
+        } else {
+          return tokenizeMediaQuery(mediaQueryTokens);
+        }
       });
       var nonNullMediaQueryTokens = [];
 
@@ -1079,9 +1023,9 @@
             nonNullMediaQueryTokens.push(mediaQueryToken);
           }
         }
-      } catch (error) {
+      } catch (e_1_1) {
         e_1 = {
-          error: error,
+          error: e_1_1,
         };
       } finally {
         try {
@@ -1113,8 +1057,8 @@
           mediaType: "all",
           mediaCondition: tokenizeMediaCondition(tokens, true),
         };
-      } catch (error) {
-        throw createError("Expected media condition after '('", error);
+      } catch (err) {
+        throw createError("Expected media condition after '('", err);
       }
     } else if (firstToken.type === "<ident-token>") {
       var mediaPrefix = null;
@@ -1176,8 +1120,8 @@
             mediaType: "all",
             mediaCondition: tokenizeMediaCondition(tokensWithParens, true),
           };
-        } catch (error) {
-          throw createError("Expected media condition after '('", error);
+        } catch (err) {
+          throw createError("Expected media condition after '('", err);
         }
       } else {
         throw createError("Invalid media query");
@@ -1199,8 +1143,8 @@
               mediaType: mediaType,
               mediaCondition: tokenizeMediaCondition(tokens.slice(firstIndex + 2), false),
             };
-          } catch (error) {
-            throw createError("Expected media condition after 'and'", error);
+          } catch (err) {
+            throw createError("Expected media condition after 'and'", err);
           }
         } else {
           throw createError("Expected 'and' after media prefix");
@@ -1221,7 +1165,11 @@
       previousOperator = null;
     }
 
-    if (tokens.length < 3 || tokens[0].type !== "<(-token>" || tokens.at(-1).type !== "<)-token>") {
+    if (
+      tokens.length < 3 ||
+      tokens[0].type !== "<(-token>" ||
+      tokens[tokens.length - 1].type !== "<)-token>"
+    ) {
       throw new Error("Invalid media condition");
     }
 
@@ -1229,7 +1177,9 @@
     var maxDepth = 0;
     var count = 0;
 
-    for (var [i, token] of tokens.entries()) {
+    for (var i = 0; i < tokens.length; i++) {
+      var token = tokens[i];
+
       if (token.type === "<(-token>") {
         count += 1;
         maxDepth = Math.max(maxDepth, count);
@@ -1253,10 +1203,11 @@
     if (maxDepth === 1) {
       child = tokenizeMediaFeature(featureTokens);
     } else {
-      child =
-        featureTokens[1].type === "<ident-token>" && featureTokens[1].value === "not"
-          ? tokenizeMediaCondition(featureTokens.slice(2, -1), true, "not")
-          : tokenizeMediaCondition(featureTokens.slice(1, -1), true);
+      if (featureTokens[1].type === "<ident-token>" && featureTokens[1].value === "not") {
+        child = tokenizeMediaCondition(featureTokens.slice(2, -1), true, "not");
+      } else {
+        child = tokenizeMediaCondition(featureTokens.slice(1, -1), true);
+      }
     }
 
     if (endIndexOfFirstFeature === tokens.length - 1) {
@@ -1298,7 +1249,7 @@
     if (
       rawTokens.length < 3 ||
       rawTokens[0].type !== "<(-token>" ||
-      rawTokens.at(-1).type !== "<)-token>"
+      rawTokens[rawTokens.length - 1].type !== "<)-token>"
     ) {
       throw new Error("Invalid media feature");
     }
@@ -1315,7 +1266,7 @@
           a.type === "<number-token>" &&
           a.value > 0 &&
           b.type === "<delim-token>" &&
-          b.value === 0x00_2f &&
+          b.value === 0x002f &&
           c.type === "<number-token>" &&
           c.value > 0
         ) {
@@ -1385,8 +1336,8 @@
           feature: range.featureName,
           range: range,
         };
-      } catch (error) {
-        throw createError("Invalid media feature", error);
+      } catch (err) {
+        throw createError("Invalid media feature", err);
       }
     }
 
@@ -1395,7 +1346,11 @@
   var tokenizeRange = function tokenizeRange(tokens) {
     var _a, _b, _c, _d;
 
-    if (tokens.length < 5 || tokens[0].type !== "<(-token>" || tokens.at(-1).type !== "<)-token>") {
+    if (
+      tokens.length < 5 ||
+      tokens[0].type !== "<(-token>" ||
+      tokens[tokens.length - 1].type !== "<)-token>"
+    ) {
       throw new Error("Invalid range");
     }
 
@@ -1413,27 +1368,27 @@
       (tokens[1].type === "<ident-token>" && tokens[1].value === "infinite");
 
     if (tokens[2].type === "<delim-token>") {
-      if (tokens[2].value === 0x00_3c) {
+      if (tokens[2].value === 0x003c) {
         if (
           tokens[3].type === "<delim-token>" &&
-          tokens[3].value === 0x00_3d &&
+          tokens[3].value === 0x003d &&
           !tokens[3].wsBefore
         ) {
           range[hasLeft ? "leftOp" : "rightOp"] = "<=";
         } else {
           range[hasLeft ? "leftOp" : "rightOp"] = "<";
         }
-      } else if (tokens[2].value === 0x00_3e) {
+      } else if (tokens[2].value === 0x003e) {
         if (
           tokens[3].type === "<delim-token>" &&
-          tokens[3].value === 0x00_3d &&
+          tokens[3].value === 0x003d &&
           !tokens[3].wsBefore
         ) {
           range[hasLeft ? "leftOp" : "rightOp"] = ">=";
         } else {
           range[hasLeft ? "leftOp" : "rightOp"] = ">";
         }
-      } else if (tokens[2].value === 0x00_3d) {
+      } else if (tokens[2].value === 0x003d) {
         range[hasLeft ? "leftOp" : "rightOp"] = "=";
       } else {
         throw new Error("Invalid range");
@@ -1468,20 +1423,26 @@
             if (secondOpToken.type === "<delim-token>") {
               var charCode = secondOpToken.value;
 
-              if (charCode === 0x00_3c) {
-                range.rightOp =
+              if (charCode === 0x003c) {
+                if (
                   followingToken.type === "<delim-token>" &&
-                  followingToken.value === 0x00_3d &&
+                  followingToken.value === 0x003d &&
                   !followingToken.wsBefore
-                    ? "<="
-                    : "<";
-              } else if (charCode === 0x00_3e) {
-                range.rightOp =
+                ) {
+                  range.rightOp = "<=";
+                } else {
+                  range.rightOp = "<";
+                }
+              } else if (charCode === 0x003e) {
+                if (
                   followingToken.type === "<delim-token>" &&
-                  followingToken.value === 0x00_3d &&
+                  followingToken.value === 0x003d &&
                   !followingToken.wsBefore
-                    ? ">="
-                    : ">";
+                ) {
+                  range.rightOp = ">=";
+                } else {
+                  range.rightOp = ">";
+                }
               } else {
                 throw new Error("Invalid range");
               }
