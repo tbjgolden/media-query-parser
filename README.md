@@ -6,13 +6,18 @@
 ![npm downloads](https://img.shields.io/npm/dw/media-query-parser)
 [![install size](https://packagephobia.com/badge?p=media-query-parser)](https://packagephobia.com/result?p=media-query-parser)
 
-- **Parses correct CSS media queries**
-- **Fails on invalid CSS media queries**
+- **Create a JS object from a CSS media queries**
+- **Create a CSS media query from a JS object**
+- **Returns a ParserError for invalid CSS media queries**
 - **Spec-compliant** - https://www.w3.org/TR/mediaqueries-5/
-  - **All valid queries parsed, even newer ones like  
-     `@media (100px < width < 200px)`**
+  - **All valid queries parsed; e.g. `(100px < width < 200px)`**
 - **Zero-dependencies**
+- **Well tested**
 - **TypeScript friendly**
+
+> This repo/package contains only the parser, stringify and isParserError.
+>
+> `media-query-fns` uses this library internally to achieve common use-cases.
 
 **_[You can try it out!](https://tbjgolden.github.io/media-query-parser/)_**
 
@@ -44,12 +49,17 @@ if (!isParserError(mediaQuery)) {
   //     children: [
   //       {
   //         type: "feature",
-  //         context: "range",
   //         feature: "width",
+  //         context: "range",
   //         range: {
   //           featureName: "width",
   //           rightOp: "<=",
-  //           rightToken: { type: "dimension", unit: "px", value: 768, flag: "number" },
+  //           rightToken: {
+  //             type: "dimension",
+  //             value: 768,
+  //             unit: "px",
+  //             flag: "number"
+  //           },
   //         },
   //       },
   //     ],
@@ -66,18 +76,16 @@ Can also be imported via `require("media-query-parser")`.
 
 This library **does**:
 
+- follow the spec's CSS syntax / media query parsing rules
 - remove extra layers from unnecessary parentheses `(((((max-width: 768px)))))`
-- parses units, numbers and other values according to the spec
 - handle unusual whitespace anywhere that the spec allows it
-- contain over 200 unit tests
 
 This library **will not**:
 
-- sanity check the actual media features or their types `(max-power: infinite)` is as valid as
-  `(hover: none)` - see [media-query-fns](https://github.com/tbjgolden/media-query-fns)
+- sanity check the actual media features or their types beyond the parser rules; so
+  `(max-power: infinite)` is as valid as `(min-width: 768px)`
 - support `calc()` or `var()` - functions are disallowed by the spec, even though some browsers seem
   to support them. If/when the spec allows them they'll be added in a new major version
-- (yet) convert the AST back into a media query
 
 ## Contributing
 
