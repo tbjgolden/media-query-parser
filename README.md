@@ -40,10 +40,10 @@ These are valid media queries that this library supports:
 
 ```css
 @media (768px <= width < 1200px);
-@media not(not(not(((hover)or((not(color)))))));
 @media only print and (color);
+@media not (not (not (((hover) or ((not (color)))))));
 @media (🗺️: /* follows spec for comments/emoji/etc */ 🇺🇦) {
-  /* this query is valid syntax, but 🗺️ is obviously not a real feature.
+  /* this query has valid syntax, but 🗺️ is obviously not a real feature.
      see `media-query-fns` for feature checking */
 }
 ```
@@ -53,6 +53,7 @@ These are invalid media queries that this library will detect:
 ```css
 @media (color) or (hover); /* or cannot be at top level */
 @media (min-width: calc(50vw + 10px)); /* functions aren't valid values */
+@media not((color)); /* operators need whitespace */
 @media (768px < = width < 1200px); /* cannot have a space between `<` and `=` */
 ```
 
