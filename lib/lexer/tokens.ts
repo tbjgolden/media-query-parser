@@ -323,19 +323,19 @@ export const codepointsToTokens = (codepoints: number[], index = 0): CSSToken[] 
       c >= FIRST_NON_ASCII_CODEPOINT ||
       c === BACKSLASH_CODEPOINT
     ) {
-      const cc = codepoints.at(index + 1);
-      if (c === BACKSLASH_CODEPOINT && (cc === undefined || cc === NEWLINE_CODEPOINT)) {
+      // const cc = codepoints.at(index + 1);
+      // if (c === BACKSLASH_CODEPOINT && (cc === undefined || cc === NEWLINE_CODEPOINT)) {
+      //   tokens.push({ type: "delim", value: c, start, end: index });
+      // } else {
+      const result = consumeIdentLike(codepoints, index);
+      if (result === null) {
         tokens.push({ type: "delim", value: c, start, end: index });
       } else {
-        const result = consumeIdentLike(codepoints, index);
-        if (result === null) {
-          tokens.push({ type: "delim", value: c, start, end: index });
-        } else {
-          const [lastIndex, value, type] = result;
-          index = lastIndex;
-          tokens.push({ type, value, start, end: index });
-        }
+        const [lastIndex, value, type] = result;
+        index = lastIndex;
+        tokens.push({ type, value, start, end: index });
       }
+      // }
     } else {
       tokens.push({ type: "delim", value: c, start, end: index });
     }

@@ -348,6 +348,7 @@ test("stringify", () => {
 });
 
 test("coverage", () => {
+  expect(s(parseMediaQuery(`\\\n`))).toEqual("EXPECT_LPAREN_OR_TYPE_OR_MODIFIER");
   expect(s(parseMediaQueryList("(((((hover)) and (((color))))))"))).toEqual("(hover) and (color)");
   expect(s(parseMediaQueryList("[,], {"))).toEqual("NO_LCURLY");
   expect(s(parseMediaQuery("not ( width <  )"))).toEqual("INVALID_FEATURE");
@@ -358,4 +359,17 @@ test("coverage", () => {
   expect(s(parseMediaCondition("width: 100px"))).toEqual("EXPECT_LPAREN");
   expect(s(parseMediaQuery("(boaty: #mcboatface)"))).toEqual("EXPECT_VALUE");
   expect(s(parseMediaFeature(""))).toEqual("EMPTY_FEATURE");
+  expect(s(parseMediaQuery("\u0000"))).toEqual("EXPECT_TYPE");
+  expect(s(parseMediaQuery("(\r\n  max-width:\r\n    1000px\r\n)"))).toEqual("(max-width: 1000px)");
+  expect(s(parseMediaQuery("(\r  max-width:\r    1000px\r)"))).toEqual("(max-width: 1000px)");
+  expect(s(parseMediaQuery("\u0000"))).toEqual("EXPECT_TYPE");
+  expect(s(parseMediaQuery("\u000C"))).toEqual("EMPTY_QUERY");
+  expect(s(parseMediaQuery("(£: true)"))).toEqual("(£: true)");
+  expect(s(parseMediaQuery("(€: false)"))).toEqual("(€: false)");
+  expect(s(parseMediaQuery("(𐍈:𐍈)"))).toEqual("(𐍈: 𐍈)");
+  expect(s(parseMediaQuery("(𐍈;𐍈)"))).toEqual("NO_SEMICOLON");
+  expect(s(parseMediaQuery("(𐍈: /**/ /**/ 𐍈)"))).toEqual("(𐍈: 𐍈)");
+  expect(s(parseMediaQuery(`"string" + --x - @val 0% 'string' url("") _`))).toEqual(
+    "EXPECT_LPAREN_OR_TYPE_OR_MODIFIER"
+  );
 });
