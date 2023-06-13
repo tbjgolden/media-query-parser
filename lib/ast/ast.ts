@@ -17,7 +17,7 @@ export type ConvenientToken =
 export type UncheckedRange = {
   leftToken?: ConvenientToken | undefined;
   leftOp?: ">=" | "<=" | ">" | "<" | "=" | undefined;
-  featureName: string;
+  feature: string;
   rightOp?: ">=" | "<=" | ">" | "<" | "=" | undefined;
   rightToken?: ConvenientToken | undefined;
 };
@@ -353,16 +353,18 @@ export const readMediaFeature = (parsingTokens: ParserToken[]): MediaFeature | P
         return { errid: "EXPECT_VALUE", start: valueToken.start, end: valueToken.end };
       }
     } else if (tokens.length >= 5) {
-      const range = readRange(tokens);
-
-      return isParserError(range)
-        ? {
-            errid: "EXPECT_RANGE",
-            start: firstToken.start,
-            end: tokens[tokens.length - 1].end,
-            child: range,
-          }
-        : { type: "feature", context: "range", feature: range.featureName, range };
+      const maybeRange = readRange(tokens);
+      if (isParserError(maybeRange)) {
+        return {
+          errid: "EXPECT_RANGE",
+          start: firstToken.start,
+          end: tokens[tokens.length - 1].end,
+          child: maybeRange,
+        };
+      } else {
+        const { feature, ...range } = maybeRange;
+        return { type: "feature", context: "range", feature, range };
+      }
     }
 
     return {
@@ -395,9 +397,7 @@ export const readRange = (convenientTokens: ConvenientToken[]): ValidRange | Par
   }
 
   // range form
-  const range: UncheckedRange = {
-    featureName: "",
-  };
+  const range: UncheckedRange = { feature: "" };
 
   const hasLeft =
     convenientTokens[1].type === "number" ||
@@ -435,7 +435,7 @@ export const readRange = (convenientTokens: ConvenientToken[]): ValidRange | Par
     if (hasLeft) {
       range.leftToken = convenientTokens[1];
     } else if (convenientTokens[1].type === "ident") {
-      range.featureName = convenientTokens[1].value;
+      range.feature = convenientTokens[1].value;
     } else {
       return { errid: "INVALID_RANGE", start: convenientTokens[0].start, end: lastToken.end };
     }
@@ -446,7 +446,7 @@ export const readRange = (convenientTokens: ConvenientToken[]): ValidRange | Par
 
     if (hasLeft) {
       if (tokenAfterFirstOp.type === "ident") {
-        range.featureName = tokenAfterFirstOp.value;
+        range.feature = tokenAfterFirstOp.value;
 
         if (convenientTokens.length >= 7) {
           // check for right side
@@ -508,7 +508,7 @@ export const readRange = (convenientTokens: ConvenientToken[]): ValidRange | Par
 
     let validRange: ValidRange | undefined;
 
-    const { leftToken: lt, leftOp, featureName, rightOp, rightToken: rt } = range;
+    const { leftToken: lt, leftOp, feature, rightOp, rightToken: rt } = range;
 
     let leftToken: ValidRangeToken | undefined;
     if (lt !== undefined) {
@@ -537,9 +537,9 @@ export const readRange = (convenientTokens: ConvenientToken[]): ValidRange | Par
 
     if (leftToken !== undefined && rightToken !== undefined) {
       if ((leftOp === "<" || leftOp === "<=") && (rightOp === "<" || rightOp === "<=")) {
-        validRange = { leftToken, leftOp, featureName, rightOp, rightToken };
+        validRange = { leftToken, leftOp, feature, rightOp, rightToken };
       } else if ((leftOp === ">" || leftOp === ">=") && (rightOp === ">" || rightOp === ">=")) {
-        validRange = { leftToken, leftOp, featureName, rightOp, rightToken };
+        validRange = { leftToken, leftOp, feature, rightOp, rightToken };
       } else {
         return { errid: "INVALID_RANGE", start: convenientTokens[0].start, end: lastToken.end };
       }
@@ -549,14 +549,14 @@ export const readRange = (convenientTokens: ConvenientToken[]): ValidRange | Par
       rightOp !== undefined &&
       rightToken !== undefined
     ) {
-      validRange = { leftToken, leftOp, featureName, rightOp, rightToken };
+      validRange = { leftToken, leftOp, feature, rightOp, rightToken };
     } else if (
       leftToken !== undefined &&
       leftOp !== undefined &&
       rightOp === undefined &&
       rightToken === undefined
     ) {
-      validRange = { leftToken, leftOp, featureName, rightOp, rightToken };
+      validRange = { leftToken, leftOp, feature, rightOp, rightToken };
     }
 
     return (

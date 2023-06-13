@@ -135,28 +135,24 @@ export type ValidRange =
   | {
       leftToken: ValidRangeToken;
       leftOp: "<" | "<=";
-      featureName: string;
       rightOp: "<" | "<=";
       rightToken: ValidRangeToken;
     }
   | {
       leftToken: ValidRangeToken;
       leftOp: ">" | ">=";
-      featureName: string;
       rightOp: ">" | ">=";
       rightToken: ValidRangeToken;
     }
   | {
       leftToken: ValidRangeToken;
       leftOp: ">" | ">=" | "<" | "<=" | "=";
-      featureName: string;
       rightOp?: undefined;
       rightToken?: undefined;
     }
   | {
       leftToken?: undefined;
       leftOp?: undefined;
-      featureName: string;
       rightOp: ">" | ">=" | "<" | "<=" | "=";
       rightToken: ValidRangeToken;
     };

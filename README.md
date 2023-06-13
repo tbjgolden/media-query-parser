@@ -98,21 +98,6 @@ if (!isParserError(mediaQuery)) {
 
 Can also be imported via `require("media-query-parser")`.
 
-## Considerations & Caveats
-
-This library **does**:
-
-- follow the spec's CSS syntax / media query parsing rules
-- remove extra layers from unnecessary parentheses `(((((max-width: 768px)))))`
-- handle unusual whitespace anywhere that the spec allows it
-
-This library **will not**:
-
-- sanity check the actual media features or their types beyond the parser rules; so
-  `(max-power: infinite)` is as valid as `(min-width: 768px)`
-- support `calc()` or `var()` - functions are disallowed by the spec, even though some browsers seem
-  to support them. If/when the spec allows them they'll be added in a new major version
-
 ## Contributing
 
 - PRs welcome and accepted, simply fork and create

@@ -293,7 +293,6 @@ test("parseMediaQueryList parses media query", async () => {
             context: "range",
             feature: "height",
             range: {
-              featureName: "height",
               rightOp: ">",
               rightToken: { flag: "number", type: "dimension", unit: "px", value: 600 },
             },
@@ -310,7 +309,6 @@ test("parseMediaQueryList parses media query", async () => {
             context: "range",
             feature: "height",
             range: {
-              featureName: "height",
               leftOp: "<",
               leftToken: { flag: "number", type: "dimension", unit: "px", value: 600 },
             },
@@ -327,7 +325,6 @@ test("parseMediaQueryList parses media query", async () => {
             context: "range",
             feature: "width",
             range: {
-              featureName: "width",
               leftOp: ">",
               leftToken: { flag: "number", type: "dimension", unit: "px", value: 600 },
             },
@@ -344,7 +341,6 @@ test("parseMediaQueryList parses media query", async () => {
             context: "range",
             feature: "width",
             range: {
-              featureName: "width",
               rightOp: "<",
               rightToken: { flag: "number", type: "dimension", unit: "px", value: 600 },
             },
@@ -361,7 +357,6 @@ test("parseMediaQueryList parses media query", async () => {
             context: "range",
             feature: "width",
             range: {
-              featureName: "width",
               leftOp: "<=",
               leftToken: { flag: "number", type: "dimension", unit: "px", value: 100 },
               rightOp: "<=",
@@ -381,7 +376,6 @@ test("parseMediaQueryList parses media query", async () => {
             context: "range",
             feature: "width",
             range: {
-              featureName: "width",
               leftOp: "<=",
               leftToken: { flag: "number", type: "dimension", unit: "px", value: 100 },
             },
@@ -390,7 +384,6 @@ test("parseMediaQueryList parses media query", async () => {
             context: "range",
             feature: "width",
             range: {
-              featureName: "width",
               rightOp: "<=",
               rightToken: { flag: "number", type: "dimension", unit: "px", value: 200 },
             },
@@ -408,7 +401,6 @@ test("parseMediaQueryList parses media query", async () => {
             context: "range",
             feature: "aspect-ratio",
             range: {
-              featureName: "aspect-ratio",
               leftOp: "<",
               leftToken: { denominator: 2, numerator: 1, type: "ratio" },
               rightOp: "<",
@@ -427,7 +419,6 @@ test("parseMediaQueryList parses media query", async () => {
             context: "range",
             feature: "width",
             range: {
-              featureName: "width",
               leftOp: "<=",
               leftToken: { flag: "number", type: "dimension", unit: "px", value: 100 },
               rightOp: "<=",
@@ -531,7 +522,6 @@ test("coverage misses", () => {
           context: "range",
           feature: "width",
           range: {
-            featureName: "width",
             leftOp: ">=",
             leftToken: { flag: "number", type: "dimension", unit: "px", value: 200 },
             rightOp: ">=",
@@ -548,7 +538,6 @@ test("coverage misses", () => {
           context: "range",
           feature: "width",
           range: {
-            featureName: "width",
             leftOp: "=",
             leftToken: { flag: "number", type: "dimension", unit: "px", value: 200 },
           },
@@ -563,7 +552,6 @@ test("coverage misses", () => {
           context: "range",
           feature: "width",
           range: {
-            featureName: "width",
             rightOp: ">=",
             rightToken: { flag: "number", type: "dimension", unit: "px", value: 200 },
           },

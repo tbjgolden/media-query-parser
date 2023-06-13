@@ -102,7 +102,6 @@ test("parseMediaQueryList", () => {
               context: "range",
               feature: "width",
               range: {
-                featureName: "width",
                 leftOp: "<=",
                 leftToken: {
                   flag: "number",
@@ -267,7 +266,6 @@ test("parseMediaQuery", () => {
           context: "range",
           feature: "width",
           range: {
-            featureName: "width",
             rightOp: "<",
             rightToken: { type: "dimension", value: 10, unit: "px", flag: "number" },
           },
@@ -376,4 +374,7 @@ test("coverage", () => {
   expect(s(parseMediaQuery(`(hover) or (color)`))).toEqual("(hover) or (color)");
   expect(s(parseMediaQuery(`screen and not (color)`))).toEqual("screen and not (color)");
   expect(s(parseMediaQuery(`SCREEN AND NOT (COLOR)`))).toEqual("screen and not (color)");
+  expect(s(parseMediaQuery(`screen and (hover) and (color)`))).toEqual(
+    "screen and (hover) and (color)"
+  );
 });
