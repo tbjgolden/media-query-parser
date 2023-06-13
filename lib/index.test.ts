@@ -126,8 +126,6 @@ test("parseMediaQueryList", () => {
       },
     ],
   });
-
-  // not ((min-width: 100px) and (max-width: 200px)) should not have mediaPrefix
   expect(parseMediaQueryList("not ((min-width: 100px) and (max-width: 200px))")).toEqual({
     type: "query-list",
     mediaQueries: [
@@ -172,7 +170,6 @@ test("parseMediaQueryList", () => {
       },
     ],
   });
-  // not (min-width: 100px) and (max-width: 200px) should fail
   expect(parseMediaQueryList("not (min-width: 100px) and (max-width: 200px)")).toEqual({
     mediaQueries: [
       {
@@ -207,12 +204,10 @@ test("parseMediaQueryList", () => {
     ],
     type: "query-list",
   });
-  // other media types like tty should never match, but not break query
   expect(parseMediaQueryList("not tty")).toEqual({
     type: "query-list",
     mediaQueries: [{ type: "query" }],
   });
-  // negative numbers should parse correctly
   expect(parseMediaQueryList("(min-height: -100px)")).toEqual({
     type: "query-list",
     mediaQueries: [
@@ -241,6 +236,27 @@ test("parseMediaQueryList", () => {
 });
 
 test("parseMediaQuery", () => {
+  expect(parseMediaQuery("((monochrome) and (100px < width > 200px))")).toEqual({
+    errid: "INVALID_RANGE",
+    start: 18,
+    end: 40,
+    child: {
+      errid: "EXPECT_RANGE",
+      start: 18,
+      end: 40,
+      child: {
+        errid: "EXPECT_FEATURE_OR_CONDITION",
+        start: 18,
+        end: 40,
+        child: {
+          errid: "EXPECT_FEATURE_OR_CONDITION",
+          start: 0,
+          end: 41,
+          child: { errid: "EXPECT_FEATURE_OR_CONDITION", start: 1, end: 1 },
+        },
+      },
+    },
+  });
   expect(parseMediaQuery("( width < 10px )")).toEqual({
     type: "query",
     mediaCondition: {
@@ -309,12 +325,14 @@ test("parseMediaFeature", () => {
     start: 7,
     end: 7,
   });
+  expect(parseMediaFeature("vr")).toEqual({ errid: "EXPECT_LPAREN", start: 0, end: 1 });
+  expect(parseMediaFeature("(vr")).toEqual({ errid: "EXPECT_RPAREN", start: 3, end: 3 });
 });
 
 const s = (
   ast: MediaQueryList | MediaQuery | MediaCondition | MediaFeature | ValidValueToken | ParserError
 ): string | ParserError => {
-  return isParserError(ast) ? ast : stringify(ast);
+  return isParserError(ast) ? ast.errid : stringify(ast);
 };
 
 test("stringify", () => {
@@ -327,4 +345,17 @@ test("stringify", () => {
   expect(s({ type: "dimension", value: 2, unit: "px", flag: "number" })).toEqual("2px");
   expect(s({ type: "ratio", numerator: 3, denominator: 4 })).toEqual("3/4");
   expect(s({ type: "ident", value: "five" })).toEqual("five");
+});
+
+test("coverage", () => {
+  expect(s(parseMediaQueryList("(((((hover)) and (((color))))))"))).toEqual("(hover) and (color)");
+  expect(s(parseMediaQueryList("[,], {"))).toEqual("NO_LCURLY");
+  expect(s(parseMediaQuery("not ( width <  )"))).toEqual("INVALID_FEATURE");
+  expect(s(parseMediaQuery("only #"))).toEqual("EXPECT_TYPE");
+  expect(s(parseMediaQuery("((orientation) and (width < 100px) or (monochrome))"))).toEqual(
+    "MIX_AND_WITH_OR"
+  );
+  expect(s(parseMediaCondition("width: 100px"))).toEqual("EXPECT_LPAREN");
+  expect(s(parseMediaQuery("(boaty: #mcboatface)"))).toEqual("EXPECT_VALUE");
+  expect(s(parseMediaFeature(""))).toEqual("EMPTY_FEATURE");
 });

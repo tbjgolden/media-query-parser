@@ -36,7 +36,9 @@ test("wrapper does not flatten useful layers", () => {
   expectFlattenEq("((hover) and (not (color)))", "(hover) and not (color)", false);
 });
 
-test("code coverage misses", () => {
+test.only("code coverage misses", () => {
+  expectFlattenEq("(not ((not (color))))", "(color)");
+  expectFlattenEq("(((hover) and (color)))", "(hover) and (color)");
   expectFlattenEq(
     "((hover) and (color) and ((monochrome) and (pointer)))",
     "(hover) and (color) and (monochrome) and (pointer)"

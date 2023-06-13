@@ -6,24 +6,14 @@ export const flattenMediaQueryList = (mediaQueryList: MediaQueryList): MediaQuer
 });
 
 export const flattenMediaQuery = (mediaQuery: MediaQuery): MediaQuery => {
-  if (mediaQuery.mediaCondition === undefined) return mediaQuery;
-
-  let mediaCondition = flattenMediaCondition(mediaQuery.mediaCondition);
-
-  if (
-    mediaCondition.operator === undefined &&
-    mediaCondition.children.length === 1 &&
-    "children" in mediaCondition.children[0]
-  ) {
-    mediaCondition = mediaCondition.children[0];
-  }
-
-  return {
-    type: "query",
-    mediaPrefix: mediaQuery.mediaPrefix,
-    mediaType: mediaQuery.mediaType,
-    mediaCondition,
-  };
+  return mediaQuery.mediaCondition
+    ? {
+        type: "query",
+        mediaPrefix: mediaQuery.mediaPrefix,
+        mediaType: mediaQuery.mediaType,
+        mediaCondition: flattenMediaCondition(mediaQuery.mediaCondition),
+      }
+    : mediaQuery;
 };
 
 export const flattenMediaCondition = (mediaCondition: MediaCondition): MediaCondition => {
@@ -51,13 +41,8 @@ export const flattenMediaCondition = (mediaCondition: MediaCondition): MediaCond
     if (flatChild.type === "condition") {
       if (mediaCondition.operator === undefined) {
         return flatChild;
-      } else if (mediaCondition.operator === "not") {
-        // can flatten if child has 'not' or undefined
-        if (flatChild.operator === undefined) {
-          return { type: "condition", operator: "not", children: flatChild.children };
-        } else if (flatChild.operator === "not") {
-          return { type: "condition", children: flatChild.children };
-        }
+      } else if (mediaCondition.operator === "not" && flatChild.operator === "not") {
+        return { type: "condition", children: flatChild.children };
       }
     }
   }

@@ -1,3 +1,4 @@
+import { ConvenientToken, readRange, splitMediaQueryList } from "./ast.js";
 import { expectMQ, expectMQL } from "./test-helpers.js";
 
 test("parseMediaQueryList parses media query", async () => {
@@ -584,4 +585,73 @@ test("coverage misses", () => {
   expectMQ(`(infinity < width < infinite)`, "EXPECT_FEATURE_OR_CONDITION");
   expectMQ(`(infinite < width < infinite)`, true);
   expectMQ(`(infinite < width < infinite any)`, "EXPECT_FEATURE_OR_CONDITION");
+});
+
+test("splitMediaQueryList", () => {
+  expect(
+    splitMediaQueryList([
+      { type: "[", start: 0, end: 0, hasSpaceBefore: false, hasSpaceAfter: false },
+      { type: "comma", start: 1, end: 1, hasSpaceBefore: false, hasSpaceAfter: false },
+      { type: "]", start: 2, end: 2, hasSpaceBefore: false, hasSpaceAfter: false },
+      { type: "comma", start: 3, end: 3, hasSpaceBefore: false, hasSpaceAfter: true },
+      { type: "{", start: 5, end: 5, hasSpaceBefore: true, hasSpaceAfter: false },
+      { type: "comma", start: 6, end: 6, hasSpaceBefore: false, hasSpaceAfter: true },
+      { type: "}", start: 8, end: 8, hasSpaceBefore: true, hasSpaceAfter: false },
+    ])
+  ).toEqual([
+    [
+      { type: "[", start: 0, end: 0, hasSpaceBefore: false, hasSpaceAfter: false },
+      { type: "comma", start: 1, end: 1, hasSpaceBefore: false, hasSpaceAfter: false },
+      { type: "]", start: 2, end: 2, hasSpaceBefore: false, hasSpaceAfter: false },
+    ],
+    [
+      { type: "{", start: 5, end: 5, hasSpaceBefore: true, hasSpaceAfter: false },
+      { type: "comma", start: 6, end: 6, hasSpaceBefore: false, hasSpaceAfter: true },
+      { type: "}", start: 8, end: 8, hasSpaceBefore: true, hasSpaceAfter: false },
+    ],
+  ]);
+});
+
+test("coverage misses", () => {
+  expect(readRange([])).toEqual({ errid: "INVALID_RANGE", start: 0, end: 0 });
+
+  const tokens: ConvenientToken[] = [
+    { type: "(", start: 0, end: 0, hasSpaceBefore: false, hasSpaceAfter: false },
+    {
+      type: "dimension",
+      value: 100,
+      unit: "px",
+      flag: "number",
+      start: 1,
+      end: 5,
+      hasSpaceBefore: false,
+      hasSpaceAfter: true,
+    },
+    { type: "delim", value: 60, start: 7, end: 7, hasSpaceBefore: true, hasSpaceAfter: false },
+    { type: "delim", value: 61, start: 8, end: 8, hasSpaceBefore: false, hasSpaceAfter: true },
+    {
+      type: "ident",
+      value: "width",
+      start: 10,
+      end: 14,
+      hasSpaceBefore: true,
+      hasSpaceAfter: true,
+    },
+    { type: "delim", value: 60, start: 16, end: 16, hasSpaceBefore: true, hasSpaceAfter: false },
+    { type: "delim", value: 61, start: 17, end: 17, hasSpaceBefore: false, hasSpaceAfter: true },
+    {
+      type: "dimension",
+      value: 200,
+      unit: "px",
+      flag: "number",
+      start: 19,
+      end: 23,
+      hasSpaceBefore: true,
+      hasSpaceAfter: false,
+    },
+    { type: ")", start: 24, end: 24, hasSpaceBefore: false, hasSpaceAfter: false },
+  ];
+
+  expect(readRange(tokens.slice(1))).toEqual({ errid: "EXPECT_LPAREN", start: 1, end: 5 });
+  expect(readRange(tokens.slice(0, -1))).toEqual({ errid: "EXPECT_RPAREN", start: 19, end: 23 });
 });

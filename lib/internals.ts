@@ -8,5 +8,6 @@ export const invertParserError = (parserError: ParserError): ParserError => {
   for (let i = errors.length - 2; i >= 0; i--) {
     errors[i + 1].child = errors.at(i);
   }
+  delete errors[0].child;
   return errors.at(-1) as ParserError;
 };

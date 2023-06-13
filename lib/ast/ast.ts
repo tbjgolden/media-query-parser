@@ -10,11 +10,11 @@ import {
   ValidRangeToken,
 } from "../utils.js";
 
-type ConvenientToken =
+export type ConvenientToken =
   | ParserToken
   | (RatioToken & { hasSpaceBefore: boolean; hasSpaceAfter: boolean; start: number; end: number });
 
-type UncheckedRange = {
+export type UncheckedRange = {
   leftToken?: ConvenientToken | undefined;
   leftOp?: ">=" | "<=" | ">" | "<" | "=" | undefined;
   featureName: string;
@@ -145,9 +145,6 @@ export const readMediaQuery = (parsingTokens: ParserToken[]): MediaQuery | Parse
             mediaCondition: { type: "condition", operator: "not", children: [mediaCondition] },
           };
         }
-      } else if (mediaPrefix === undefined) {
-        const { start, end } = firstNonUnaryToken;
-        return { errid: "EXPECT_LPAREN_OR_TYPE", start, end };
       } else {
         const { start, end } = firstNonUnaryToken;
         return { errid: "EXPECT_TYPE", start, end };
@@ -281,7 +278,7 @@ export const readMediaFeature = (parsingTokens: ParserToken[]): MediaFeature | P
     }
     const lastToken = parsingTokens[parsingTokens.length - 1];
     if (lastToken.type !== ")") {
-      return { errid: "EXPECT_RPAREN", start: lastToken.start, end: lastToken.end };
+      return { errid: "EXPECT_RPAREN", start: lastToken.end + 1, end: lastToken.end + 1 };
     }
 
     const tokens: ConvenientToken[] = [parsingTokens[0]];
