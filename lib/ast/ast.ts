@@ -376,7 +376,9 @@ export const readMediaFeature = (parsingTokens: ParserToken[]): MediaFeature | P
     return { errid: "EMPTY_FEATURE", start: 0, end: 0 };
   }
 };
-export const readRange = (convenientTokens: ConvenientToken[]): ValidRange | ParserError => {
+export const readRange = (
+  convenientTokens: ConvenientToken[]
+): (ValidRange & { feature: string }) | ParserError => {
   if (convenientTokens.length < 5) {
     return {
       errid: "INVALID_RANGE",
@@ -506,7 +508,7 @@ export const readRange = (convenientTokens: ConvenientToken[]): ValidRange | Par
       range.rightToken = tokenAfterFirstOp;
     }
 
-    let validRange: ValidRange | undefined;
+    let validRange: (ValidRange & { feature: string }) | undefined;
 
     const { leftToken: lt, leftOp, feature, rightOp, rightToken: rt } = range;
 
