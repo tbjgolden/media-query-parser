@@ -2,7 +2,7 @@ import { ConvenientToken, readRange, splitMediaQueryList } from "./ast.js";
 import { expectMQ, expectMQL } from "./test-helpers.js";
 
 test("parseMediaQueryList parses media query", async () => {
-  expectMQ(`((not (color))) or (hover)`, "EXPECT_FEATURE_OR_CONDITION");
+  expectMQ(`((not (color))) or (hover)`, true);
   expectMQL("", [{}]);
   expectMQ(``, "EMPTY_QUERY");
   expectMQL(`,`, [{ mediaPrefix: "not" }, { mediaPrefix: "not" }]);

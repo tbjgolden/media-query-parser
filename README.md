@@ -16,16 +16,45 @@
 - **Spec-compliant** - https://www.w3.org/TR/mediaqueries-5/
   - **All valid queries parsed; e.g. `(100px < width < 200px)`**
 - **Zero-dependencies**
-- **Well tested**
+- **Well tested** - every single line
 - **TypeScript friendly**
 
 > This repo/package contains only the parser, stringify and isParserError.
 >
 > `media-query-fns` uses this library internally to achieve common use-cases.
 
-**_[You can try it out!](https://tbjgolden.github.io/media-query-parser/)_**
-
 ![banner](banner.svg)
+
+## Why?
+
+Other CSS parsers (e.g. css-tree and postcss) do not support all media query syntax out of the box.
+
+Further, the only other media query parser that I'm aware of is `postcss-media-query-parser` - which
+is specific to postcss and doesn't parse newer syntax like range expressions (i.e.
+`(width >= 768px)`).
+
+This package is a spec-compliant media query parser that can be used in Node/Deno/etc, or on the
+client that precisely matches the spec right down to the quirks.
+
+These are valid media queries that this library supports:
+
+```css
+@media (768px <= width < 1200px);
+@media not(not(not(((hover)or((not(color)))))));
+@media only print and (color);
+@media (🗺️: /* follows spec for comments/emoji/etc */ 🇺🇦) {
+  /* this query is valid syntax, but 🗺️ is obviously not a real feature.
+     see `media-query-fns` for feature checking */
+}
+```
+
+These are invalid media queries that this library will detect:
+
+```css
+@media (color) or (hover); /* or cannot be at top level */
+@media (min-width: calc(50vw + 10px)); /* functions aren't valid values */
+@media (768px < = width < 1200px); /* cannot have a space between `<` and `=` */
+```
 
 ## Install
 
@@ -42,7 +71,7 @@ Supports JavaScript + TypeScript:
 ```ts
 import { parseMediaQuery } from "media-query-parser";
 
-const mediaQuery = parseMediaQuery("screen and (width <= 768px)");
+const mediaQuery = parseMediaQuery("screen and (min-width: 768px)");
 if (!isParserError(mediaQuery)) {
   console.log(mediaQuery);
   // {
@@ -50,27 +79,19 @@ if (!isParserError(mediaQuery)) {
   //   mediaType: "screen",
   //   mediaCondition: {
   //     type: "condition",
-  //     children: [
-  //       {
-  //         type: "feature",
-  //         feature: "width",
-  //         context: "range",
-  //         range: {
-  //           featureName: "width",
-  //           rightOp: "<=",
-  //           rightToken: {
-  //             type: "dimension",
-  //             value: 768,
-  //             unit: "px",
-  //             flag: "number"
-  //           },
-  //         },
+  //     children: [{
+  //       type: "feature",
+  //       context: "value",
+  //       mediaPrefix: "min",
+  //       feature: "width",
+  //       value: {
+  //         type: "dimension", value: 768, unit: "px", flag: "number"
   //       },
-  //     ],
+  //     }],
   //   },
   // }
   console.log(stringify(mediaQuery.mediaCondition.children[0]));
-  // "(width <= 768px)"
+  // "(min-width: 768px)"
 }
 ```
 

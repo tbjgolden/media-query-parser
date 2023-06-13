@@ -77,7 +77,6 @@ export type ParserErrId =
   | "EXPECT_VALUE"
   | "EXPECT_RANGE"
   | "MIX_AND_WITH_OR"
-  | "OR_AT_TOP_LEVEL"
   | "MISMATCH_PARENS"
   | "EMPTY_QUERY"
   | "EMPTY_CONDITION"

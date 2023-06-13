@@ -35,10 +35,7 @@ export const generateMediaQuery = (mediaQuery: MediaQuery): string => {
 
     const condition = mediaQuery.mediaCondition;
 
-    const canTrimParentheses =
-      condition.operator === undefined ||
-      condition.operator === "and" ||
-      (condition.operator === "not" && !str);
+    const canTrimParentheses = condition.operator !== "or" || !str;
 
     str += canTrimParentheses
       ? generateMediaCondition(mediaQuery.mediaCondition).slice(1, -1)

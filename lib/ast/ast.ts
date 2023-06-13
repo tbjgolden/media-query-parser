@@ -87,7 +87,7 @@ export const readMediaQuery = (parsingTokens: ParserToken[]): MediaQuery | Parse
   const firstToken = parsingTokens.at(0);
   if (firstToken) {
     if (firstToken.type === "(") {
-      const mediaCondition = readMediaCondition(parsingTokens, false);
+      const mediaCondition = readMediaCondition(parsingTokens, true);
       if (isParserError(mediaCondition)) {
         const { start, end } = parsingTokens.at(1) ?? firstToken;
         return { errid: "EXPECT_FEATURE_OR_CONDITION", start, end, child: mediaCondition };
@@ -155,13 +155,20 @@ export const readMediaQuery = (parsingTokens: ParserToken[]): MediaQuery | Parse
       } else {
         const secondNonUnaryToken = parsingTokens[firstIndex + 1];
         if (secondNonUnaryToken.type === "ident" && secondNonUnaryToken.value === "and") {
-          const mediaCondition = readMediaCondition(parsingTokens.slice(firstIndex + 2), false);
           const lastToken = parsingTokens.at(-1) as ParserToken;
-          const { start, end } = parsingTokens.at(firstIndex + 2) ?? {
-            start: lastToken.end + 1,
-            end: lastToken.end + 1,
-          };
-
+          const afterAndToken = parsingTokens.at(firstIndex + 2);
+          let index = lastToken.end + 1;
+          let mediaCondition: MediaCondition | ParserError;
+          if (afterAndToken?.type === "ident" && afterAndToken.value === "not") {
+            index += 1;
+            const parsedCondition = readMediaCondition(parsingTokens.slice(firstIndex + 3), false);
+            mediaCondition = isParserError(parsedCondition)
+              ? parsedCondition
+              : { type: "condition", operator: "not", children: [parsedCondition] };
+          } else {
+            mediaCondition = readMediaCondition(parsingTokens.slice(firstIndex + 2), false);
+          }
+          const { start, end } = parsingTokens.at(firstIndex + 2) ?? { start: index, end: index };
           return isParserError(mediaCondition)
             ? { errid: "EXPECT_CONDITION", start, end, child: mediaCondition }
             : { type: "query", mediaPrefix, mediaType, mediaCondition };
@@ -249,7 +256,7 @@ export const readMediaCondition = (
       } else if (previousOperator !== undefined && previousOperator !== nextToken.value) {
         return { errid: "MIX_AND_WITH_OR", start: nextToken.start, end: nextToken.end };
       } else if (nextToken.value === "or" && !mayContainOr) {
-        return { errid: "OR_AT_TOP_LEVEL", start: nextToken.start, end: nextToken.end };
+        return { errid: "MIX_AND_WITH_OR", start: nextToken.start, end: nextToken.end };
       }
 
       const mediaCondition = readMediaCondition(

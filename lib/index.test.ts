@@ -372,4 +372,8 @@ test("coverage", () => {
   expect(s(parseMediaQuery(`"string" + --x - @val 0% 'string' url("") _`))).toEqual(
     "EXPECT_LPAREN_OR_TYPE_OR_MODIFIER"
   );
+  //
+  expect(s(parseMediaQuery(`screen and (hover) or (color)`))).toEqual("MIX_AND_WITH_OR");
+  expect(s(parseMediaQuery(`(hover) or (color)`))).toEqual("(hover) or (color)");
+  expect(s(parseMediaQuery(`screen and not (color)`))).toEqual("screen and not (color)");
 });
