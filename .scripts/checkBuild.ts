@@ -29,7 +29,6 @@ if (await isDirectory("lib")) {
   const result = JSON.stringify(parseMediaQuery("(monochrome)"));
   const expected = JSON.stringify({
     type: "query",
-    mediaType: "all",
     mediaCondition: {
       type: "condition",
       children: [{ type: "feature", context: "boolean", feature: "monochrome" }],
