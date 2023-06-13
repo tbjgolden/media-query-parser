@@ -354,6 +354,7 @@ test("coverage", () => {
   expect(s(parseMediaQuery("((orientation) and (width < 100px) or (monochrome))"))).toEqual(
     "MIX_AND_WITH_OR"
   );
+  expect(s(parseMediaQuery("(100px > width)"))).toEqual("(100px > width)");
   expect(s(parseMediaCondition("width: 100px"))).toEqual("EXPECT_LPAREN");
   expect(s(parseMediaQuery("(boaty: #mcboatface)"))).toEqual("EXPECT_VALUE");
   expect(s(parseMediaFeature(""))).toEqual("EMPTY_FEATURE");

@@ -16,7 +16,7 @@ import {
   generateMediaFeature,
   generateValidValueToken,
 } from "./generator/generator.js";
-import { invertParserError } from "./internals.js";
+import { deleteUndefinedValues, invertParserError } from "./internals.js";
 import { lexer } from "./lexer/lexer.js";
 import {
   MediaQueryList,
@@ -53,7 +53,7 @@ export const parseMediaQueryList = (str: string): MediaQueryList | ParserError =
   const tokens = lexer(str);
   return isParserError(tokens)
     ? invertParserError(tokens)
-    : flattenMediaQueryList(readMediaQueryList(tokens));
+    : deleteUndefinedValues(flattenMediaQueryList(readMediaQueryList(tokens)));
 };
 
 /**
@@ -78,7 +78,7 @@ export const parseMediaQuery = (str: string): MediaQuery | ParserError => {
     const mediaQuery = readMediaQuery(tokens);
     return isParserError(mediaQuery)
       ? invertParserError(mediaQuery)
-      : flattenMediaQuery(mediaQuery);
+      : deleteUndefinedValues(flattenMediaQuery(mediaQuery));
   }
 };
 
@@ -119,7 +119,7 @@ export const parseMediaCondition = (str: string): MediaCondition | ParserError =
     const mediaCondition = readMediaCondition(tokens, true);
     return isParserError(mediaCondition)
       ? invertParserError(mediaCondition)
-      : flattenMediaCondition(mediaCondition);
+      : deleteUndefinedValues(flattenMediaCondition(mediaCondition));
   }
 };
 
@@ -141,7 +141,12 @@ export const parseMediaCondition = (str: string): MediaCondition | ParserError =
  */
 export const parseMediaFeature = (str: string): MediaFeature | ParserError => {
   const tokens = lexer(str);
-  return isParserError(tokens) ? invertParserError(tokens) : readMediaFeature(tokens);
+  if (isParserError(tokens)) {
+    return invertParserError(tokens);
+  } else {
+    const mediaFeature = readMediaFeature(tokens);
+    return isParserError(mediaFeature) ? mediaFeature : deleteUndefinedValues(mediaFeature);
+  }
 };
 
 /**
