@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>media-query-parser api docs</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        padding: 0;
+        margin: 0;
+      }
+      body {
+        padding: 18px;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+          Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+      }
+      code,
+      .code {
+        font-family: ui-monospace, Menlo, Monaco, "Cascadia Mono", "Segoe UI Mono", "Roboto Mono",
+          "Oxygen Mono", "Ubuntu Monospace", "Source Code Pro", "Fira Mono", "Droid Sans Mono",
+          "Courier New", monospace;
+      }
+    </style>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/default.min.css"
+      integrity="sha512-hasIneQUHlh06VNBe7f6ZcHmeRTLIaQWFd43YriJ0UND19bvYRauxthDg8E4eVNPm9bRUhr5JGeqH7FRFXQu5g=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+  </head>
+  <body style="text-align: center">
+    <h1>API Docs</h1>
+    <h2>Functions</h2>
+    <pre
+      style="white-space: pre-wrap"
+    ><code class="language-typescript" style="display:inline-block;width:100%;max-width:106ch;text-align:left;">/**
+  * creates an AST from a **media-query-list** string; parses comma-separated media queries correctly
+  *
+  * Important:
+  *
+  * - _an invalid media-query child **does not** make the media-query-list invalid_
+  * - can rarely return a ParserError (e.g. when there is an issue reading a CSS token: `"\n"`)
+  *
+  * @example
+  * ```ts
+  * console.log(parseMediaQueryList(`print, invalid, (min-width: 1000px)`));
+  * // {
+  * //   type: "query-list",
+  * //   mediaQueries: [
+  * //     {type: "query", mediaType: "print"},
+  * //     {type: "query", prefix: "not"},
+  * //     {type: "query", mediaCondition: ...}
+  * //   ],
+  * // }
+  * ```
+  */
+export const parseMediaQueryList = (str: string) =&gt; MediaQueryList;
+
+/**
+  * creates an AST from a **media-query** string
+  * @example
+  * ```ts
+  * console.log(parseMediaQuery(`(monochrome)`));
+  * // {
+  * //   type: "query",
+  * //   mediaCondition: {
+  * //     type: "condition",
+  * //     children: [{ type: "feature", context: "boolean", feature: "monochrome" }],
+  * //   },
+  * // }
+  * ```
+  */
+export const parseMediaQuery = (str: string) =&gt; MediaQuery | ParserError;
+
+/**
+  * creates an AST from a **media-condition** string
+  *
+  * @example
+  * ```ts
+  * console.log(parseMediaCondition(`((aspect-ratio &gt; 1/2) or (monochrome))`));
+  * // {
+  * //   type: "condition",
+  * //   children: [{
+  * //     type: "condition",
+  * //     children: [
+  * //       {
+  * //         type: "feature",
+  * //         context: "range",
+  * //         feature: "aspect-ratio",
+  * //         range: {
+  * //           featureName: "aspect-ratio",
+  * //           rightOp: "&gt;",
+  * //           rightToken: { denominator: 2, numerator: 1, type: "ratio" },
+  * //         },
+  * //       },
+  * //       { context: "boolean", feature: "monochrome", type: "feature" },
+  * //     ],
+  * //     operator: "or",
+  * //   }],
+  * // }
+  *
+  * ```
+  */
+export const parseMediaCondition = (str: string) =&gt; MediaCondition | ParserError;
+
+/**
+  * creates an AST from a **media-feature** string - including parentheses
+  *
+  * @example
+  * ```ts
+  * console.log(parseMediaFeature(`(min-width: 768px)`));
+  * // {
+  * //   type: "feature",
+  * //   context: "value",
+  * //   feature: "width",
+  * //   prefix: "min",
+  * //   value: { type: "dimension", flag: "number", unit: "px", value: 768 },
+  * // }
+  *
+  * ```
+  */
+export const parseMediaFeature = (str: string) =&gt; MediaFeature | ParserError;
+
+/**
+  * turns an AST into an equivalent string
+  *
+  * @example
+  * ```ts
+  * console.log(stringify({
+  *   type: "query",
+  *   mediaCondition: {
+  *     type: "condition",
+  *     children: [{ type: "feature", context: "boolean", feature: "monochrome" }],
+  *   },
+  * }));
+  * // "(monochrome)"
+  * ```
+  *
+  * note: stringifying a MediaCondition directly will always wrap the condition with parentheses.
+  * sometimes they are redundant, but calling this with a MediaQuery will remove them for you.
+  * e.g. `stringify({ type: 'query', mediaType: 'all', mediaCondition: &lt;your condition&gt; })`
+  *
+  * @example
+  * ```ts
+  * console.log(stringify(parseMediaFeature(`(min-width: 768px)`)));
+  * // "(min-width: 768px)"
+  * ```
+  */
+export const stringify = (
+  node: MediaQueryList | MediaQuery | MediaCondition | MediaFeature | ValidValueToken
+) =&gt; string;
+</code></pre>
+    <h2>AST / Shape / Types</h2>
+    <pre
+      style="white-space: pre-wrap"
+    ><code class="language-typescript" style="display:inline-block;width:100%;max-width:106ch;text-align:left;">export type MediaQueryList = { type: "query-list"; mediaQueries: MediaQuery[] };
+
+export type MediaQuery = {
+  type: "query";
+  prefix?: "not" | "only";
+  mediaType?: "screen" | "print";
+  mediaCondition?: MediaCondition;
+};
+
+export type MediaCondition =
+  | {
+      type: "condition";
+      operator?: "not";
+      children: [child: MediaCondition | MediaFeature];
+    }
+  | {
+      type: "condition";
+      operator: "and" | "or";
+      children: [
+        child1: MediaCondition | MediaFeature,
+        child2: MediaCondition | MediaFeature,
+        ...rest: Array&lt;MediaCondition | MediaFeature&gt;
+      ];
+    };
+
+export type MediaFeature = { type: "feature" } & (
+  MediaFeatureBoolean | MediaFeatureValue | MediaFeatureRange
+);
+
+export type MediaFeatureBoolean = { context: "boolean"; feature: string };
+
+export type MediaFeatureValue = {
+  context: "value";
+  prefix?: "min" | "max";
+  feature: string;
+  value: ValidValueToken;
+};
+export type ValidValueToken =
+  | { type: "number"; value: number; flag: "number" | "integer" }
+  | { type: "dimension"; value: number; flag: "number"; unit: string }
+  | { type: "ratio"; numerator: number; denominator: number }
+  | { type: "ident"; value: string };
+
+export type MediaFeatureRange = { context: "range"; feature: string; range: ValidRange };
+export type ValidRange =
+  | {
+      leftToken: ValidRangeToken;
+      leftOp: "&lt;" | "&lt;=";
+      rightOp: "&lt;" | "&lt;=";
+      rightToken: ValidRangeToken;
+    }
+  | {
+      leftToken: ValidRangeToken;
+      leftOp: "&gt;" | "&gt;=";
+      rightOp: "&gt;" | "&gt;=";
+      rightToken: ValidRangeToken;
+    }
+  | {
+      leftToken: ValidRangeToken;
+      leftOp: "&gt;" | "&gt;=" | "&lt;" | "&lt;=" | "=";
+    }
+  | {
+      rightOp: "&gt;" | "&gt;=" | "&lt;" | "&lt;=" | "=";
+      rightToken: ValidRangeToken;
+    };
+export type ValidRangeToken =
+  | { type: "number"; value: number; flag: "number" | "integer" }
+  | { type: "dimension"; value: number; flag: "number"; unit: string }
+  | { type: "ratio"; numerator: number; denominator: number }
+  | { type: "ident"; value: "infinite" };
+&gt;;
+</code></pre>
+    <h2>ParserError</h2>
+    <pre
+      style="white-space: pre-wrap"
+    ><code class="language-typescript" style="display:inline-block;width:100%;max-width:106ch;text-align:left;">export type ParserError = { errid: ParserErrId; start: number; end: number; child?: ParserError };
+export type ParserErrId =
+  | "EXPECT_LPAREN_OR_TYPE"
+  | "EXPECT_TYPE"
+  | "EXPECT_CONDITION"
+  | "EXPECT_AND"
+  | "EXPECT_LPAREN_OR_TYPE_OR_MODIFIER"
+  | "EXPECT_LPAREN"
+  | "EXPECT_FEATURE_OR_CONDITION"
+  | "EXPECT_AND_OR_OR"
+  | "EXPECT_RPAREN"
+  | "EXPECT_VALUE"
+  | "EXPECT_RANGE"
+  | "MIX_AND_WITH_OR"
+  | "MISMATCH_PARENS"
+  | "EMPTY_QUERY"
+  | "EMPTY_CONDITION"
+  | "EMPTY_FEATURE"
+  | "NO_LCURLY"
+  | "NO_SEMICOLON"
+  | "INVALID_FEATURE"
+  | "INVALID_RANGE"
+  | "INVALID_STRING";
+
+/**
+* a type guard that asserts whether `value` is of type ParserError
+*
+* tolerant of any input type, you can assume it will be true if (and only if) it is a ParserError
+*/
+export const isParserError = (value: unknown) =&gt; value is ParserError;
+</code></pre>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"
+      integrity="sha512-rdhY3cbXURo13l/WU9VlaRyaIYeJ/KBakckXIvJNAQde8DgpOmE+eZf7ha4vdqVjTtwQt69bD2wH2LXob/LB7Q=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <script>
+      hljs.highlightAll();
+    </script>
+  </body>
+</html>

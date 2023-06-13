@@ -43,7 +43,7 @@ import {
  * //   type: "query-list",
  * //   mediaQueries: [
  * //     {type: "query", mediaType: "print"},
- * //     {type: "query", mediaPrefix: "not"},
+ * //     {type: "query", prefix: "not"},
  * //     {type: "query", mediaCondition: ...}
  * //   ],
  * // }
@@ -133,7 +133,7 @@ export const parseMediaCondition = (str: string): MediaCondition | ParserError =
  * //   type: "feature",
  * //   context: "value",
  * //   feature: "width",
- * //   mediaPrefix: "min",
+ * //   prefix: "min",
  * //   value: { type: "dimension", flag: "number", unit: "px", value: 768 },
  * // }
  *

@@ -75,7 +75,7 @@ export const readMediaQueryList = (parsingTokens: ParserToken[]): MediaQueryList
       const mediaQuery = readMediaQuery(mediaQueryParserTokens);
       // note: a media query list can contain an invalid media query
       if (isParserError(mediaQuery)) {
-        mediaQueries.push({ type: "query", mediaPrefix: "not" });
+        mediaQueries.push({ type: "query", prefix: "not" });
       } else {
         mediaQueries.push(mediaQuery);
       }
@@ -95,15 +95,15 @@ export const readMediaQuery = (parsingTokens: ParserToken[]): MediaQuery | Parse
         return { type: "query", mediaCondition };
       }
     } else if (firstToken.type === "ident") {
-      let mediaPrefix: "not" | "only" | undefined;
+      let prefix: "not" | "only" | undefined;
       let mediaType: "print" | "screen" | undefined;
 
       const { value, end } = firstToken;
       if (value === "only" || value === "not") {
-        mediaPrefix = value;
+        prefix = value;
       }
 
-      const firstIndex = mediaPrefix === undefined ? 0 : 1;
+      const firstIndex = prefix === undefined ? 0 : 1;
 
       const firstNonUnaryToken = parsingTokens.at(firstIndex);
       if (!firstNonUnaryToken) {
@@ -128,12 +128,12 @@ export const readMediaQuery = (parsingTokens: ParserToken[]): MediaQuery | Parse
           value === "speech"
         ) {
           // these are treated as equivalent to 'not all'
-          mediaPrefix = mediaPrefix === "not" ? undefined : "not";
+          prefix = prefix === "not" ? undefined : "not";
           mediaType = undefined;
         } else {
           return { errid: "EXPECT_TYPE", start, end };
         }
-      } else if (mediaPrefix === "not" && firstNonUnaryToken.type === "(") {
+      } else if (prefix === "not" && firstNonUnaryToken.type === "(") {
         const mediaCondition = readMediaCondition(parsingTokens.slice(firstIndex), true);
 
         if (isParserError(mediaCondition)) {
@@ -151,7 +151,7 @@ export const readMediaQuery = (parsingTokens: ParserToken[]): MediaQuery | Parse
       }
 
       if (firstIndex + 1 === parsingTokens.length) {
-        return { type: "query", mediaPrefix, mediaType };
+        return { type: "query", prefix, mediaType };
       } else {
         const secondNonUnaryToken = parsingTokens[firstIndex + 1];
         if (secondNonUnaryToken.type === "ident" && secondNonUnaryToken.value === "and") {
@@ -171,7 +171,7 @@ export const readMediaQuery = (parsingTokens: ParserToken[]): MediaQuery | Parse
           const { start, end } = parsingTokens.at(firstIndex + 2) ?? { start: index, end: index };
           return isParserError(mediaCondition)
             ? { errid: "EXPECT_CONDITION", start, end, child: mediaCondition }
-            : { type: "query", mediaPrefix, mediaType, mediaCondition };
+            : { type: "query", prefix, mediaType, mediaCondition };
         } else {
           return {
             errid: "EXPECT_AND",
@@ -335,20 +335,20 @@ export const readMediaFeature = (parsingTokens: ParserToken[]): MediaFeature | P
       ) {
         let feature = tokens[1].value;
 
-        let mediaPrefix: "min" | "max" | undefined;
+        let prefix: "min" | "max" | undefined;
 
         const slice = feature.slice(0, 4);
         if (slice === "min-") {
-          mediaPrefix = "min";
+          prefix = "min";
           feature = feature.slice(4);
         } else if (slice === "max-") {
-          mediaPrefix = "max";
+          prefix = "max";
           feature = feature.slice(4);
         }
 
         const { hasSpaceBefore: _, hasSpaceAfter: _0, start: _1, end: _2, ...value } = valueToken;
 
-        return { type: "feature", context: "value", mediaPrefix, feature, value };
+        return { type: "feature", context: "value", prefix, feature, value };
       } else {
         return { errid: "EXPECT_VALUE", start: valueToken.start, end: valueToken.end };
       }

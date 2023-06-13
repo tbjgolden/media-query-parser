@@ -93,7 +93,7 @@ export type MediaQueryList = { type: "query-list"; mediaQueries: MediaQuery[] };
 
 export type MediaQuery = {
   type: "query";
-  mediaPrefix?: "not" | "only";
+  prefix?: "not" | "only";
   mediaType?: "screen" | "print";
   mediaCondition?: MediaCondition;
 };
@@ -120,7 +120,7 @@ export type MediaFeature = Simplify<
 export type MediaFeatureBoolean = { context: "boolean"; feature: string };
 export type MediaFeatureValue = {
   context: "value";
-  mediaPrefix?: "min" | "max";
+  prefix?: "min" | "max";
   feature: string;
   value: ValidValueToken;
 };

@@ -47,7 +47,7 @@ test("parseMediaQueryList", () => {
                     {
                       context: "value",
                       feature: "width",
-                      mediaPrefix: "min",
+                      prefix: "min",
                       type: "feature",
                       value: {
                         flag: "number",
@@ -78,7 +78,7 @@ test("parseMediaQueryList", () => {
           operator: "or",
           type: "condition",
         },
-        mediaPrefix: "not",
+        prefix: "not",
         mediaType: "screen",
         type: "query",
       },
@@ -87,7 +87,7 @@ test("parseMediaQueryList", () => {
   });
   expect(parseMediaQueryList("invalid (color-index <= 128)")).toEqual({
     type: "query-list",
-    mediaQueries: [{ type: "query", mediaPrefix: "not" }],
+    mediaQueries: [{ type: "query", prefix: "not" }],
   });
   expect(parseMediaQueryList("not print and (110px <= width <= 220px)")).toEqual({
     type: "query-list",
@@ -120,7 +120,7 @@ test("parseMediaQueryList", () => {
             },
           ],
         },
-        mediaPrefix: "not",
+        prefix: "not",
         mediaType: "print",
       },
     ],
@@ -140,7 +140,7 @@ test("parseMediaQueryList", () => {
                   type: "feature",
                   context: "value",
                   feature: "width",
-                  mediaPrefix: "min",
+                  prefix: "min",
                   value: {
                     flag: "number",
                     type: "dimension",
@@ -152,7 +152,7 @@ test("parseMediaQueryList", () => {
                   type: "feature",
                   context: "value",
                   feature: "width",
-                  mediaPrefix: "max",
+                  prefix: "max",
                   value: {
                     flag: "number",
                     type: "dimension",
@@ -179,14 +179,14 @@ test("parseMediaQueryList", () => {
                 {
                   context: "value",
                   feature: "width",
-                  mediaPrefix: "min",
+                  prefix: "min",
                   type: "feature",
                   value: { flag: "number", type: "dimension", unit: "px", value: 100 },
                 },
                 {
                   context: "value",
                   feature: "width",
-                  mediaPrefix: "max",
+                  prefix: "max",
                   type: "feature",
                   value: { flag: "number", type: "dimension", unit: "px", value: 200 },
                 },
@@ -219,7 +219,7 @@ test("parseMediaQueryList", () => {
               type: "feature",
               context: "value",
               feature: "height",
-              mediaPrefix: "min",
+              prefix: "min",
               value: {
                 flag: "number",
                 type: "dimension",

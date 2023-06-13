@@ -42,9 +42,9 @@ These are valid media queries that this library supports:
 @media (768px <= width < 1200px);
 @media only print and (color);
 @media not (not (not (((hover) or ((not (color)))))));
-@media (🗺️: /* follows spec for comments/emoji/etc */ 🇺🇦) {
-  /* this query has valid syntax, but 🗺️ is obviously not a real feature.
-     see `media-query-fns` for feature checking */
+@media (🐈: 😸 /* if cat happy */) {
+  /* this query has valid syntax, but is clearly not a real feature.
+     (see `media-query-fns` for feature checking) */
 }
 ```
 
@@ -65,6 +65,8 @@ This package is available from the `npm` registry.
 npm install media-query-parser
 ```
 
+> The shape of Errors are
+
 ## Usage
 
 Supports JavaScript + TypeScript:
@@ -83,7 +85,7 @@ if (!isParserError(mediaQuery)) {
   //     children: [{
   //       type: "feature",
   //       context: "value",
-  //       mediaPrefix: "min",
+  //       prefix: "min",
   //       feature: "width",
   //       value: {
   //         type: "dimension", value: 768, unit: "px", flag: "number"
@@ -97,6 +99,8 @@ if (!isParserError(mediaQuery)) {
 ```
 
 Can also be imported via `require("media-query-parser")`.
+
+### [**Full Docs**](https://tbjgolden.github.io/media-query-parser/)
 
 ## Contributing
 

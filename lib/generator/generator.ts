@@ -18,10 +18,10 @@ export const generateMediaQueryList = (mediaQueryList: MediaQueryList): string =
   mediaQueryList.mediaQueries.map((mediaQuery) => generateMediaQuery(mediaQuery)).join(", ");
 export const generateMediaQuery = (mediaQuery: MediaQuery): string => {
   let str = "";
-  if (mediaQuery.mediaPrefix) {
-    str += mediaQuery.mediaPrefix + " ";
+  if (mediaQuery.prefix) {
+    str += mediaQuery.prefix + " ";
   }
-  const doesNeedAll = mediaQuery.mediaPrefix !== undefined || !mediaQuery.mediaCondition;
+  const doesNeedAll = mediaQuery.prefix !== undefined || !mediaQuery.mediaCondition;
   if (doesNeedAll || mediaQuery.mediaType !== undefined) {
     str += mediaQuery.mediaType ?? "all";
     if (mediaQuery.mediaCondition) {
@@ -77,8 +77,8 @@ export const generateMediaFeatureBoolean = (mediaFeature: MediaFeatureBoolean): 
   return mediaFeature.feature;
 };
 export const generateMediaFeatureValue = (mediaFeature: MediaFeatureValue): string => {
-  const mediaPrefix = mediaFeature.mediaPrefix ? `${mediaFeature.mediaPrefix}-` : "";
-  return mediaPrefix + mediaFeature.feature + ": " + generateValidValueToken(mediaFeature.value);
+  const prefix = mediaFeature.prefix ? `${mediaFeature.prefix}-` : "";
+  return prefix + mediaFeature.feature + ": " + generateValidValueToken(mediaFeature.value);
 };
 export const generateMediaFeatureRange = (mediaFeature: MediaFeatureRange): string => {
   let str = "";

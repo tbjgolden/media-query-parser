@@ -9,7 +9,7 @@ export const flattenMediaQuery = (mediaQuery: MediaQuery): MediaQuery => {
   return mediaQuery.mediaCondition
     ? {
         type: "query",
-        mediaPrefix: mediaQuery.mediaPrefix,
+        prefix: mediaQuery.prefix,
         mediaType: mediaQuery.mediaType,
         mediaCondition: flattenMediaCondition(mediaQuery.mediaCondition),
       }

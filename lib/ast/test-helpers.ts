@@ -17,7 +17,7 @@ export type LiteMediaQueryList = {
 };
 
 export type LiteMediaQuery = {
-  mediaPrefix?: "not" | "only";
+  prefix?: "not" | "only";
   mediaType?: "screen" | "print";
   mediaCondition?: LiteMediaCondition;
 };
@@ -37,7 +37,7 @@ export type LiteMediaFeatureBoolean = {
 };
 export type LiteMediaFeatureValue = {
   context: "value";
-  mediaPrefix?: "min" | "max";
+  prefix?: "min" | "max";
   feature: string;
   value: ValidValueToken;
 };
@@ -62,10 +62,10 @@ export const toLiteMediaCondition = ({
 export const toLiteMediaQuery = ({
   mediaType,
   mediaCondition,
-  mediaPrefix,
+  prefix,
 }: MediaQuery): LiteMediaQuery => ({
   mediaType,
-  mediaPrefix,
+  prefix,
   mediaCondition: mediaCondition ? toLiteMediaCondition(mediaCondition) : mediaCondition,
 });
 

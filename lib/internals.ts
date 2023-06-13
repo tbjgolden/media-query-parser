@@ -32,7 +32,7 @@ export const deleteUndefinedValues = <
       return n;
     }
     case "query": {
-      if (n.mediaPrefix === undefined) delete n.mediaPrefix;
+      if (n.prefix === undefined) delete n.prefix;
       if (n.mediaType === undefined) delete n.mediaType;
       if (n.mediaCondition === undefined) {
         delete n.mediaCondition;
@@ -50,7 +50,7 @@ export const deleteUndefinedValues = <
     }
     case "feature": {
       if (n.context === "value") {
-        if (n.mediaPrefix === undefined) delete n.mediaPrefix;
+        if (n.prefix === undefined) delete n.prefix;
         deleteUndefinedValues(n.value);
       } else if (n.context === "range") {
         if (n.range.leftOp === undefined) delete n.range.leftOp;
