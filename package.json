@@ -79,6 +79,12 @@
   ],
   "jest": {
     "clearMocks": true,
+    "collectCoverageFrom": [
+      "lib/**/*.ts",
+      "!**/test-helpers.ts",
+      "!**/node_modules/**",
+      "!**/vendor/**"
+    ],
     "coverageReporters": [
       "json-summary",
       "text"

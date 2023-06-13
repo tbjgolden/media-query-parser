@@ -12,18 +12,18 @@ import {
   NumberToken,
   DimensionToken,
   IdentToken,
-} from "../shared.js";
+} from "../utils.js";
 
 export const generateMediaQueryList = (mediaQueryList: MediaQueryList): string =>
   mediaQueryList.mediaQueries.map((mediaQuery) => generateMediaQuery(mediaQuery)).join(", ");
 export const generateMediaQuery = (mediaQuery: MediaQuery): string => {
   let str = "";
-  if (mediaQuery.mediaPrefix) {
-    str += mediaQuery.mediaPrefix + " ";
+  if (mediaQuery.prefix) {
+    str += mediaQuery.prefix + " ";
   }
-  const doesNeedAll = mediaQuery.mediaPrefix !== undefined || !mediaQuery.mediaCondition;
-  if (doesNeedAll || mediaQuery.mediaType !== "all") {
-    str += mediaQuery.mediaType;
+  const doesNeedAll = mediaQuery.prefix !== undefined || !mediaQuery.mediaCondition;
+  if (doesNeedAll || mediaQuery.mediaType !== undefined) {
+    str += mediaQuery.mediaType ?? "all";
     if (mediaQuery.mediaCondition) {
       str += " and";
     }
@@ -32,27 +32,24 @@ export const generateMediaQuery = (mediaQuery: MediaQuery): string => {
     if (str !== "") {
       str += " ";
     }
-    const conditionStr = generateMediaCondition(mediaQuery.mediaCondition);
-    if (
-      mediaQuery.mediaCondition.operator === undefined ||
-      mediaQuery.mediaCondition.operator === "and" ||
-      (mediaQuery.mediaCondition.operator === "not" && str === "")
-    ) {
-      str += conditionStr.slice(1, -1);
-    } else {
-      str += conditionStr;
-    }
+
+    const condition = mediaQuery.mediaCondition;
+
+    const canTrimParentheses = condition.operator !== "or" || !str;
+
+    str += canTrimParentheses
+      ? generateMediaCondition(mediaQuery.mediaCondition).slice(1, -1)
+      : generateMediaCondition(mediaQuery.mediaCondition);
   }
   return str;
 };
 export const generateMediaCondition = (mediaCondition: MediaCondition): string => {
   let str = "(";
-  if (mediaCondition.operator === undefined || mediaCondition.operator === "not") {
-    if (mediaCondition.operator === "not") {
-      str += "not ";
-    }
+  if (mediaCondition.operator === "not") {
     const child = mediaCondition.children[0];
-    str += child.type === "feature" ? generateMediaFeature(child) : generateMediaCondition(child);
+    str +=
+      "not " +
+      (child.type === "feature" ? generateMediaFeature(child) : generateMediaCondition(child));
   } else {
     for (const child of mediaCondition.children) {
       if (str.length > 1) {
@@ -80,8 +77,8 @@ export const generateMediaFeatureBoolean = (mediaFeature: MediaFeatureBoolean): 
   return mediaFeature.feature;
 };
 export const generateMediaFeatureValue = (mediaFeature: MediaFeatureValue): string => {
-  const mediaPrefix = mediaFeature.mediaPrefix ? `${mediaFeature.mediaPrefix}-` : "";
-  return mediaPrefix + mediaFeature.feature + ": " + generateValidValueToken(mediaFeature.value);
+  const prefix = mediaFeature.prefix ? `${mediaFeature.prefix}-` : "";
+  return prefix + mediaFeature.feature + ": " + generateValidValueToken(mediaFeature.value);
 };
 export const generateMediaFeatureRange = (mediaFeature: MediaFeatureRange): string => {
   let str = "";

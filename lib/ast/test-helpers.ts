@@ -8,7 +8,7 @@ import {
   ParserToken,
   ValidRange,
   ValidValueToken,
-} from "../shared.js";
+} from "../utils.js";
 import { isParserError, readMediaQuery, readMediaQueryList } from "./ast.js";
 import { deepEqual } from "node:assert/strict";
 
@@ -17,8 +17,8 @@ export type LiteMediaQueryList = {
 };
 
 export type LiteMediaQuery = {
-  mediaPrefix?: "not" | "only";
-  mediaType: "all" | "screen" | "print";
+  prefix?: "not" | "only";
+  mediaType?: "screen" | "print";
   mediaCondition?: LiteMediaCondition;
 };
 
@@ -37,7 +37,7 @@ export type LiteMediaFeatureBoolean = {
 };
 export type LiteMediaFeatureValue = {
   context: "value";
-  mediaPrefix?: "min" | "max";
+  prefix?: "min" | "max";
   feature: string;
   value: ValidValueToken;
 };
@@ -62,10 +62,10 @@ export const toLiteMediaCondition = ({
 export const toLiteMediaQuery = ({
   mediaType,
   mediaCondition,
-  mediaPrefix,
+  prefix,
 }: MediaQuery): LiteMediaQuery => ({
   mediaType,
-  mediaPrefix,
+  prefix,
   mediaCondition: mediaCondition ? toLiteMediaCondition(mediaCondition) : mediaCondition,
 });
 
@@ -94,13 +94,7 @@ export const expectMQ = (str: string, expected: LiteMediaQuery | ParserErrId | b
     expect(isParserError(result)).toBe(true);
     // ...and for the error id to be the string passed
     if (isParserError(result)) {
-      let parserError = result.child;
-      let output: string = result.errid;
-      while (parserError) {
-        output = parserError.errid;
-        parserError = parserError.child;
-      }
-      expect(output).toBe(expected);
+      expect(result.errid).toBe(expected);
     }
   } else {
     // for object, expect the string *not* to be parsed as an error...

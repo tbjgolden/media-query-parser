@@ -1,14 +1,33 @@
-import { readMediaQueryList } from "../ast/ast.js";
+import { readMediaCondition, readMediaFeature, readMediaQueryList } from "../ast/ast.js";
 import { flattenMediaQueryList } from "../flatten/flatten.js";
-import { generateMediaQueryList } from "../generator/generator.js";
+import {
+  generateMediaCondition,
+  generateMediaFeature,
+  generateMediaQueryList,
+} from "../generator/generator.js";
 import { lexer } from "../lexer/lexer.js";
-import { ParserToken } from "../shared.js";
+import { ParserToken, isParserError } from "../utils.js";
 
 const expectIdentity = (str: string) => {
   expect(
     generateMediaQueryList(flattenMediaQueryList(readMediaQueryList(lexer(str) as ParserToken[])))
   ).toBe(str);
 };
+
+test(`debug`, () => {
+  const x = readMediaFeature(lexer("(width:100px)") as ParserToken[]);
+  if (!isParserError(x)) {
+    expect(generateMediaFeature(x)).toEqual("(width: 100px)");
+  }
+  const y = readMediaCondition(lexer("(width:100px)") as ParserToken[], true);
+  if (!isParserError(y)) {
+    expect(generateMediaCondition(y)).toEqual("((width: 100px))");
+  }
+  const z = readMediaCondition(lexer("(width:100px) and (orientation)") as ParserToken[], true);
+  if (!isParserError(z)) {
+    expect(generateMediaCondition(z)).toEqual("((width: 100px) and (orientation))");
+  }
+});
 
 test("wrapper does not flatten useful layers", () => {
   expectIdentity(`all`);

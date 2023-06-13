@@ -1,7 +1,7 @@
 import { readMediaQueryList } from "../ast/ast.js";
 import { LiteMediaQueryList, isEqualish, toLiteMediaQueryList } from "../ast/test-helpers.js";
-import { ParserToken } from "../ast/types.js";
 import { lexer } from "../lexer/lexer.js";
+import { ParserToken } from "../utils.js";
 import { flattenMediaQueryList } from "./flatten.js";
 
 const flattenMQL = (str: string): LiteMediaQueryList => {
@@ -24,6 +24,7 @@ test("wrapper flattens valueless layers", () => {
 });
 
 test("wrapper does not flatten useful layers", () => {
+  expectFlattenEq("screen and (not (not (color)))", "screen and (not (color))", false);
   expectFlattenEq("(not (hover)) and (color)", "not (hover) and (color)", false);
   expectFlattenEq(
     "((hover) or (color)) and (aspect-ratio > 2/1)",
@@ -31,11 +32,13 @@ test("wrapper does not flatten useful layers", () => {
     false
   );
   expectFlattenEq("((hover) and (not (color)))", "(hover) and (not (color))");
+  expectFlattenEq("not (not (color))", "(color)");
   expectFlattenEq("((hover) and (not (color)))", "(hover) and not (color)", false);
-  expectFlattenEq("screen and (not (not (color)))", "screen and (not (color))", false);
 });
 
 test("code coverage misses", () => {
+  expectFlattenEq("(not ((not (color))))", "(color)");
+  expectFlattenEq("(((hover) and (color)))", "(hover) and (color)");
   expectFlattenEq(
     "((hover) and (color) and ((monochrome) and (pointer)))",
     "(hover) and (color) and (monochrome) and (pointer)"

@@ -77,7 +77,6 @@ export type ParserErrId =
   | "EXPECT_VALUE"
   | "EXPECT_RANGE"
   | "MIX_AND_WITH_OR"
-  | "OR_AT_TOP_LEVEL"
   | "MISMATCH_PARENS"
   | "EMPTY_QUERY"
   | "EMPTY_CONDITION"
@@ -94,8 +93,8 @@ export type MediaQueryList = { type: "query-list"; mediaQueries: MediaQuery[] };
 
 export type MediaQuery = {
   type: "query";
-  mediaPrefix?: "not" | "only";
-  mediaType: "all" | "screen" | "print";
+  prefix?: "not" | "only";
+  mediaType?: "screen" | "print";
   mediaCondition?: MediaCondition;
 };
 
@@ -121,7 +120,7 @@ export type MediaFeature = Simplify<
 export type MediaFeatureBoolean = { context: "boolean"; feature: string };
 export type MediaFeatureValue = {
   context: "value";
-  mediaPrefix?: "min" | "max";
+  prefix?: "min" | "max";
   feature: string;
   value: ValidValueToken;
 };
@@ -136,28 +135,24 @@ export type ValidRange =
   | {
       leftToken: ValidRangeToken;
       leftOp: "<" | "<=";
-      featureName: string;
       rightOp: "<" | "<=";
       rightToken: ValidRangeToken;
     }
   | {
       leftToken: ValidRangeToken;
       leftOp: ">" | ">=";
-      featureName: string;
       rightOp: ">" | ">=";
       rightToken: ValidRangeToken;
     }
   | {
       leftToken: ValidRangeToken;
       leftOp: ">" | ">=" | "<" | "<=" | "=";
-      featureName: string;
       rightOp?: undefined;
       rightToken?: undefined;
     }
   | {
       leftToken?: undefined;
       leftOp?: undefined;
-      featureName: string;
       rightOp: ">" | ">=" | "<" | "<=" | "=";
       rightToken: ValidRangeToken;
     };

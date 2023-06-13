@@ -8,16 +8,16 @@ import {
   RatioToken,
   ValidRange,
   ValidRangeToken,
-} from "../shared.js";
+} from "../utils.js";
 
-type ConvenientToken =
+export type ConvenientToken =
   | ParserToken
   | (RatioToken & { hasSpaceBefore: boolean; hasSpaceAfter: boolean; start: number; end: number });
 
-type UncheckedRange = {
+export type UncheckedRange = {
   leftToken?: ConvenientToken | undefined;
   leftOp?: ">=" | "<=" | ">" | "<" | "=" | undefined;
-  featureName: string;
+  feature: string;
   rightOp?: ">=" | "<=" | ">" | "<" | "=" | undefined;
   rightToken?: ConvenientToken | undefined;
 };
@@ -68,14 +68,14 @@ export const readMediaQueryList = (parsingTokens: ParserToken[]): MediaQueryList
 
   if (mediaQueriesParserTokens.length === 1 && mediaQueriesParserTokens[0].length === 0) {
     // '@media {' is fine, treat as all
-    return { type: "query-list", mediaQueries: [{ type: "query", mediaType: "all" }] };
+    return { type: "query-list", mediaQueries: [{ type: "query" }] };
   } else {
     const mediaQueries: MediaQuery[] = [];
     for (const mediaQueryParserTokens of mediaQueriesParserTokens) {
       const mediaQuery = readMediaQuery(mediaQueryParserTokens);
       // note: a media query list can contain an invalid media query
       if (isParserError(mediaQuery)) {
-        mediaQueries.push({ type: "query", mediaPrefix: "not", mediaType: "all" });
+        mediaQueries.push({ type: "query", prefix: "not" });
       } else {
         mediaQueries.push(mediaQuery);
       }
@@ -87,23 +87,23 @@ export const readMediaQuery = (parsingTokens: ParserToken[]): MediaQuery | Parse
   const firstToken = parsingTokens.at(0);
   if (firstToken) {
     if (firstToken.type === "(") {
-      const mediaCondition = readMediaCondition(parsingTokens, false);
+      const mediaCondition = readMediaCondition(parsingTokens, true);
       if (isParserError(mediaCondition)) {
         const { start, end } = parsingTokens.at(1) ?? firstToken;
         return { errid: "EXPECT_FEATURE_OR_CONDITION", start, end, child: mediaCondition };
       } else {
-        return { type: "query", mediaType: "all", mediaCondition };
+        return { type: "query", mediaCondition };
       }
     } else if (firstToken.type === "ident") {
-      let mediaPrefix: "not" | "only" | undefined;
-      let mediaType: "all" | "print" | "screen";
+      let prefix: "not" | "only" | undefined;
+      let mediaType: "print" | "screen" | undefined;
 
       const { value, end } = firstToken;
       if (value === "only" || value === "not") {
-        mediaPrefix = value;
+        prefix = value;
       }
 
-      const firstIndex = mediaPrefix === undefined ? 0 : 1;
+      const firstIndex = prefix === undefined ? 0 : 1;
 
       const firstNonUnaryToken = parsingTokens.at(firstIndex);
       if (!firstNonUnaryToken) {
@@ -114,7 +114,7 @@ export const readMediaQuery = (parsingTokens: ParserToken[]): MediaQuery | Parse
         const { value, start, end } = firstNonUnaryToken;
 
         if (value === "all") {
-          mediaType = "all";
+          mediaType = undefined;
         } else if (value === "print" || value === "screen") {
           mediaType = value;
         } else if (
@@ -128,12 +128,12 @@ export const readMediaQuery = (parsingTokens: ParserToken[]): MediaQuery | Parse
           value === "speech"
         ) {
           // these are treated as equivalent to 'not all'
-          mediaPrefix = mediaPrefix === "not" ? undefined : "not";
-          mediaType = "all";
+          prefix = prefix === "not" ? undefined : "not";
+          mediaType = undefined;
         } else {
           return { errid: "EXPECT_TYPE", start, end };
         }
-      } else if (mediaPrefix === "not" && firstNonUnaryToken.type === "(") {
+      } else if (prefix === "not" && firstNonUnaryToken.type === "(") {
         const mediaCondition = readMediaCondition(parsingTokens.slice(firstIndex), true);
 
         if (isParserError(mediaCondition)) {
@@ -142,33 +142,36 @@ export const readMediaQuery = (parsingTokens: ParserToken[]): MediaQuery | Parse
         } else {
           return {
             type: "query",
-            mediaType: "all",
             mediaCondition: { type: "condition", operator: "not", children: [mediaCondition] },
           };
         }
-      } else if (mediaPrefix === undefined) {
-        const { start, end } = firstNonUnaryToken;
-        return { errid: "EXPECT_LPAREN_OR_TYPE", start, end };
       } else {
         const { start, end } = firstNonUnaryToken;
         return { errid: "EXPECT_TYPE", start, end };
       }
 
       if (firstIndex + 1 === parsingTokens.length) {
-        return { type: "query", mediaPrefix, mediaType };
+        return { type: "query", prefix, mediaType };
       } else {
         const secondNonUnaryToken = parsingTokens[firstIndex + 1];
         if (secondNonUnaryToken.type === "ident" && secondNonUnaryToken.value === "and") {
-          const mediaCondition = readMediaCondition(parsingTokens.slice(firstIndex + 2), false);
           const lastToken = parsingTokens.at(-1) as ParserToken;
-          const { start, end } = parsingTokens.at(firstIndex + 2) ?? {
-            start: lastToken.end + 1,
-            end: lastToken.end + 1,
-          };
-
+          const afterAndToken = parsingTokens.at(firstIndex + 2);
+          let index = lastToken.end + 1;
+          let mediaCondition: MediaCondition | ParserError;
+          if (afterAndToken?.type === "ident" && afterAndToken.value === "not") {
+            index += 1;
+            const parsedCondition = readMediaCondition(parsingTokens.slice(firstIndex + 3), false);
+            mediaCondition = isParserError(parsedCondition)
+              ? parsedCondition
+              : { type: "condition", operator: "not", children: [parsedCondition] };
+          } else {
+            mediaCondition = readMediaCondition(parsingTokens.slice(firstIndex + 2), false);
+          }
+          const { start, end } = parsingTokens.at(firstIndex + 2) ?? { start: index, end: index };
           return isParserError(mediaCondition)
             ? { errid: "EXPECT_CONDITION", start, end, child: mediaCondition }
-            : { type: "query", mediaPrefix, mediaType, mediaCondition };
+            : { type: "query", prefix, mediaType, mediaCondition };
         } else {
           return {
             errid: "EXPECT_AND",
@@ -253,7 +256,7 @@ export const readMediaCondition = (
       } else if (previousOperator !== undefined && previousOperator !== nextToken.value) {
         return { errid: "MIX_AND_WITH_OR", start: nextToken.start, end: nextToken.end };
       } else if (nextToken.value === "or" && !mayContainOr) {
-        return { errid: "OR_AT_TOP_LEVEL", start: nextToken.start, end: nextToken.end };
+        return { errid: "MIX_AND_WITH_OR", start: nextToken.start, end: nextToken.end };
       }
 
       const mediaCondition = readMediaCondition(
@@ -282,7 +285,7 @@ export const readMediaFeature = (parsingTokens: ParserToken[]): MediaFeature | P
     }
     const lastToken = parsingTokens[parsingTokens.length - 1];
     if (lastToken.type !== ")") {
-      return { errid: "EXPECT_RPAREN", start: lastToken.start, end: lastToken.end };
+      return { errid: "EXPECT_RPAREN", start: lastToken.end + 1, end: lastToken.end + 1 };
     }
 
     const tokens: ConvenientToken[] = [parsingTokens[0]];
@@ -332,34 +335,36 @@ export const readMediaFeature = (parsingTokens: ParserToken[]): MediaFeature | P
       ) {
         let feature = tokens[1].value;
 
-        let mediaPrefix: "min" | "max" | undefined;
+        let prefix: "min" | "max" | undefined;
 
         const slice = feature.slice(0, 4);
         if (slice === "min-") {
-          mediaPrefix = "min";
+          prefix = "min";
           feature = feature.slice(4);
         } else if (slice === "max-") {
-          mediaPrefix = "max";
+          prefix = "max";
           feature = feature.slice(4);
         }
 
         const { hasSpaceBefore: _, hasSpaceAfter: _0, start: _1, end: _2, ...value } = valueToken;
 
-        return { type: "feature", context: "value", mediaPrefix, feature, value };
+        return { type: "feature", context: "value", prefix, feature, value };
       } else {
         return { errid: "EXPECT_VALUE", start: valueToken.start, end: valueToken.end };
       }
     } else if (tokens.length >= 5) {
-      const range = readRange(tokens);
-
-      return isParserError(range)
-        ? {
-            errid: "EXPECT_RANGE",
-            start: firstToken.start,
-            end: tokens[tokens.length - 1].end,
-            child: range,
-          }
-        : { type: "feature", context: "range", feature: range.featureName, range };
+      const maybeRange = readRange(tokens);
+      if (isParserError(maybeRange)) {
+        return {
+          errid: "EXPECT_RANGE",
+          start: firstToken.start,
+          end: tokens[tokens.length - 1].end,
+          child: maybeRange,
+        };
+      } else {
+        const { feature, ...range } = maybeRange;
+        return { type: "feature", context: "range", feature, range };
+      }
     }
 
     return {
@@ -392,9 +397,7 @@ export const readRange = (convenientTokens: ConvenientToken[]): ValidRange | Par
   }
 
   // range form
-  const range: UncheckedRange = {
-    featureName: "",
-  };
+  const range: UncheckedRange = { feature: "" };
 
   const hasLeft =
     convenientTokens[1].type === "number" ||
@@ -432,7 +435,7 @@ export const readRange = (convenientTokens: ConvenientToken[]): ValidRange | Par
     if (hasLeft) {
       range.leftToken = convenientTokens[1];
     } else if (convenientTokens[1].type === "ident") {
-      range.featureName = convenientTokens[1].value;
+      range.feature = convenientTokens[1].value;
     } else {
       return { errid: "INVALID_RANGE", start: convenientTokens[0].start, end: lastToken.end };
     }
@@ -443,7 +446,7 @@ export const readRange = (convenientTokens: ConvenientToken[]): ValidRange | Par
 
     if (hasLeft) {
       if (tokenAfterFirstOp.type === "ident") {
-        range.featureName = tokenAfterFirstOp.value;
+        range.feature = tokenAfterFirstOp.value;
 
         if (convenientTokens.length >= 7) {
           // check for right side
@@ -505,7 +508,7 @@ export const readRange = (convenientTokens: ConvenientToken[]): ValidRange | Par
 
     let validRange: ValidRange | undefined;
 
-    const { leftToken: lt, leftOp, featureName, rightOp, rightToken: rt } = range;
+    const { leftToken: lt, leftOp, feature, rightOp, rightToken: rt } = range;
 
     let leftToken: ValidRangeToken | undefined;
     if (lt !== undefined) {
@@ -534,9 +537,9 @@ export const readRange = (convenientTokens: ConvenientToken[]): ValidRange | Par
 
     if (leftToken !== undefined && rightToken !== undefined) {
       if ((leftOp === "<" || leftOp === "<=") && (rightOp === "<" || rightOp === "<=")) {
-        validRange = { leftToken, leftOp, featureName, rightOp, rightToken };
+        validRange = { leftToken, leftOp, feature, rightOp, rightToken };
       } else if ((leftOp === ">" || leftOp === ">=") && (rightOp === ">" || rightOp === ">=")) {
-        validRange = { leftToken, leftOp, featureName, rightOp, rightToken };
+        validRange = { leftToken, leftOp, feature, rightOp, rightToken };
       } else {
         return { errid: "INVALID_RANGE", start: convenientTokens[0].start, end: lastToken.end };
       }
@@ -546,14 +549,14 @@ export const readRange = (convenientTokens: ConvenientToken[]): ValidRange | Par
       rightOp !== undefined &&
       rightToken !== undefined
     ) {
-      validRange = { leftToken, leftOp, featureName, rightOp, rightToken };
+      validRange = { leftToken, leftOp, feature, rightOp, rightToken };
     } else if (
       leftToken !== undefined &&
       leftOp !== undefined &&
       rightOp === undefined &&
       rightToken === undefined
     ) {
-      validRange = { leftToken, leftOp, featureName, rightOp, rightToken };
+      validRange = { leftToken, leftOp, feature, rightOp, rightToken };
     }
 
     return (

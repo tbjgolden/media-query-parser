@@ -1,4 +1,4 @@
-import { MediaQueryList, MediaQuery, MediaCondition, MediaFeature } from "../shared.js";
+import { MediaQueryList, MediaQuery, MediaCondition, MediaFeature } from "../utils.js";
 
 export const flattenMediaQueryList = (mediaQueryList: MediaQueryList): MediaQueryList => ({
   type: "query-list",
@@ -6,43 +6,49 @@ export const flattenMediaQueryList = (mediaQueryList: MediaQueryList): MediaQuer
 });
 
 export const flattenMediaQuery = (mediaQuery: MediaQuery): MediaQuery => {
-  if (mediaQuery.mediaCondition === undefined) return mediaQuery;
-
-  let mediaCondition = flattenMediaCondition(mediaQuery.mediaCondition);
-  if (
-    mediaCondition.operator === undefined &&
-    mediaCondition.children.length === 1 &&
-    "children" in mediaCondition.children[0]
-  ) {
-    mediaCondition = mediaCondition.children[0];
-  }
-
-  return {
-    type: "query",
-    mediaPrefix: mediaQuery.mediaPrefix,
-    mediaType: mediaQuery.mediaType,
-    mediaCondition,
-  };
+  return mediaQuery.mediaCondition
+    ? {
+        type: "query",
+        prefix: mediaQuery.prefix,
+        mediaType: mediaQuery.mediaType,
+        mediaCondition: flattenMediaCondition(mediaQuery.mediaCondition),
+      }
+    : mediaQuery;
 };
 
 export const flattenMediaCondition = (mediaCondition: MediaCondition): MediaCondition => {
-  const children: Array<MediaCondition | MediaFeature> = [];
+  const flatChildren: Array<MediaCondition | MediaFeature> = [];
   for (const child of mediaCondition.children) {
     if (child.type === "condition") {
-      const grandchild = flattenMediaCondition(child);
-      if (grandchild.operator === undefined && grandchild.children.length === 1) {
-        children.push(grandchild.children[0]);
+      const flatChild = flattenMediaCondition(child);
+      if (flatChild.operator === undefined && flatChild.children.length === 1) {
+        flatChildren.push(flatChild.children[0]);
       } else if (
-        grandchild.operator === mediaCondition.operator &&
-        (grandchild.operator === "and" || grandchild.operator === "or")
+        flatChild.operator === mediaCondition.operator &&
+        (flatChild.operator === "and" || flatChild.operator === "or")
       ) {
-        children.push(...grandchild.children);
+        flatChildren.push(...flatChild.children);
       } else {
-        children.push(grandchild);
+        flatChildren.push(flatChild);
       }
     } else {
-      children.push(child);
+      flatChildren.push(child);
     }
   }
-  return { type: "condition", operator: mediaCondition.operator, children } as MediaCondition;
+
+  if (flatChildren.length === 1) {
+    const flatChild = flatChildren[0];
+    if (flatChild.type === "condition") {
+      if (mediaCondition.operator === undefined) {
+        return flatChild;
+      } else if (mediaCondition.operator === "not" && flatChild.operator === "not") {
+        return { type: "condition", children: flatChild.children };
+      }
+    }
+  }
+  return {
+    type: "condition",
+    operator: mediaCondition.operator,
+    children: flatChildren,
+  } as MediaCondition;
 };

@@ -16,6 +16,7 @@ import {
   generateMediaFeature,
   generateValidValueToken,
 } from "./generator/generator.js";
+import { deleteUndefinedValues, invertParserError } from "./internals.js";
 import { lexer } from "./lexer/lexer.js";
 import {
   MediaQueryList,
@@ -25,7 +26,7 @@ import {
   MediaCondition,
   MediaFeature,
   ValidValueToken,
-} from "./shared.js";
+} from "./utils.js";
 
 /**
  * creates an AST from a **media-query-list** string; parses comma-separated media queries correctly
@@ -42,15 +43,17 @@ import {
  * //   type: "query-list",
  * //   mediaQueries: [
  * //     {type: "query", mediaType: "print"},
- * //     {type: "query", mediaPrefix: "not", mediaType: "all"},
- * //     {type: "query", mediaType: "all", mediaCondition: ...}
+ * //     {type: "query", prefix: "not"},
+ * //     {type: "query", mediaCondition: ...}
  * //   ],
  * // }
  * ```
  */
 export const parseMediaQueryList = (str: string): MediaQueryList | ParserError => {
   const tokens = lexer(str);
-  return isParserError(tokens) ? tokens : flattenMediaQueryList(readMediaQueryList(tokens));
+  return isParserError(tokens)
+    ? invertParserError(tokens)
+    : deleteUndefinedValues(flattenMediaQueryList(readMediaQueryList(tokens)));
 };
 
 /**
@@ -64,22 +67,23 @@ export const parseMediaQueryList = (str: string): MediaQueryList | ParserError =
  * //     type: "condition",
  * //     children: [{ type: "feature", context: "boolean", feature: "monochrome" }],
  * //   },
- * //   mediaType: "all",
  * // }
  * ```
  */
 export const parseMediaQuery = (str: string): MediaQuery | ParserError => {
   const tokens = lexer(str);
   if (isParserError(tokens)) {
-    return tokens;
+    return invertParserError(tokens);
   } else {
     const mediaQuery = readMediaQuery(tokens);
-    return isParserError(mediaQuery) ? mediaQuery : flattenMediaQuery(mediaQuery);
+    return isParserError(mediaQuery)
+      ? invertParserError(mediaQuery)
+      : deleteUndefinedValues(flattenMediaQuery(mediaQuery));
   }
 };
 
 /**
- * creates an AST from a **media-condition** string - including parentheses
+ * creates an AST from a **media-condition** string
  *
  * @example
  * ```ts
@@ -110,10 +114,12 @@ export const parseMediaQuery = (str: string): MediaQuery | ParserError => {
 export const parseMediaCondition = (str: string): MediaCondition | ParserError => {
   const tokens = lexer(str);
   if (isParserError(tokens)) {
-    return tokens;
+    return invertParserError(tokens);
   } else {
     const mediaCondition = readMediaCondition(tokens, true);
-    return isParserError(mediaCondition) ? mediaCondition : flattenMediaCondition(mediaCondition);
+    return isParserError(mediaCondition)
+      ? invertParserError(mediaCondition)
+      : deleteUndefinedValues(flattenMediaCondition(mediaCondition));
   }
 };
 
@@ -127,7 +133,7 @@ export const parseMediaCondition = (str: string): MediaCondition | ParserError =
  * //   type: "feature",
  * //   context: "value",
  * //   feature: "width",
- * //   mediaPrefix: "min",
+ * //   prefix: "min",
  * //   value: { type: "dimension", flag: "number", unit: "px", value: 768 },
  * // }
  *
@@ -135,7 +141,12 @@ export const parseMediaCondition = (str: string): MediaCondition | ParserError =
  */
 export const parseMediaFeature = (str: string): MediaFeature | ParserError => {
   const tokens = lexer(str);
-  return isParserError(tokens) ? tokens : readMediaFeature(tokens);
+  if (isParserError(tokens)) {
+    return invertParserError(tokens);
+  } else {
+    const mediaFeature = readMediaFeature(tokens);
+    return isParserError(mediaFeature) ? mediaFeature : deleteUndefinedValues(mediaFeature);
+  }
 };
 
 /**
@@ -143,21 +154,24 @@ export const parseMediaFeature = (str: string): MediaFeature | ParserError => {
  *
  * @example
  * ```ts
- * console.log(stringify(parseMediaFeature(`(min-width: 768px)`)));
- * // "(min-width: 768px)"
- * ```
- *
- * @example
- * ```ts
  * console.log(stringify({
  *   type: "query",
- *   mediaType: "all",
  *   mediaCondition: {
  *     type: "condition",
  *     children: [{ type: "feature", context: "boolean", feature: "monochrome" }],
  *   },
  * }));
  * // "(monochrome)"
+ * ```
+ *
+ * note: stringifying a MediaCondition directly will always wrap the condition with parentheses.
+ * sometimes they are redundant, but calling this with a MediaQuery will remove them for you.
+ * e.g. `stringify({ type: 'query', mediaType: 'all', mediaCondition: <your condition> })`
+ *
+ * @example
+ * ```ts
+ * console.log(stringify(parseMediaFeature(`(min-width: 768px)`)));
+ * // "(min-width: 768px)"
  * ```
  */
 export const stringify = (
@@ -182,4 +196,4 @@ export const stringify = (
   }
 };
 
-export * from "./shared.js";
+export * from "./utils.js";

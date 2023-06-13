@@ -1,4 +1,4 @@
-import { CSSToken, ParserError } from "../shared.js";
+import { CSSToken, ParserError } from "../utils.js";
 
 const TAB_CODEPOINT = 0x00_09;
 const NEWLINE_CODEPOINT = 0x00_0a;
@@ -323,19 +323,19 @@ export const codepointsToTokens = (codepoints: number[], index = 0): CSSToken[] 
       c >= FIRST_NON_ASCII_CODEPOINT ||
       c === BACKSLASH_CODEPOINT
     ) {
-      const cc = codepoints.at(index + 1);
-      if (c === BACKSLASH_CODEPOINT && (cc === undefined || cc === NEWLINE_CODEPOINT)) {
+      // const cc = codepoints.at(index + 1);
+      // if (c === BACKSLASH_CODEPOINT && (cc === undefined || cc === NEWLINE_CODEPOINT)) {
+      //   tokens.push({ type: "delim", value: c, start, end: index });
+      // } else {
+      const result = consumeIdentLike(codepoints, index);
+      if (result === null) {
         tokens.push({ type: "delim", value: c, start, end: index });
       } else {
-        const result = consumeIdentLike(codepoints, index);
-        if (result === null) {
-          tokens.push({ type: "delim", value: c, start, end: index });
-        } else {
-          const [lastIndex, value, type] = result;
-          index = lastIndex;
-          tokens.push({ type, value, start, end: index });
-        }
+        const [lastIndex, value, type] = result;
+        index = lastIndex;
+        tokens.push({ type, value, start, end: index });
       }
+      // }
     } else {
       tokens.push({ type: "delim", value: c, start, end: index });
     }
@@ -618,39 +618,7 @@ export const consumeIdentUnsafe = (
 };
 
 export const consumeIdent = (codepoints: number[], index: number): [number, string] | null => {
-  if (codepoints.length <= index || !wouldStartIdentifier(codepoints, index)) {
-    return null;
-  }
-
-  const identChars: number[] = [];
-  for (
-    let c = codepoints.at(index) as number;
-    index < codepoints.length;
-    c = codepoints.at(++index) as number
-  ) {
-    if (
-      c === HYPHEN_CODEPOINT ||
-      c === UNDERSCORE_CODEPOINT ||
-      (c >= UPPER_A_CODEPOINT && c <= UPPER_Z_CODEPOINT) ||
-      (c >= LOWER_A_CODEPOINT && c <= LOWER_Z_CODEPOINT) ||
-      c >= FIRST_NON_ASCII_CODEPOINT ||
-      (c >= ZERO_CODEPOINT && c <= NINE_CODEPOINT)
-    ) {
-      identChars.push(c);
-      continue;
-    } else {
-      const result = consumeEscape(codepoints, index);
-      if (result !== null) {
-        const [lastIndex, cc] = result;
-        identChars.push(cc);
-        index = lastIndex;
-        continue;
-      }
-    }
-    break;
-  }
-
-  return [index - 1, String.fromCodePoint(...identChars)];
+  return wouldStartIdentifier(codepoints, index) ? consumeIdentUnsafe(codepoints, index) : null;
 };
 
 export const consumeUrl = (codepoints: number[], index: number): [number, string] | null => {

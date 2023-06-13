@@ -1,4 +1,4 @@
-import { CSSToken, ParserToken, ParserError } from "../shared.js";
+import { CSSToken, ParserToken, ParserError } from "../utils.js";
 
 export const convertToParserTokens = (cssTokens: CSSToken[]): ParserToken[] | ParserError => {
   const tokens: ParserToken[] = [];
