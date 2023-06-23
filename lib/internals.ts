@@ -4,7 +4,7 @@ import {
   MediaQuery,
   MediaQueryList,
   ParserError,
-  ValidValueToken,
+  ValueToken,
 } from "./utils.js";
 
 export const invertParserError = (parserError: ParserError): ParserError => {
@@ -20,7 +20,7 @@ export const invertParserError = (parserError: ParserError): ParserError => {
 };
 
 export const deleteUndefinedValues = <
-  T extends MediaQueryList | MediaQuery | MediaCondition | MediaFeature | ValidValueToken
+  T extends MediaQueryList | MediaQuery | MediaCondition | MediaFeature | ValueToken
 >(
   n: T
 ): T => {
@@ -73,3 +73,6 @@ export const deleteUndefinedValues = <
     }
   }
 };
+
+// eslint-disable-next-line @typescript-eslint/ban-types
+export type Simplify<T> = { [KeyType in keyof T]: T[KeyType] } & {};

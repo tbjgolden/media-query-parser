@@ -1,9 +1,9 @@
-import { CSSToken, ParserToken, ParserError } from "../utils.js";
+import { LexerToken, ParserToken, ParserError } from "../utils.js";
 
-export const convertToParserTokens = (cssTokens: CSSToken[]): ParserToken[] | ParserError => {
+export const convertToParserTokens = (cssTokens: LexerToken[]): ParserToken[] | ParserError => {
   const tokens: ParserToken[] = [];
 
-  let hasSpaceBefore = false;
+  let isAfterSpace = false;
   for (const cssToken of cssTokens) {
     switch (cssToken.type) {
       case "{": {
@@ -13,18 +13,15 @@ export const convertToParserTokens = (cssTokens: CSSToken[]): ParserToken[] | Pa
         return { errid: "NO_SEMICOLON", start: cssToken.start, end: cssToken.end };
       }
       case "whitespace": {
-        hasSpaceBefore = true;
-        if (tokens.length > 0) {
-          tokens[tokens.length - 1].hasSpaceAfter = true;
-        }
+        isAfterSpace = true;
         break;
       }
       case "EOF": {
         break;
       }
       default: {
-        tokens.push({ ...cssToken, hasSpaceBefore, hasSpaceAfter: false });
-        hasSpaceBefore = false;
+        tokens.push({ ...cssToken, isAfterSpace });
+        isAfterSpace = false;
       }
     }
   }

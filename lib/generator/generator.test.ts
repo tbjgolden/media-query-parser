@@ -1,35 +1,32 @@
-import { readMediaCondition, readMediaFeature, readMediaQueryList } from "../ast/ast.js";
-import { flattenMediaQueryList } from "../flatten/flatten.js";
-import {
-  generateMediaCondition,
-  generateMediaFeature,
-  generateMediaQueryList,
-} from "../generator/generator.js";
+import { matchCondition, matchFeature, matchQueryList } from "../ast/ast.js";
+import { generateCondition, generateFeature, generateQueryList } from "../generator/generator.js";
 import { lexer } from "../lexer/lexer.js";
-import { ParserToken, isParserError } from "../utils.js";
+import { ParserToken } from "../utils.js";
 
 const expectIdentity = (str: string) => {
-  expect(
-    generateMediaQueryList(flattenMediaQueryList(readMediaQueryList(lexer(str) as ParserToken[])))
-  ).toBe(str);
+  const ast = matchQueryList(lexer(str) as ParserToken[]);
+  expect(generateQueryList(ast)).toBe(str);
 };
 
-test(`debug`, () => {
-  const x = readMediaFeature(lexer("(width:100px)") as ParserToken[]);
-  if (!isParserError(x)) {
-    expect(generateMediaFeature(x)).toEqual("(width: 100px)");
+test("ensure generator regenerates same query", () => {
+  const a = matchFeature(lexer("(width:100px)") as ParserToken[])?.n;
+  if (a) {
+    expect(generateFeature(a)).toEqual("(width: 100px)");
   }
-  const y = readMediaCondition(lexer("(width:100px)") as ParserToken[], true);
-  if (!isParserError(y)) {
-    expect(generateMediaCondition(y)).toEqual("((width: 100px))");
+  const b = matchCondition(lexer("(width:100px)") as ParserToken[])?.n;
+  if (b) {
+    expect(generateCondition(b)).toEqual("(width: 100px)");
   }
-  const z = readMediaCondition(lexer("(width:100px) and (orientation)") as ParserToken[], true);
-  if (!isParserError(z)) {
-    expect(generateMediaCondition(z)).toEqual("((width: 100px) and (orientation))");
+  const c = matchCondition(lexer("(width:100px) and (orientation)") as ParserToken[])?.n;
+  if (c) {
+    expect(generateCondition(c)).toEqual("(width: 100px) and (orientation)");
   }
-});
+  const d = matchCondition(lexer("((width:100px) and (orientation))") as ParserToken[])?.n;
+  if (d) {
+    expect(generateCondition(d)).toEqual("((width: 100px) and (orientation))");
+  }
 
-test("wrapper does not flatten useful layers", () => {
+  expectIdentity(`screen and (100px <= width <= 200px)`);
   expectIdentity(`all`);
   expectIdentity(`all, all, all`);
   expectIdentity(`only screen and (color)`);
@@ -58,12 +55,11 @@ test("wrapper does not flatten useful layers", () => {
   expectIdentity(`(600px < height)`);
   expectIdentity(`(600px > width)`);
   expectIdentity(`(width < 600px)`);
-  expectIdentity(`screen and (100px <= width <= 200px)`);
   expectIdentity(`(100px <= width) and (width <= 200px)`);
   expectIdentity(`(1/2 < aspect-ratio < 1/1)`);
   expectIdentity(`(100px <= width <= 200px)`);
   expectIdentity(`only screen and (color)`);
-  expectIdentity(`not ((color) and (hover) and (min-width: 1px))`);
   expectIdentity(`not (hover)`);
   expectIdentity(`not ((hover) or (color))`);
+  expectIdentity(`not ((color) and (hover) and (min-width: 1px))`);
 });

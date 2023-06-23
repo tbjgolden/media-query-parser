@@ -1,4 +1,4 @@
-import { isParserError } from "../ast/ast.js";
+import { isParserError } from "../utils.js";
 import { readCodepoints } from "./codepoints.js";
 import { lexer } from "./lexer.js";
 import {
@@ -17,14 +17,9 @@ const c = (strings: TemplateStringsArray): number[] => readCodepoints(strings[0]
 // lexer without indexes
 const l = (cssStr: string) => {
   const result = lexer(cssStr);
-  if (isParserError(result)) {
-    return result;
-  } else {
-    return result.map((token) => {
-      const { start: _0, end: _1, hasSpaceBefore: _2, hasSpaceAfter: _3, ...t } = token;
-      return t;
-    });
-  }
+  return isParserError(result)
+    ? result
+    : result.map(({ start: _0, end: _1, isAfterSpace: _2, ...token }) => token);
 };
 
 test("consumeEscape", () => {
@@ -236,16 +231,9 @@ test("old bugs", () => {
     { type: ")" },
   ]);
   expect(lexer("(min-width: -100px)")).toEqual([
-    { end: 0, start: 0, type: "(", hasSpaceBefore: false, hasSpaceAfter: false },
-    {
-      end: 9,
-      start: 1,
-      type: "ident",
-      value: "min-width",
-      hasSpaceBefore: false,
-      hasSpaceAfter: false,
-    },
-    { end: 10, start: 10, type: "colon", hasSpaceBefore: false, hasSpaceAfter: true },
+    { end: 0, start: 0, type: "(", isAfterSpace: false },
+    { end: 9, start: 1, type: "ident", value: "min-width", isAfterSpace: false },
+    { end: 10, start: 10, type: "colon", isAfterSpace: false },
     {
       end: 17,
       flag: "number",
@@ -253,10 +241,9 @@ test("old bugs", () => {
       type: "dimension",
       unit: "px",
       value: -100,
-      hasSpaceBefore: true,
-      hasSpaceAfter: false,
+      isAfterSpace: true,
     },
-    { end: 18, start: 18, type: ")", hasSpaceBefore: false, hasSpaceAfter: false },
+    { end: 18, start: 18, type: ")", isAfterSpace: false },
   ]);
 
   expect(l(".dropdown-item:hover{color:#1e2125;background-color:#e9ecef}")).toEqual({

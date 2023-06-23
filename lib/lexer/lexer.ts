@@ -1,5 +1,4 @@
-import { isParserError } from "../ast/ast.js";
-import { ParserToken, ParserError } from "../utils.js";
+import { ParserToken, ParserError, isParserError } from "../utils.js";
 import { readCodepoints } from "./codepoints.js";
 import { convertToParserTokens } from "./process.js";
 import { codepointsToTokens } from "./tokens.js";

@@ -1,9 +1,8 @@
-// eslint-disable-next-line @typescript-eslint/ban-types
-type Simplify<T> = { [KeyType in keyof T]: T[KeyType] } & {};
+import { Simplify } from "./internals.js";
 
-type GenericToken = { type: string; start: number; end: number };
+type GenericToken = { start: number; end: number };
 
-export type CSSToken =
+export type LexerToken =
   | WhitespaceToken
   | StringToken
   | HashToken
@@ -61,108 +60,51 @@ export type UrlToken = Simplify<GenericToken & { type: "url"; value: string }>;
 export type EOFToken = Simplify<GenericToken & { type: "EOF" }>;
 
 export type ParserToken = Simplify<
-  Exclude<CSSToken, EOFToken> & { hasSpaceBefore: boolean; hasSpaceAfter: boolean }
+  Exclude<LexerToken, WhitespaceToken | EOFToken> & { isAfterSpace: boolean }
 >;
+
+export type QueryListNode = { n: "query-list"; qs: QueryNode[] };
+export type QueryNode =
+  | { n: "query"; prefix?: undefined; type?: undefined; condition: ConditionNode }
+  | { n: "query"; prefix?: "not" | "only"; type: string; condition?: ConditionWithoutOrNode };
+export type FeatureNode = BooleanFeatureNode | PlainFeatureNode | RangeFeatureNode;
+export type BooleanFeatureNode = { n: "feature"; t: "boolean"; f: string };
+export type PlainFeatureNode = { n: "feature"; t: "value"; f: string; v: ValueNode };
+export type RangeFeatureNode = { n: "feature"; t: "range"; f: string; r: RangeNode };
+export type NumberNode = { n: "number"; v: number; isInt: boolean };
+export type DimensionNode = { n: "dimension"; v: number; u: string };
+export type RatioNode = { n: "ratio"; l: number; r: number };
+export type IdentNode = { n: "ident"; v: string };
+export type NumericValueNode = NumberNode | DimensionNode | RatioNode;
+export type ValueNode = NumericValueNode | IdentNode;
+export type Range1Node =
+  | { a: IdentNode; op: ">" | ">=" | "<" | "<=" | "="; b: NumericValueNode }
+  | { a: NumericValueNode; op: ">" | ">=" | "<" | "<=" | "="; b: IdentNode };
+export type Range2Node =
+  | { a: NumericValueNode; op: "<" | "<="; b: IdentNode; op2: "<" | "<="; c: NumericValueNode }
+  | { a: NumericValueNode; op: ">" | ">="; b: IdentNode; op2: ">" | ">="; c: NumericValueNode };
+export type RangeNode = Simplify<Range1Node | Range2Node>;
+export type NotConditionNode = { n: "condition"; op: "not"; a: InParensNode; bs?: undefined };
+export type AndConditionNode = { n: "condition"; op: "and"; a: InParensNode; bs?: InParensNode[] };
+export type OrConditionNode = { n: "condition"; op: "or"; a: InParensNode; bs?: InParensNode[] };
+export type ConditionNode = Simplify<NotConditionNode | AndConditionNode | OrConditionNode>;
+export type ConditionWithoutOrNode = Simplify<NotConditionNode | AndConditionNode>;
+export type GeneralEnclosedNode = { n: "general-enclosed" };
+export type InParensNode = { n: "in-parens"; v: ConditionNode | FeatureNode | GeneralEnclosedNode };
+
+export type Match<T> = { n: T; i: number } | undefined;
+
+// ---
 
 export type ParserErrId =
-  | "EXPECT_LPAREN_OR_TYPE"
-  | "EXPECT_TYPE"
-  | "EXPECT_CONDITION"
-  | "EXPECT_AND"
-  | "EXPECT_LPAREN_OR_TYPE_OR_MODIFIER"
-  | "EXPECT_LPAREN"
-  | "EXPECT_FEATURE_OR_CONDITION"
-  | "EXPECT_AND_OR_OR"
-  | "EXPECT_RPAREN"
-  | "EXPECT_VALUE"
-  | "EXPECT_RANGE"
-  | "MIX_AND_WITH_OR"
-  | "MISMATCH_PARENS"
-  | "EMPTY_QUERY"
-  | "EMPTY_CONDITION"
-  | "EMPTY_FEATURE"
-  | "NO_LCURLY"
-  | "NO_SEMICOLON"
+  | "INVALID_QUERY"
+  | "INVALID_CONDITION"
   | "INVALID_FEATURE"
-  | "INVALID_RANGE"
-  | "INVALID_STRING";
+  | "INVALID_STRING"
+  | "NO_LCURLY"
+  | "NO_SEMICOLON";
 
 export type ParserError = { errid: ParserErrId; start: number; end: number; child?: ParserError };
-
-export type MediaQueryList = { type: "query-list"; mediaQueries: MediaQuery[] };
-
-export type MediaQuery = {
-  type: "query";
-  prefix?: "not" | "only";
-  mediaType?: "screen" | "print";
-  mediaCondition?: MediaCondition;
-};
-
-export type MediaCondition =
-  | {
-      type: "condition";
-      operator?: "not";
-      children: [child: MediaCondition | MediaFeature];
-    }
-  | {
-      type: "condition";
-      operator: "and" | "or";
-      children: [
-        child1: MediaCondition | MediaFeature,
-        child2: MediaCondition | MediaFeature,
-        ...rest: Array<MediaCondition | MediaFeature>
-      ];
-    };
-
-export type MediaFeature = Simplify<
-  { type: "feature" } & (MediaFeatureBoolean | MediaFeatureValue | MediaFeatureRange)
->;
-export type MediaFeatureBoolean = { context: "boolean"; feature: string };
-export type MediaFeatureValue = {
-  context: "value";
-  prefix?: "min" | "max";
-  feature: string;
-  value: ValidValueToken;
-};
-export type MediaFeatureRange = { context: "range"; feature: string; range: ValidRange };
-export type ValidValueToken = Simplify<
-  | Omit<NumberToken, "start" | "end">
-  | Omit<DimensionToken, "start" | "end">
-  | Omit<RatioToken, "start" | "end">
-  | Omit<IdentToken, "start" | "end">
->;
-export type ValidRange =
-  | {
-      leftToken: ValidRangeToken;
-      leftOp: "<" | "<=";
-      rightOp: "<" | "<=";
-      rightToken: ValidRangeToken;
-    }
-  | {
-      leftToken: ValidRangeToken;
-      leftOp: ">" | ">=";
-      rightOp: ">" | ">=";
-      rightToken: ValidRangeToken;
-    }
-  | {
-      leftToken: ValidRangeToken;
-      leftOp: ">" | ">=" | "<" | "<=" | "=";
-      rightOp?: undefined;
-      rightToken?: undefined;
-    }
-  | {
-      leftToken?: undefined;
-      leftOp?: undefined;
-      rightOp: ">" | ">=" | "<" | "<=" | "=";
-      rightToken: ValidRangeToken;
-    };
-export type RatioToken = { type: "ratio"; numerator: number; denominator: number };
-export type ValidRangeToken = Simplify<
-  | Omit<NumberToken, "start" | "end">
-  | Omit<DimensionToken, "start" | "end">
-  | Omit<RatioToken, "start" | "end">
-  | { type: "ident"; value: "infinite" }
->;
 
 /**
  * a type guard that asserts whether `value` is of type ParserError

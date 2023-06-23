@@ -48,7 +48,7 @@ const config = {
           dir: { direction: true, directory: true },
           docs: { documentation: true, documents: true },
           dst: { daylightSavingTime: true, destination: true, distribution: true },
-          e: { error: true, event: true },
+          // e: { error: true, event: true },
           rel: { related: true, relationship: true, relative: true },
           res: { response: true, result: true },
         },

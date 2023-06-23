@@ -1,4 +1,4 @@
-import { CSSToken, ParserError } from "../utils.js";
+import { LexerToken, ParserError } from "../utils.js";
 
 const TAB_CODEPOINT = 0x00_09;
 const NEWLINE_CODEPOINT = 0x00_0a;
@@ -39,8 +39,8 @@ const LEFT_CURLY_CODEPOINT = 0x00_7b;
 const RIGHT_CURLY_CODEPOINT = 0x00_7d;
 const FIRST_NON_ASCII_CODEPOINT = 0x00_80;
 
-export const codepointsToTokens = (codepoints: number[], index = 0): CSSToken[] | ParserError => {
-  const tokens: CSSToken[] = [];
+export const codepointsToTokens = (codepoints: number[], index = 0): LexerToken[] | ParserError => {
+  const tokens: LexerToken[] = [];
 
   for (; index < codepoints.length; index += 1) {
     const c = codepoints.at(index) as number;

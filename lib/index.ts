@@ -1,31 +1,21 @@
+import { matchCondition, matchFeature, matchQuery, matchQueryList } from "./ast/ast.js";
 import {
-  readMediaQueryList,
-  readMediaQuery,
-  readMediaCondition,
-  readMediaFeature,
-} from "./ast/ast.js";
-import {
-  flattenMediaQueryList,
-  flattenMediaQuery,
-  flattenMediaCondition,
-} from "./flatten/flatten.js";
-import {
-  generateMediaQueryList,
-  generateMediaQuery,
-  generateMediaCondition,
-  generateMediaFeature,
-  generateValidValueToken,
+  generateQueryList,
+  generateQuery,
+  generateCondition,
+  generateFeature,
+  generateValue,
 } from "./generator/generator.js";
 import { deleteUndefinedValues, invertParserError } from "./internals.js";
 import { lexer } from "./lexer/lexer.js";
 import {
-  MediaQueryList,
+  ConditionNode,
+  FeatureNode,
   ParserError,
+  QueryListNode,
+  QueryNode,
+  ValueNode,
   isParserError,
-  MediaQuery,
-  MediaCondition,
-  MediaFeature,
-  ValidValueToken,
 } from "./utils.js";
 
 /**
@@ -49,11 +39,11 @@ import {
  * // }
  * ```
  */
-export const parseMediaQueryList = (str: string): MediaQueryList | ParserError => {
+export const parseMediaQueryList = (str: string): QueryListNode | ParserError => {
   const tokens = lexer(str);
   return isParserError(tokens)
     ? invertParserError(tokens)
-    : deleteUndefinedValues(flattenMediaQueryList(readMediaQueryList(tokens)));
+    : deleteUndefinedValues(matchQueryList(tokens));
 };
 
 /**
@@ -70,15 +60,19 @@ export const parseMediaQueryList = (str: string): MediaQueryList | ParserError =
  * // }
  * ```
  */
-export const parseMediaQuery = (str: string): MediaQuery | ParserError => {
+export const parseMediaQuery = (str: string): QueryNode | ParserError => {
   const tokens = lexer(str);
   if (isParserError(tokens)) {
-    return invertParserError(tokens);
+    return tokens;
   } else {
-    const mediaQuery = readMediaQuery(tokens);
-    return isParserError(mediaQuery)
-      ? invertParserError(mediaQuery)
-      : deleteUndefinedValues(flattenMediaQuery(mediaQuery));
+    const query = matchQuery(tokens);
+    return query && query.i === tokens.length
+      ? deleteUndefinedValues(query.n)
+      : {
+          errid: "INVALID_QUERY",
+          start: tokens.at(0)?.start ?? 0,
+          end: tokens.at(-1)?.end ?? 0,
+        };
   }
 };
 
@@ -111,15 +105,19 @@ export const parseMediaQuery = (str: string): MediaQuery | ParserError => {
  *
  * ```
  */
-export const parseMediaCondition = (str: string): MediaCondition | ParserError => {
+export const parseMediaCondition = (str: string): ConditionNode | ParserError => {
   const tokens = lexer(str);
   if (isParserError(tokens)) {
-    return invertParserError(tokens);
+    return tokens;
   } else {
-    const mediaCondition = readMediaCondition(tokens, true);
-    return isParserError(mediaCondition)
-      ? invertParserError(mediaCondition)
-      : deleteUndefinedValues(flattenMediaCondition(mediaCondition));
+    const condition = matchCondition(tokens);
+    return condition && condition.i === tokens.length
+      ? deleteUndefinedValues(condition.n)
+      : {
+          errid: "INVALID_CONDITION",
+          start: tokens.at(0)?.start ?? 0,
+          end: tokens.at(-1)?.end ?? 0,
+        };
   }
 };
 
@@ -139,13 +137,19 @@ export const parseMediaCondition = (str: string): MediaCondition | ParserError =
  *
  * ```
  */
-export const parseMediaFeature = (str: string): MediaFeature | ParserError => {
+export const parseMediaFeature = (str: string): FeatureNode | ParserError => {
   const tokens = lexer(str);
   if (isParserError(tokens)) {
-    return invertParserError(tokens);
+    return tokens;
   } else {
-    const mediaFeature = readMediaFeature(tokens);
-    return isParserError(mediaFeature) ? mediaFeature : deleteUndefinedValues(mediaFeature);
+    const feature = matchFeature(tokens);
+    return feature && feature.i === tokens.length
+      ? deleteUndefinedValues(feature.n)
+      : {
+          errid: "INVALID_FEATURE",
+          start: tokens.at(0)?.start ?? 0,
+          end: tokens.at(-1)?.end ?? 0,
+        };
   }
 };
 
@@ -175,23 +179,23 @@ export const parseMediaFeature = (str: string): MediaFeature | ParserError => {
  * ```
  */
 export const stringify = (
-  node: MediaQueryList | MediaQuery | MediaCondition | MediaFeature | ValidValueToken
+  node: QueryListNode | QueryNode | ConditionNode | FeatureNode | ValueNode
 ) => {
-  switch (node.type) {
+  switch (node.n) {
     case "query-list": {
-      return generateMediaQueryList(node);
+      return generateQueryList(node);
     }
     case "query": {
-      return generateMediaQuery(node);
+      return generateQuery(node);
     }
     case "condition": {
-      return generateMediaCondition(node);
+      return generateCondition(node);
     }
     case "feature": {
-      return generateMediaFeature(node);
+      return generateFeature(node);
     }
     default: {
-      return generateValidValueToken(node);
+      return generateValue(node);
     }
   }
 };

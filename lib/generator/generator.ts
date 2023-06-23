@@ -1,117 +1,96 @@
 import {
-  MediaQueryList,
-  MediaQuery,
-  MediaCondition,
-  MediaFeature,
-  MediaFeatureBoolean,
-  MediaFeatureValue,
-  MediaFeatureRange,
-  ValidValueToken,
-  ValidRangeToken,
-  RatioToken,
-  NumberToken,
-  DimensionToken,
-  IdentToken,
+  QueryListNode,
+  QueryNode,
+  ConditionNode,
+  FeatureNode,
+  BooleanFeatureNode,
+  PlainFeatureNode,
+  RangeFeatureNode,
+  ValueNode,
+  RatioNode,
+  IdentNode,
+  NumberNode,
+  ConditionWithoutOrNode,
+  InParensNode,
+  DimensionNode,
 } from "../utils.js";
 
-export const generateMediaQueryList = (mediaQueryList: MediaQueryList): string =>
-  mediaQueryList.mediaQueries.map((mediaQuery) => generateMediaQuery(mediaQuery)).join(", ");
-export const generateMediaQuery = (mediaQuery: MediaQuery): string => {
+export const generateQueryList = (queryList: QueryListNode): string =>
+  queryList.qs.map((q) => generateQuery(q)).join(", ");
+export const generateQuery = (mediaQuery: QueryNode): string => {
   let str = "";
   if (mediaQuery.prefix) {
     str += mediaQuery.prefix + " ";
   }
-  const doesNeedAll = mediaQuery.prefix !== undefined || !mediaQuery.mediaCondition;
-  if (doesNeedAll || mediaQuery.mediaType !== undefined) {
-    str += mediaQuery.mediaType ?? "all";
-    if (mediaQuery.mediaCondition) {
+  const doesNeedAll = mediaQuery.prefix !== undefined || !mediaQuery.condition;
+  if (doesNeedAll || mediaQuery.type !== undefined) {
+    str += mediaQuery.type ?? "all";
+    if (mediaQuery.condition) {
       str += " and";
     }
   }
-  if (mediaQuery.mediaCondition) {
+  if (mediaQuery.condition) {
     if (str !== "") {
       str += " ";
     }
 
-    const condition = mediaQuery.mediaCondition;
-
-    const canTrimParentheses = condition.operator !== "or" || !str;
-
-    str += canTrimParentheses
-      ? generateMediaCondition(mediaQuery.mediaCondition).slice(1, -1)
-      : generateMediaCondition(mediaQuery.mediaCondition);
+    str += generateCondition(mediaQuery.condition);
   }
   return str;
 };
-export const generateMediaCondition = (mediaCondition: MediaCondition): string => {
-  let str = "(";
-  if (mediaCondition.operator === "not") {
-    const child = mediaCondition.children[0];
-    str +=
-      "not " +
-      (child.type === "feature" ? generateMediaFeature(child) : generateMediaCondition(child));
+
+export const generateInParens = (inParens: InParensNode): string => {
+  if (inParens.v.n === "condition") {
+    return "(" + generateCondition(inParens.v) + ")";
+  } else if (inParens.v.n === "feature") {
+    return generateFeature(inParens.v);
   } else {
-    for (const child of mediaCondition.children) {
-      if (str.length > 1) {
-        str += " " + mediaCondition.operator + " ";
-      }
-      str += child.type === "feature" ? generateMediaFeature(child) : generateMediaCondition(child);
-    }
+    return "(general enclosed)";
+  }
+};
+
+export const generateCondition = (condition: ConditionNode | ConditionWithoutOrNode): string => {
+  return condition.op === "not"
+    ? "not " + generateInParens(condition.a)
+    : generateInParens(condition.a) +
+        (condition.bs ?? []).map((b) => ` ${condition.op} ${generateInParens(b)}`).join("");
+};
+export const generateFeature = (feature: FeatureNode): string => {
+  let str = "(";
+  if (feature.t === "boolean") {
+    str += generateFeatureBoolean(feature);
+  } else if (feature.t === "value") {
+    str += generateFeatureValue(feature);
+  } else {
+    str += generateFeatureRange(feature);
   }
   str += ")";
   return str;
 };
-export const generateMediaFeature = (mediaFeature: MediaFeature): string => {
-  let str = "(";
-  if (mediaFeature.context === "boolean") {
-    str += generateMediaFeatureBoolean(mediaFeature);
-  } else if (mediaFeature.context === "value") {
-    str += generateMediaFeatureValue(mediaFeature);
-  } else {
-    str += generateMediaFeatureRange(mediaFeature);
-  }
-  str += ")";
+export const generateFeatureBoolean = (feature: BooleanFeatureNode): string => {
+  return feature.f;
+};
+export const generateFeatureValue = (feature: PlainFeatureNode): string => {
+  return feature.f + ": " + generateValue(feature.v);
+};
+export const generateFeatureRange = (feature: RangeFeatureNode): string => {
+  let str = `${generateValue(feature.r.a)} ${feature.r.op} ${generateValue(feature.r.b)}`;
+  if ("op2" in feature.r) str += ` ${feature.r.op2} ${generateValue(feature.r.c)}`;
   return str;
 };
-export const generateMediaFeatureBoolean = (mediaFeature: MediaFeatureBoolean): string => {
-  return mediaFeature.feature;
-};
-export const generateMediaFeatureValue = (mediaFeature: MediaFeatureValue): string => {
-  const prefix = mediaFeature.prefix ? `${mediaFeature.prefix}-` : "";
-  return prefix + mediaFeature.feature + ": " + generateValidValueToken(mediaFeature.value);
-};
-export const generateMediaFeatureRange = (mediaFeature: MediaFeatureRange): string => {
-  let str = "";
-  if (mediaFeature.range.leftOp) {
-    str += `${generateValidRangeToken(mediaFeature.range.leftToken)} ${mediaFeature.range.leftOp} `;
-  }
-  str += mediaFeature.feature;
-  if (mediaFeature.range.rightOp) {
-    str += ` ${mediaFeature.range.rightOp} ${generateValidRangeToken(
-      mediaFeature.range.rightToken
-    )}`;
-  }
-  return str;
-};
-export const generateValidValueToken = (validValueToken: ValidValueToken): string => {
-  if (validValueToken.type === "dimension") {
-    return generateDimensionToken(validValueToken);
-  } else if (validValueToken.type === "ident") {
-    return generateIdentToken(validValueToken);
-  } else if (validValueToken.type === "ratio") {
-    return generateRatioToken(validValueToken);
+export const generateValue = (value: ValueNode): string => {
+  if (value.n === "dimension") {
+    return generateDimension(value);
+  } else if (value.n === "ident") {
+    return generateIdent(value);
+  } else if (value.n === "ratio") {
+    return generateRatio(value);
   } else {
-    return generateNumberToken(validValueToken);
+    return generateNumber(value);
   }
 };
-export const generateValidRangeToken = (validRangeToken: ValidRangeToken): string =>
-  generateValidValueToken(validRangeToken);
-export const generateRatioToken = (ratioToken: RatioToken): string =>
-  `${ratioToken.numerator}/${ratioToken.denominator}`;
-export const generateNumberToken = (numberToken: Omit<NumberToken, "start" | "end">): string =>
-  `${numberToken.value}`;
-export const generateDimensionToken = (
-  dimensionToken: Omit<DimensionToken, "start" | "end">
-): string => `${dimensionToken.value}${dimensionToken.unit}`;
-export const generateIdentToken = (identToken: Omit<IdentToken, "start" | "end">): string =>
-  identToken.value;
+export const generateRatio = (ratio: RatioNode): string => `${ratio.l}/${ratio.r}`;
+export const generateNumber = (number: NumberNode): string => `${number.v}`;
+export const generateDimension = (dimension: DimensionNode): string =>
+  `${dimension.v}${dimension.u}`;
+export const generateIdent = (ident: IdentNode): string => ident.v;
