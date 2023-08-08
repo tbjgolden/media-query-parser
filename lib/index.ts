@@ -6,7 +6,6 @@ import {
   generateFeature,
   generateValue,
 } from "./generator/generator.js";
-import { deleteUndefinedValues, invertParserError } from "./internals.js";
 import { lexer } from "./lexer/lexer.js";
 import {
   ConditionNode,
@@ -41,9 +40,7 @@ import {
  */
 export const parseMediaQueryList = (str: string): QueryListNode | ParserError => {
   const tokens = lexer(str);
-  return isParserError(tokens)
-    ? invertParserError(tokens)
-    : deleteUndefinedValues(matchQueryList(tokens));
+  return isParserError(tokens) ? tokens : matchQueryList(tokens);
 };
 
 /**
@@ -67,7 +64,7 @@ export const parseMediaQuery = (str: string): QueryNode | ParserError => {
   } else {
     const query = matchQuery(tokens);
     return query && query.i === tokens.length
-      ? deleteUndefinedValues(query.n)
+      ? query.n
       : {
           errid: "INVALID_QUERY",
           start: tokens.at(0)?.start ?? 0,
@@ -112,7 +109,7 @@ export const parseMediaCondition = (str: string): ConditionNode | ParserError =>
   } else {
     const condition = matchCondition(tokens);
     return condition && condition.i === tokens.length
-      ? deleteUndefinedValues(condition.n)
+      ? condition.n
       : {
           errid: "INVALID_CONDITION",
           start: tokens.at(0)?.start ?? 0,
@@ -144,7 +141,7 @@ export const parseMediaFeature = (str: string): FeatureNode | ParserError => {
   } else {
     const feature = matchFeature(tokens);
     return feature && feature.i === tokens.length
-      ? deleteUndefinedValues(feature.n)
+      ? feature.n
       : {
           errid: "INVALID_FEATURE",
           start: tokens.at(0)?.start ?? 0,
