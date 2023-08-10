@@ -403,13 +403,13 @@ export const matchQueryList = (parsingTokens: ParserToken[]): QueryListNode => {
     // '@media {' is fine, treat as all
     return { n: "query-list", qs: [{ n: "query", type: "all" }] };
   } else {
-    const qs: QueryNode[] = [];
+    const qs: Array<QueryNode | undefined> = [];
     for (const mediaQueryParserTokens of mediaQueriesParserTokens) {
       const a = matchQuery(mediaQueryParserTokens);
       if (a && a.i === mediaQueryParserTokens.length) {
         qs.push(a.n);
       } else {
-        qs.push({ n: "query", prefix: "not", type: "all" });
+        qs.push(undefined);
       }
     }
 

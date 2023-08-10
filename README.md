@@ -65,8 +65,6 @@ This package is available from the `npm` registry.
 npm install media-query-parser
 ```
 
-> The shape of Errors are
-
 ## Usage
 
 Supports JavaScript + TypeScript:
@@ -78,22 +76,23 @@ const mediaQuery = parseMediaQuery("screen and (min-width: 768px)");
 if (!isParserError(mediaQuery)) {
   console.log(mediaQuery);
   // {
-  //   type: "query",
-  //   mediaType: "screen",
-  //   mediaCondition: {
-  //     type: "condition",
-  //     children: [{
-  //       type: "feature",
-  //       context: "value",
-  //       prefix: "min",
-  //       feature: "width",
-  //       value: {
-  //         type: "dimension", value: 768, unit: "px", flag: "number"
-  //       },
-  //     }],
-  //   },
+  //   n: 'query',
+  //   type: 'screen',
+  //   condition: {
+  //     n: 'condition',
+  //     op: 'and',
+  //     a: {
+  //       n: 'in-parens',
+  //       v: {
+  //         n: 'feature',
+  //         t: 'value',
+  //         f: 'min-width',
+  //         v: { n: 'dimension', v: 768, u: 'px' }
+  //       }
+  //     }
+  //   }
   // }
-  console.log(stringify(mediaQuery.mediaCondition.children[0]));
+  console.log(stringify(mediaQuery.condition));
   // "(min-width: 768px)"
 }
 ```

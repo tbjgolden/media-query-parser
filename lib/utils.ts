@@ -63,7 +63,7 @@ export type ParserToken = Simplify<
   Exclude<LexerToken, WhitespaceToken | EOFToken> & { isAfterSpace: boolean }
 >;
 
-export type QueryListNode = { n: "query-list"; qs: QueryNode[] };
+export type QueryListNode = { n: "query-list"; qs: Array<QueryNode | undefined> };
 export type QueryNode =
   | { n: "query"; prefix?: undefined; type?: undefined; condition: ConditionNode }
   | { n: "query"; prefix?: "not" | "only"; type: string; condition?: ConditionWithoutOrNode };

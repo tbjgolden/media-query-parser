@@ -23,18 +23,34 @@ import {
  * Important:
  *
  * - _an invalid media-query child **does not** make the media-query-list invalid_
+ *  - each invalid media query child is replaced with undefined
  * - can **return** a ParserError (e.g. when there is a CSS syntax error, like an invalid string)
  *
  * @example
  * ```ts
- * console.log(parseMediaQueryList(`print, invalid, (min-width: 1000px)`));
+ * console.log(parseMediaQueryList(`print, #invalid, (min-width: 1000px)`));
  * // {
- * //   type: "query-list",
- * //   mediaQueries: [
- * //     {type: "query", mediaType: "print"},
- * //     {type: "query", prefix: "not"},
- * //     {type: "query", mediaCondition: ...}
- * //   ],
+ * //   n: 'query-list',
+ * //   qs: [
+ * //     { n: 'query', type: 'print' },
+ * //     undefined,
+ * //     {
+ * //       n: 'query',
+ * //       condition: {
+ * //         n: 'condition',
+ * //         op: 'and',
+ * //         a: {
+ * //           n: 'in-parens',
+ * //           v: {
+ * //             n: 'feature',
+ * //             t: 'value',
+ * //             f: 'min-width',
+ * //             v: { n: 'dimension', v: 1000, u: 'px' }
+ * //           }
+ * //         }
+ * //       }
+ * //     }
+ * //   ]
  * // }
  * ```
  */
@@ -47,13 +63,18 @@ export const parseMediaQueryList = (str: string): QueryListNode | ParserError =>
  * creates an AST from a **media-query** string
  * @example
  * ```ts
- * console.log(parseMediaQuery(`(monochrome)`));
+ * console.log(parseMediaQuery(`screen and (monochrome)`));
  * // {
- * //   type: "query",
- * //   mediaCondition: {
- * //     type: "condition",
- * //     children: [{ type: "feature", context: "boolean", feature: "monochrome" }],
- * //   },
+ * //   n: 'query',
+ * //   type: 'screen',
+ * //   condition: {
+ * //     n: 'condition',
+ * //     op: 'and',
+ * //     a: {
+ * //       n: 'in-parens',
+ * //       v: { n: 'feature', t: 'boolean', f: 'monochrome' }
+ * //     }
+ * //   }
  * // }
  * ```
  */
@@ -80,26 +101,35 @@ export const parseMediaQuery = (str: string): QueryNode | ParserError => {
  * ```ts
  * console.log(parseMediaCondition(`((aspect-ratio > 1/2) or (monochrome))`));
  * // {
- * //   type: "condition",
- * //   children: [{
- * //     type: "condition",
- * //     children: [
- * //       {
- * //         type: "feature",
- * //         context: "range",
- * //         feature: "aspect-ratio",
- * //         range: {
- * //           featureName: "aspect-ratio",
- * //           rightOp: ">",
- * //           rightToken: { denominator: 2, numerator: 1, type: "ratio" },
- * //         },
+ * //   n: 'condition',
+ * //   op: 'and',
+ * //   a: {
+ * //     n: 'in-parens',
+ * //     v: {
+ * //       n: 'condition',
+ * //       op: 'or',
+ * //       a: {
+ * //         n: 'in-parens',
+ * //         v: {
+ * //           n: 'feature',
+ * //           t: 'range',
+ * //           f: 'aspect-ratio',
+ * //           r: {
+ * //             a: { n: 'ident', v: 'aspect-ratio' },
+ * //             op: '>',
+ * //             b: { n: 'ratio', l: 1, r: 2 }
+ * //           }
+ * //         }
  * //       },
- * //       { context: "boolean", feature: "monochrome", type: "feature" },
- * //     ],
- * //     operator: "or",
- * //   }],
+ * //       bs: [
+ * //         {
+ * //           n: 'in-parens',
+ * //           v: { n: 'feature', t: 'boolean', f: 'monochrome' }
+ * //         }
+ * //       ]
+ * //     }
+ * //   }
  * // }
- *
  * ```
  */
 export const parseMediaCondition = (str: string): ConditionNode | ParserError => {
@@ -125,13 +155,11 @@ export const parseMediaCondition = (str: string): ConditionNode | ParserError =>
  * ```ts
  * console.log(parseMediaFeature(`(min-width: 768px)`));
  * // {
- * //   type: "feature",
- * //   context: "value",
- * //   feature: "width",
- * //   prefix: "min",
- * //   value: { type: "dimension", flag: "number", unit: "px", value: 768 },
+ * //   n: 'feature',
+ * //   t: 'value',
+ * //   f: 'min-width',
+ * //   v: { n: 'dimension', v: 768, u: 'px' }
  * // }
- *
  * ```
  */
 export const parseMediaFeature = (str: string): FeatureNode | ParserError => {
@@ -156,23 +184,18 @@ export const parseMediaFeature = (str: string): FeatureNode | ParserError => {
  * @example
  * ```ts
  * console.log(stringify({
- *   type: "query",
- *   mediaCondition: {
- *     type: "condition",
- *     children: [{ type: "feature", context: "boolean", feature: "monochrome" }],
- *   },
+ *   n: 'query',
+ *   type: 'screen',
+ *   condition: {
+ *     n: 'condition',
+ *     op: 'and',
+ *     a: {
+ *       n: 'in-parens',
+ *       v: { n: 'feature', t: 'boolean', f: 'monochrome' }
+ *     }
+ *   }
  * }));
- * // "(monochrome)"
- * ```
- *
- * note: stringifying a MediaCondition directly will always wrap the condition with parentheses.
- * sometimes they are redundant, but calling this with a MediaQuery will remove them for you.
- * e.g. `stringify({ type: 'query', mediaType: 'all', mediaCondition: <your condition> })`
- *
- * @example
- * ```ts
- * console.log(stringify(parseMediaFeature(`(min-width: 768px)`)));
- * // "(min-width: 768px)"
+ * // 'screen and (monochrome)'
  * ```
  */
 export const stringify = (

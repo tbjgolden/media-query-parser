@@ -16,7 +16,7 @@ import {
 } from "../utils.js";
 
 export const generateQueryList = (queryList: QueryListNode): string =>
-  queryList.qs.map((q) => generateQuery(q)).join(", ");
+  queryList.qs.map((q) => (q ? generateQuery(q) : "not all")).join(", ");
 export const generateQuery = (mediaQuery: QueryNode): string => {
   let str = "";
   if (mediaQuery.prefix) {
