@@ -34,7 +34,7 @@ test("parseMediaQueryList", () => {
     if (!isParserError(mql)) {
       const neverQueries: number[] = [];
       for (const [i, mq] of mql.qs.entries()) {
-        if (mq.prefix === "not" && mq.type === "all" && mq.condition === undefined) {
+        if (!mq || (mq.prefix === "not" && mq.type === "all" && mq.condition === undefined)) {
           neverQueries.push(i);
         }
       }
