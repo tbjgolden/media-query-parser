@@ -5,7 +5,6 @@ import {
   FeatureNode,
   BooleanFeatureNode,
   PlainFeatureNode,
-  RangeFeatureNode,
   ValueNode,
   RatioNode,
   IdentNode,
@@ -13,6 +12,9 @@ import {
   ConditionWithoutOrNode,
   InParensNode,
   DimensionNode,
+  RangeFeatureNode,
+  DoubleRangeFeatureNode,
+  SingleRangeFeatureNode,
 } from "../utils.js";
 
 export const generateQueryList = (queryList: QueryListNode): string =>
@@ -51,9 +53,8 @@ export const generateInParens = (inParens: InParensNode): string => {
 
 export const generateCondition = (condition: ConditionNode | ConditionWithoutOrNode): string => {
   return condition.op === "not"
-    ? "not " + generateInParens(condition.a)
-    : generateInParens(condition.a) +
-        (condition.bs ?? []).map((b) => ` ${condition.op} ${generateInParens(b)}`).join("");
+    ? "not " + generateInParens(condition.nodes[0])
+    : (condition.nodes ?? []).map((b) => `${generateInParens(b)}`).join(` ${condition.op} `);
 };
 export const generateFeature = (feature: FeatureNode): string => {
   let str = "(";
@@ -74,11 +75,17 @@ export const generateFeatureValue = (feature: PlainFeatureNode): string => {
   return feature.feature + ": " + generateValue(feature.value);
 };
 export const generateFeatureRange = (feature: RangeFeatureNode): string => {
-  let str = `${generateValue(feature.value.a)} ${feature.value.op} ${generateValue(
-    feature.value.b,
-  )}`;
-  if ("op2" in feature.value) str += ` ${feature.value.op2} ${generateValue(feature.value.c)}`;
-  return str;
+  return feature.ops === 1
+    ? generateFeatureSingleRange(feature)
+    : generateFeatureDoubleRange(feature);
+};
+export const generateFeatureSingleRange = (feature: SingleRangeFeatureNode): string => {
+  return `${feature.feature} ${feature.op} ${generateValue(feature.value)}`;
+};
+export const generateFeatureDoubleRange = (feature: DoubleRangeFeatureNode): string => {
+  return `${generateValue(feature.minValue)} ${feature.minOp} ${feature.feature} ${
+    feature.maxOp
+  } ${generateValue(feature.maxValue)}`;
 };
 export const generateValue = (value: ValueNode): string => {
   if (value._t === "dimension") {

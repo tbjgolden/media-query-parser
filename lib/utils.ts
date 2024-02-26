@@ -71,7 +71,11 @@ export type QueryListNode = { _t: "query-list"; nodes: Array<QueryNode | undefin
 export type QueryNode =
   | { _t: "query"; prefix?: undefined; type?: undefined; condition: ConditionNode }
   | { _t: "query"; prefix?: "not" | "only"; type: string; condition?: ConditionWithoutOrNode };
-export type FeatureNode = BooleanFeatureNode | PlainFeatureNode | RangeFeatureNode;
+export type FeatureNode =
+  | BooleanFeatureNode
+  | PlainFeatureNode
+  | SingleRangeFeatureNode
+  | DoubleRangeFeatureNode;
 export type BooleanFeatureNode = { _t: "feature"; context: "boolean"; feature: string };
 export type PlainFeatureNode = {
   _t: "feature";
@@ -79,28 +83,42 @@ export type PlainFeatureNode = {
   feature: string;
   value: ValueNode;
 };
-export type RangeFeatureNode = {
+export type SingleRangeFeatureNode = {
   _t: "feature";
   context: "range";
+  ops: 1;
   feature: string;
-  value: RangeNode;
+  op: ">" | ">=" | "<" | "<=" | "=";
+  value: NumericValueNode;
 };
+export type DoubleRangeFeatureNode = {
+  _t: "feature";
+  context: "range";
+  ops: 2;
+  feature: string;
+  minOp: "<" | "<=";
+  minValue: NumericValueNode;
+  maxOp: "<" | "<=";
+  maxValue: NumericValueNode;
+};
+export type RangeFeatureNode = SingleRangeFeatureNode | DoubleRangeFeatureNode;
 export type NumberNode = { _t: "number"; value: number; flag: "number" | "integer" };
 export type DimensionNode = { _t: "dimension"; value: number; unit: string };
 export type RatioNode = { _t: "ratio"; left: number; right: number };
 export type IdentNode = { _t: "ident"; value: string };
 export type NumericValueNode = NumberNode | DimensionNode | RatioNode;
 export type ValueNode = NumericValueNode | IdentNode;
-export type Range1Node =
-  | { a: IdentNode; op: ">" | ">=" | "<" | "<=" | "="; b: NumericValueNode }
-  | { a: NumericValueNode; op: ">" | ">=" | "<" | "<=" | "="; b: IdentNode };
-export type Range2Node =
-  | { a: NumericValueNode; op: "<" | "<="; b: IdentNode; op2: "<" | "<="; c: NumericValueNode }
-  | { a: NumericValueNode; op: ">" | ">="; b: IdentNode; op2: ">" | ">="; c: NumericValueNode };
-export type RangeNode = Simplify<Range1Node | Range2Node>;
-export type NotConditionNode = { _t: "condition"; op: "not"; a: InParensNode; bs?: undefined };
-export type AndConditionNode = { _t: "condition"; op: "and"; a: InParensNode; bs?: InParensNode[] };
-export type OrConditionNode = { _t: "condition"; op: "or"; a: InParensNode; bs?: InParensNode[] };
+export type NotConditionNode = { _t: "condition"; op: "not"; nodes: [InParensNode] };
+export type AndConditionNode = {
+  _t: "condition";
+  op: "and";
+  nodes: [InParensNode, ...InParensNode[]];
+};
+export type OrConditionNode = {
+  _t: "condition";
+  op: "or";
+  nodes: [InParensNode, ...InParensNode[]];
+};
 export type ConditionNode = Simplify<NotConditionNode | AndConditionNode | OrConditionNode>;
 export type ConditionWithoutOrNode = Simplify<NotConditionNode | AndConditionNode>;
 export type GeneralEnclosedNode = {

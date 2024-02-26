@@ -2,6 +2,7 @@ import {
   BooleanFeatureNode,
   ConditionNode,
   ConditionWithoutOrNode,
+  DoubleRangeFeatureNode,
   FeatureNode,
   GeneralEnclosedNode,
   InParensNode,
@@ -10,9 +11,8 @@ import {
   PlainFeatureNode,
   QueryListNode,
   QueryNode,
-  Range1Node,
-  RangeFeatureNode,
   RatioNode,
+  SingleRangeFeatureNode,
   ValueNode,
 } from "../utils.js";
 
@@ -95,7 +95,10 @@ const matchValue = (ts: ParserToken[], i = 0): Match<ValueNode> => {
   }
 };
 
-const matchRange = (ts: ParserToken[], i = 0): Match<RangeFeatureNode> => {
+const matchRange = (
+  ts: ParserToken[],
+  i = 0,
+): Match<SingleRangeFeatureNode | DoubleRangeFeatureNode> => {
   const a = matchValue(ts, i);
   if (a) {
     const b = matchComparison(ts, a.i);
@@ -111,14 +114,12 @@ const matchRange = (ts: ParserToken[], i = 0): Match<RangeFeatureNode> => {
                 t: {
                   _t: "feature",
                   context: "range",
+                  ops: 2,
                   feature: c.t.value,
-                  value: {
-                    a: a.t,
-                    op: b.t.isIncl ? "<=" : "<",
-                    b: c.t,
-                    op2: d.t.isIncl ? "<=" : "<",
-                    c: e.t,
-                  },
+                  minValue: a.t,
+                  minOp: b.t.isIncl ? "<=" : "<",
+                  maxOp: d.t.isIncl ? "<=" : "<",
+                  maxValue: e.t,
                 },
                 i: e.i,
               };
@@ -128,14 +129,12 @@ const matchRange = (ts: ParserToken[], i = 0): Match<RangeFeatureNode> => {
                 t: {
                   _t: "feature",
                   context: "range",
+                  ops: 2,
                   feature: c.t.value,
-                  value: {
-                    a: a.t,
-                    op: b.t.isIncl ? ">=" : ">",
-                    b: c.t,
-                    op2: d.t.isIncl ? ">=" : ">",
-                    c: e.t,
-                  },
+                  minValue: e.t,
+                  minOp: d.t.isIncl ? "<=" : "<",
+                  maxOp: b.t.isIncl ? "<=" : "<",
+                  maxValue: a.t,
                 },
                 i: e.i,
               };
@@ -143,7 +142,7 @@ const matchRange = (ts: ParserToken[], i = 0): Match<RangeFeatureNode> => {
           }
         }
 
-        let op: Range1Node["op"] = "=";
+        let op: "=" | "<" | "<=" | ">" | ">=" = "=";
         if (b.t.t === "lt") {
           op = b.t.isIncl ? "<=" : "<";
         } else if (b.t.t === "gt") {
@@ -156,18 +155,28 @@ const matchRange = (ts: ParserToken[], i = 0): Match<RangeFeatureNode> => {
               _t: "feature",
               context: "range",
               feature: a.t.value,
-              value: { a: a.t, op, b: c.t },
+              ops: 1,
+              op,
+              value: c.t,
             },
             i: c.i,
           };
         }
         if (c.t._t === "ident" && a.t._t !== "ident") {
+          let flippedOp: typeof op = "=";
+          if (op === "<") flippedOp = ">";
+          else if (op === "<=") flippedOp = ">=";
+          else if (op === ">") flippedOp = "<";
+          else if (op === ">=") flippedOp = "<=";
+
           return {
             t: {
               _t: "feature",
               context: "range",
               feature: c.t.value,
-              value: { a: a.t, op, b: c.t },
+              ops: 1,
+              op: flippedOp,
+              value: a.t,
             },
             i: c.i,
           };
@@ -311,7 +320,7 @@ export const matchNot = (ts: ParserToken[], i = 0): Match<InParensNode> => {
 export const matchCondition = (ts: ParserToken[], i = 0): Match<ConditionNode> => {
   const a = matchNot(ts, i);
   if (a) {
-    return { t: { _t: "condition", op: "not", a: a.t }, i: a.i };
+    return { t: { _t: "condition", op: "not", nodes: [a.t] }, i: a.i };
   } else {
     const b = matchInParens(ts, i);
     if (b) {
@@ -325,7 +334,7 @@ export const matchCondition = (ts: ParserToken[], i = 0): Match<ConditionNode> =
           lastI = next.i;
           next = matchAnd(ts, next.i);
         }
-        return { t: { _t: "condition", op: "and", a: b.t, bs: expressions }, i: lastI };
+        return { t: { _t: "condition", op: "and", nodes: [b.t, ...expressions] }, i: lastI };
       }
       const d = matchOr(ts, b.i);
       if (d) {
@@ -337,9 +346,9 @@ export const matchCondition = (ts: ParserToken[], i = 0): Match<ConditionNode> =
           lastI = next.i;
           next = matchOr(ts, next.i);
         }
-        return { t: { _t: "condition", op: "or", a: b.t, bs: expressions }, i: lastI };
+        return { t: { _t: "condition", op: "or", nodes: [b.t, ...expressions] }, i: lastI };
       }
-      return { t: { _t: "condition", op: "and", a: b.t }, i: b.i };
+      return { t: { _t: "condition", op: "and", nodes: [b.t] }, i: b.i };
     }
   }
 };
@@ -350,7 +359,7 @@ export const matchConditionWithoutOr = (
 ): Match<ConditionWithoutOrNode> => {
   const a = matchNot(ts, i);
   if (a) {
-    return { t: { _t: "condition", op: "not", a: a.t }, i: a.i };
+    return { t: { _t: "condition", op: "not", nodes: [a.t] }, i: a.i };
   } else {
     const b = matchInParens(ts, i);
     if (b) {
@@ -364,9 +373,9 @@ export const matchConditionWithoutOr = (
           lastI = next.i;
           next = matchAnd(ts, next.i);
         }
-        return { t: { _t: "condition", op: "and", a: b.t, bs: expressions }, i: lastI };
+        return { t: { _t: "condition", op: "and", nodes: [b.t, ...expressions] }, i: lastI };
       }
-      return { t: { _t: "condition", op: "and", a: b.t }, i: b.i };
+      return { t: { _t: "condition", op: "and", nodes: [b.t] }, i: b.i };
     }
   }
 };

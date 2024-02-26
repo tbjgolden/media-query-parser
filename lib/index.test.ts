@@ -78,7 +78,7 @@ test("stringify", () => {
   expect(s(parseMediaQuery("( width < 10px )"))).toEqual("(width < 10px)");
   expect(s(parseMediaCondition("( width < 10px )"))).toEqual("(width < 10px)");
   expect(s(parseMediaFeature("( width < 10px )"))).toEqual("(width < 10px)");
-  expect(s({ _t: "number", value: 1, flag: true })).toEqual("1");
+  expect(s({ _t: "number", value: 1, flag: "integer" })).toEqual("1");
   expect(s({ _t: "dimension", value: 2, unit: "px" })).toEqual("2px");
   expect(s({ _t: "ratio", left: 3, right: 4 })).toEqual("3/4");
   expect(s({ _t: "ident", value: "five" })).toEqual("five");
@@ -93,7 +93,13 @@ test("coverage", () => {
   expect(s(parseMediaQuery("not ( width <  )"))).toEqual(false);
   expect(s(parseMediaQuery("only #"))).toEqual(false);
   expect(s(parseMediaQuery("((orientation) and (width < 100px) or (monochrome))"))).toEqual(false);
-  expect(s(parseMediaQuery("(100px > width)"))).toEqual("(100px > width)");
+  expect(s(parseMediaQuery("(width > 100px)"))).toEqual("(width > 100px)");
+  expect(s(parseMediaQuery("(100px > width)"))).toEqual("(width < 100px)");
+  expect(s(parseMediaQuery("(width >= 100px)"))).toEqual("(width >= 100px)");
+  expect(s(parseMediaQuery("(100px >= width)"))).toEqual("(width <= 100px)");
+  expect(s(parseMediaQuery("(200px > width > 100px)"))).toEqual("(100px < width < 200px)");
+  expect(s(parseMediaQuery("(50px < width <= 100px)"))).toEqual("(50px < width <= 100px)");
+  expect(s(parseMediaQuery("(100px <= width < 200px)"))).toEqual("(100px <= width < 200px)");
   expect(s(parseMediaCondition("width: 100px"))).toEqual(false);
   expect(s(parseMediaQuery("(boaty: #mcboatface)"))).toEqual(false);
   expect(s(parseMediaFeature(""))).toEqual(false);

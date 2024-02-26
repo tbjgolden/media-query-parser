@@ -7,6 +7,10 @@ const expectIdentity = (str: string) => {
   const ast = matchQueryList(lexer(str) as ParserToken[]);
   expect(generateQueryList(ast)).toBe(str);
 };
+const expectToBecome = (input: string, output: string) => {
+  const ast = matchQueryList(lexer(input) as ParserToken[]);
+  expect(generateQueryList(ast)).toBe(output);
+};
 
 test("ensure generator regenerates same query", () => {
   const a = matchFeature(lexer("(width:100px)") as ParserToken[])?.t;
@@ -52,10 +56,10 @@ test("ensure generator regenerates same query", () => {
   expectIdentity(`(prefers-reduced-motion: reduce)`);
   expectIdentity(`print`);
   expectIdentity(`(height > 600px)`);
-  expectIdentity(`(600px < height)`);
-  expectIdentity(`(600px > width)`);
+  expectToBecome(`(600px < height)`, "(height > 600px)");
+  expectToBecome(`(600px > width)`, "(width < 600px)");
   expectIdentity(`(width < 600px)`);
-  expectIdentity(`(100px <= width) and (width <= 200px)`);
+  expectToBecome(`(100px <= width) and (width <= 200px)`, "(width >= 100px) and (width <= 200px)");
   expectIdentity(`(1/2 < aspect-ratio < 1/1)`);
   expectIdentity(`(100px <= width <= 200px)`);
   expectIdentity(`only screen and (color)`);
