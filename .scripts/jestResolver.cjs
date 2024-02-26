@@ -14,7 +14,7 @@ const resolveLocalImport = import("xnr").then(({ resolveLocalImport }) => resolv
 /** @type {import('jest-resolve').AsyncResolver} */
 const asyncResolver = async (
   /** @type {Parameters<import('jest-resolve').AsyncResolver>[0]} */ importPath,
-  /** @type {Parameters<import('jest-resolve').AsyncResolver>[1]} */ options
+  /** @type {Parameters<import('jest-resolve').AsyncResolver>[1]} */ options,
 ) => {
   const prefix = "jest-sequencer-";
   if (importPath.startsWith(prefix)) importPath = importPath.slice(prefix.length);

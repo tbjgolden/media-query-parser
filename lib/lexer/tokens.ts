@@ -451,7 +451,7 @@ export const consumeEscape = (codepoints: number[], index: number): [number, num
 
 export const consumeNumeric = (
   codepoints: number[],
-  index: number
+  index: number,
 ):
   | [
       number,
@@ -459,7 +459,7 @@ export const consumeNumeric = (
         | ["number", number, "number" | "integer"]
         | ["percentage", number]
         | ["dimension", number, string]
-      )
+      ),
     ]
   | null => {
   const numberResult = consumeNumber(codepoints, index);
@@ -484,7 +484,7 @@ export const consumeNumeric = (
 
 export const consumeNumber = (
   codepoints: number[],
-  index: number
+  index: number,
 ): [number, number, "integer" | "number"] | null => {
   const c = codepoints.at(index);
   if (c === undefined) return null;
@@ -580,7 +580,7 @@ export const consumeNumber = (
 // deliberately does not check if it starts with an identifier start code point
 export const consumeIdentUnsafe = (
   codepoints: number[],
-  index: number
+  index: number,
 ): [number, string] | null => {
   if (codepoints.length <= index) {
     return null;
@@ -665,7 +665,7 @@ export const consumeUrl = (codepoints: number[], index: number): [number, string
 
 export const consumeIdentLike = (
   codepoints: number[],
-  index: number
+  index: number,
 ): [number, string, "ident" | "function" | "url"] | null => {
   const result = consumeIdent(codepoints, index);
   if (result === null) return null;

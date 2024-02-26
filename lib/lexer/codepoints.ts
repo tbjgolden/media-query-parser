@@ -53,7 +53,7 @@ export const readCodepoints = (cssStr: string): number[] => {
     } else if (byte < 0b11110000) {
       // read codepoint encoded as 3 byte utf8
       codepoints.push(
-        ((byte << 60) >>> 48) | ((utf8Bytes[++i] << 58) >>> 52) | ((utf8Bytes[++i] << 58) >>> 58)
+        ((byte << 60) >>> 48) | ((utf8Bytes[++i] << 58) >>> 52) | ((utf8Bytes[++i] << 58) >>> 58),
       );
     } else {
       // read codepoint encoded as 4 byte utf8
@@ -61,7 +61,7 @@ export const readCodepoints = (cssStr: string): number[] => {
         ((byte << 61) >>> 43) |
           ((utf8Bytes[++i] << 58) >>> 46) |
           ((utf8Bytes[++i] << 58) >>> 52) |
-          ((utf8Bytes[++i] << 58) >>> 58)
+          ((utf8Bytes[++i] << 58) >>> 58),
       );
     }
   }

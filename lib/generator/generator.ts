@@ -75,7 +75,7 @@ export const generateFeatureValue = (feature: PlainFeatureNode): string => {
 };
 export const generateFeatureRange = (feature: RangeFeatureNode): string => {
   let str = `${generateValue(feature.value.a)} ${feature.value.op} ${generateValue(
-    feature.value.b
+    feature.value.b,
   )}`;
   if ("op2" in feature.value) str += ` ${feature.value.op2} ${generateValue(feature.value.c)}`;
   return str;

@@ -346,7 +346,7 @@ export const matchCondition = (ts: ParserToken[], i = 0): Match<ConditionNode> =
 
 export const matchConditionWithoutOr = (
   ts: ParserToken[],
-  i = 0
+  i = 0,
 ): Match<ConditionWithoutOrNode> => {
   const a = matchNot(ts, i);
   if (a) {

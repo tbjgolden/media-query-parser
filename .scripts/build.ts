@@ -59,7 +59,7 @@ while ((directory = toSearch.pop())) {
             arrowParens: "avoid",
             endOfLine: "lf",
             quoteProps: "as-needed",
-          })
+          }),
         );
       }
     }

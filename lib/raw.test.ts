@@ -4,10 +4,10 @@ import { isParserError, parseMediaQueryList } from "./index.js";
 
 test("parseMediaQueryList", () => {
   const testQueryLists: string[] = JSON.parse(
-    fs.readFileSync(path.join(process.cwd(), "lib/__fixtures__/raw.json"), "utf8")
+    fs.readFileSync(path.join(process.cwd(), "lib/__fixtures__/raw.json"), "utf8"),
   );
   const errorsMap: [string, number[]][] = JSON.parse(
-    fs.readFileSync(path.join(process.cwd(), "lib/__fixtures__/errors.json"), "utf8")
+    fs.readFileSync(path.join(process.cwd(), "lib/__fixtures__/errors.json"), "utf8"),
   );
 
   const shouldBeErrorSet = new Set([

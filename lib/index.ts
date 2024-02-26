@@ -199,7 +199,7 @@ export const parseMediaFeature = (str: string): FeatureNode | ParserError => {
  * ```
  */
 export const stringify = (
-  node: QueryListNode | QueryNode | ConditionNode | FeatureNode | ValueNode
+  node: QueryListNode | QueryNode | ConditionNode | FeatureNode | ValueNode,
 ) => {
   switch (node._t) {
     case "query-list": {
