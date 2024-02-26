@@ -61,7 +61,7 @@
   "simple-git-hooks": {
     "commit-msg": "npx msg-time",
     "pre-commit": "npx lint-time",
-    "pre-push": "npx jest -o --coverage=false --passWithNoTests"
+    "pre-push": "NODE_OPTIONS='--experimental-vm-modules --no-warnings' npx jest -o --coverage=false --passWithNoTests"
   },
   "prettier": {
     "printWidth": 100,
