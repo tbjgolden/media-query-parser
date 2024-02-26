@@ -3,14 +3,14 @@ import { ParserToken } from "../utils.js";
 import { matchQueryList } from "./ast.js";
 
 const expectValid = (mq: string) => {
-  expect(matchQueryList(lexer(mq) as ParserToken[]).qs[0]).not.toBe(undefined);
+  expect(matchQueryList(lexer(mq) as ParserToken[]).nodes[0]).not.toBe(undefined);
 };
 const expectInvalid = (mq: string) => {
-  expect(matchQueryList(lexer(mq) as ParserToken[]).qs[0]).toBe(undefined);
+  expect(matchQueryList(lexer(mq) as ParserToken[]).nodes[0]).toBe(undefined);
 };
 const expectAll = (mq: string, expected: boolean[]) => {
   const tokens = lexer(mq) as ParserToken[];
-  expect(matchQueryList(tokens).qs.map((query) => query !== undefined)).toEqual(expected);
+  expect(matchQueryList(tokens).nodes.map((query) => query !== undefined)).toEqual(expected);
 };
 
 test("matchQueryList", async () => {

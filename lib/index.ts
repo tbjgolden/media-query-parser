@@ -85,7 +85,7 @@ export const parseMediaQuery = (str: string): QueryNode | ParserError => {
   } else {
     const query = matchQuery(tokens);
     return query && query.i === tokens.length
-      ? query.n
+      ? query.t
       : {
           errid: "INVALID_QUERY",
           start: tokens.at(0)?.start ?? 0,
@@ -139,7 +139,7 @@ export const parseMediaCondition = (str: string): ConditionNode | ParserError =>
   } else {
     const condition = matchCondition(tokens);
     return condition && condition.i === tokens.length
-      ? condition.n
+      ? condition.t
       : {
           errid: "INVALID_CONDITION",
           start: tokens.at(0)?.start ?? 0,
@@ -169,7 +169,7 @@ export const parseMediaFeature = (str: string): FeatureNode | ParserError => {
   } else {
     const feature = matchFeature(tokens);
     return feature && feature.i === tokens.length
-      ? feature.n
+      ? feature.t
       : {
           errid: "INVALID_FEATURE",
           start: tokens.at(0)?.start ?? 0,
@@ -201,7 +201,7 @@ export const parseMediaFeature = (str: string): FeatureNode | ParserError => {
 export const stringify = (
   node: QueryListNode | QueryNode | ConditionNode | FeatureNode | ValueNode
 ) => {
-  switch (node.n) {
+  switch (node._t) {
     case "query-list": {
       return generateQueryList(node);
     }

@@ -224,26 +224,26 @@ test("consumeIdentUnsafe", () => {
 
 test("old bugs", () => {
   expect(l("(min-width: -100px)")).toEqual([
-    { type: "(" },
-    { type: "ident", value: "min-width" },
-    { type: "colon" },
-    { flag: "number", type: "dimension", unit: "px", value: -100 },
-    { type: ")" },
+    { _t: "(" },
+    { _t: "ident", value: "min-width" },
+    { _t: "colon" },
+    { flag: "number", _t: "dimension", unit: "px", value: -100 },
+    { _t: ")" },
   ]);
   expect(lexer("(min-width: -100px)")).toEqual([
-    { end: 0, start: 0, type: "(", isAfterSpace: false },
-    { end: 9, start: 1, type: "ident", value: "min-width", isAfterSpace: false },
-    { end: 10, start: 10, type: "colon", isAfterSpace: false },
+    { end: 0, start: 0, _t: "(", isAfterSpace: false },
+    { end: 9, start: 1, _t: "ident", value: "min-width", isAfterSpace: false },
+    { end: 10, start: 10, _t: "colon", isAfterSpace: false },
     {
       end: 17,
       flag: "number",
       start: 12,
-      type: "dimension",
+      _t: "dimension",
       unit: "px",
       value: -100,
       isAfterSpace: true,
     },
-    { end: 18, start: 18, type: ")", isAfterSpace: false },
+    { end: 18, start: 18, _t: ")", isAfterSpace: false },
   ]);
 
   expect(l(".dropdown-item:hover{color:#1e2125;background-color:#e9ecef}")).toEqual({
@@ -252,54 +252,54 @@ test("old bugs", () => {
     start: 20,
   });
   expect(l("(1/2 < aspect-ratio < 1/1)")).toEqual([
-    { type: "(" },
-    { flag: "integer", type: "number", value: 1 },
-    { type: "delim", value: 47 },
-    { flag: "integer", type: "number", value: 2 },
-    { type: "delim", value: 60 },
-    { type: "ident", value: "aspect-ratio" },
-    { type: "delim", value: 60 },
-    { flag: "integer", type: "number", value: 1 },
-    { type: "delim", value: 47 },
-    { flag: "integer", type: "number", value: 1 },
-    { type: ")" },
+    { _t: "(" },
+    { flag: "integer", _t: "number", value: 1 },
+    { _t: "delim", value: 47 },
+    { flag: "integer", _t: "number", value: 2 },
+    { _t: "delim", value: 60 },
+    { _t: "ident", value: "aspect-ratio" },
+    { _t: "delim", value: 60 },
+    { flag: "integer", _t: "number", value: 1 },
+    { _t: "delim", value: 47 },
+    { flag: "integer", _t: "number", value: 1 },
+    { _t: ")" },
   ]);
 });
 
 test("missing coverage", () => {
   expect(l('"\n"')).toEqual({ end: 0, errid: "INVALID_STRING", start: 0 });
   expect(l("'\n'")).toEqual({ end: 0, errid: "INVALID_STRING", start: 0 });
-  expect(l("#")).toEqual([{ type: "delim", value: 35 }]);
+  expect(l("#")).toEqual([{ _t: "delim", value: 35 }]);
   expect(l("+3% +4 +2px")).toEqual([
-    { flag: "number", type: "percentage", value: 3 },
-    { flag: "integer", type: "number", value: 4 },
-    { flag: "number", type: "dimension", unit: "px", value: 2 },
+    { flag: "number", _t: "percentage", value: 3 },
+    { flag: "integer", _t: "number", value: 4 },
+    { flag: "number", _t: "dimension", unit: "px", value: 2 },
   ]);
   expect(l("-3% -4 -2px")).toEqual([
-    { flag: "number", type: "percentage", value: -3 },
-    { flag: "integer", type: "number", value: -4 },
-    { flag: "number", type: "dimension", unit: "px", value: -2 },
+    { flag: "number", _t: "percentage", value: -3 },
+    { flag: "integer", _t: "number", value: -4 },
+    { flag: "number", _t: "dimension", unit: "px", value: -2 },
   ]);
   expect(l(".3% .4 .2px")).toEqual([
-    { flag: "number", type: "percentage", value: 0.3 },
-    { flag: "number", type: "number", value: 0.4 },
-    { flag: "number", type: "dimension", unit: "px", value: 0.2 },
+    { flag: "number", _t: "percentage", value: 0.3 },
+    { flag: "number", _t: "number", value: 0.4 },
+    { flag: "number", _t: "dimension", unit: "px", value: 0.2 },
   ]);
   expect(l("+2.")).toEqual([
-    { flag: "integer", type: "number", value: 2 },
-    { type: "delim", value: 46 },
+    { flag: "integer", _t: "number", value: 2 },
+    { _t: "delim", value: 46 },
   ]);
-  expect(l("<!-- -->")).toEqual([{ type: "CDO" }, { type: "CDC" }]);
-  expect(l("@")).toEqual([{ type: "delim", value: 64 }]);
+  expect(l("<!-- -->")).toEqual([{ _t: "CDO" }, { _t: "CDC" }]);
+  expect(l("@")).toEqual([{ _t: "delim", value: 64 }]);
   expect(l("\\ \\\n")).toEqual([
-    { type: "ident", value: " " },
-    { type: "delim", value: 92 },
+    { _t: "ident", value: " " },
+    { _t: "delim", value: 92 },
   ]);
   expect(l("a/**/b")).toEqual([
-    { type: "ident", value: "a" },
-    { type: "ident", value: "b" },
+    { _t: "ident", value: "a" },
+    { _t: "ident", value: "b" },
   ]);
-  expect(l("a/*b")).toEqual([{ type: "ident", value: "a" }]);
-  expect(l("a/**b")).toEqual([{ type: "ident", value: "a" }]);
-  expect(l("/* * / * */b")).toEqual([{ type: "ident", value: "b" }]);
+  expect(l("a/*b")).toEqual([{ _t: "ident", value: "a" }]);
+  expect(l("a/**b")).toEqual([{ _t: "ident", value: "a" }]);
+  expect(l("/* * / * */b")).toEqual([{ _t: "ident", value: "b" }]);
 });

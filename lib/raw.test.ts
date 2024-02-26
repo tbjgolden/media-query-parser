@@ -33,7 +33,7 @@ test("parseMediaQueryList", () => {
     expect(isParserError(mql)).toBe(shouldBeErrorSet.has(testQueryList));
     if (!isParserError(mql)) {
       const neverQueries: number[] = [];
-      for (const [i, mq] of mql.qs.entries()) {
+      for (const [i, mq] of mql.nodes.entries()) {
         if (!mq || (mq.prefix === "not" && mq.type === "all" && mq.condition === undefined)) {
           neverQueries.push(i);
         }

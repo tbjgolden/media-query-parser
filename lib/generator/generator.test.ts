@@ -9,19 +9,19 @@ const expectIdentity = (str: string) => {
 };
 
 test("ensure generator regenerates same query", () => {
-  const a = matchFeature(lexer("(width:100px)") as ParserToken[])?.n;
+  const a = matchFeature(lexer("(width:100px)") as ParserToken[])?.t;
   if (a) {
     expect(generateFeature(a)).toEqual("(width: 100px)");
   }
-  const b = matchCondition(lexer("(width:100px)") as ParserToken[])?.n;
+  const b = matchCondition(lexer("(width:100px)") as ParserToken[])?.t;
   if (b) {
     expect(generateCondition(b)).toEqual("(width: 100px)");
   }
-  const c = matchCondition(lexer("(width:100px) and (orientation)") as ParserToken[])?.n;
+  const c = matchCondition(lexer("(width:100px) and (orientation)") as ParserToken[])?.t;
   if (c) {
     expect(generateCondition(c)).toEqual("(width: 100px) and (orientation)");
   }
-  const d = matchCondition(lexer("((width:100px) and (orientation))") as ParserToken[])?.n;
+  const d = matchCondition(lexer("((width:100px) and (orientation))") as ParserToken[])?.t;
   if (d) {
     expect(generateCondition(d)).toEqual("((width: 100px) and (orientation))");
   }

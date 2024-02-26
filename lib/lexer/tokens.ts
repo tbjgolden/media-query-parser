@@ -62,11 +62,11 @@ export const codepointsToTokens = (codepoints: number[], index = 0): LexerToken[
       index -= 1;
 
       const prevToken = tokens.at(-1);
-      if (prevToken?.type === "whitespace") {
+      if (prevToken?._t === "whitespace") {
         tokens.pop();
-        tokens.push({ type: "whitespace", start: prevToken.start, end: index });
+        tokens.push({ _t: "whitespace", start: prevToken.start, end: index });
       } else {
-        tokens.push({ type: "whitespace", start, end: index });
+        tokens.push({ _t: "whitespace", start, end: index });
       }
     } else if (c === DOUBLE_QUOTE_CODEPOINT) {
       const result = consumeString(codepoints, index);
@@ -75,7 +75,7 @@ export const codepointsToTokens = (codepoints: number[], index = 0): LexerToken[
       }
       const [lastIndex, value] = result;
       index = lastIndex;
-      tokens.push({ type: "string", value, start, end: index });
+      tokens.push({ _t: "string", value, start, end: index });
     } else if (c === HASH_CODEPOINT) {
       // if hash
       if (index + 1 < codepoints.length) {
@@ -99,13 +99,13 @@ export const codepointsToTokens = (codepoints: number[], index = 0): LexerToken[
           if (result !== null) {
             const [lastIndex, value] = result;
             index = lastIndex;
-            tokens.push({ type: "hash", value: value.toLowerCase(), flag, start, end: index });
+            tokens.push({ _t: "hash", value: value.toLowerCase(), flag, start, end: index });
             continue;
           }
         }
       }
 
-      tokens.push({ type: "delim", value: c, start, end: index });
+      tokens.push({ _t: "delim", value: c, start, end: index });
     } else if (c === SINGLE_QUOTE_CODEPOINT) {
       const result = consumeString(codepoints, index);
       if (result === null) {
@@ -113,21 +113,21 @@ export const codepointsToTokens = (codepoints: number[], index = 0): LexerToken[
       }
       const [lastIndex, value] = result;
       index = lastIndex;
-      tokens.push({ type: "string", value, start, end: index });
+      tokens.push({ _t: "string", value, start, end: index });
     } else if (c === LEFT_PAREN_CODEPOINT) {
-      tokens.push({ type: "(", start, end: index });
+      tokens.push({ _t: "(", start, end: index });
     } else if (c === RIGHT_PAREN_CODEPOINT) {
-      tokens.push({ type: ")", start, end: index });
+      tokens.push({ _t: ")", start, end: index });
     } else if (c === PLUS_CODEPOINT) {
       const plusNumeric = consumeNumeric(codepoints, index);
       if (plusNumeric === null) {
-        tokens.push({ type: "delim", value: c, start, end: index });
+        tokens.push({ _t: "delim", value: c, start, end: index });
       } else {
         const [lastIndex, tokenTuple] = plusNumeric;
         index = lastIndex;
         if (tokenTuple[0] === "dimension") {
           tokens.push({
-            type: "dimension",
+            _t: "dimension",
             value: tokenTuple[1],
             unit: tokenTuple[2].toLowerCase(),
             flag: "number",
@@ -136,7 +136,7 @@ export const codepointsToTokens = (codepoints: number[], index = 0): LexerToken[
           });
         } else if (tokenTuple[0] === "number") {
           tokens.push({
-            type: tokenTuple[0],
+            _t: tokenTuple[0],
             value: tokenTuple[1],
             flag: tokenTuple[2],
             start,
@@ -144,7 +144,7 @@ export const codepointsToTokens = (codepoints: number[], index = 0): LexerToken[
           });
         } else {
           tokens.push({
-            type: tokenTuple[0],
+            _t: tokenTuple[0],
             value: tokenTuple[1],
             flag: "number",
             start,
@@ -153,7 +153,7 @@ export const codepointsToTokens = (codepoints: number[], index = 0): LexerToken[
         }
       }
     } else if (c === COMMA_CODEPOINT) {
-      tokens.push({ type: "comma", start, end: index });
+      tokens.push({ _t: "comma", start, end: index });
     } else if (c === HYPHEN_CODEPOINT) {
       const minusNumeric = consumeNumeric(codepoints, index);
       if (minusNumeric !== null) {
@@ -161,7 +161,7 @@ export const codepointsToTokens = (codepoints: number[], index = 0): LexerToken[
         index = lastIndex;
         if (tokenTuple[0] === "dimension") {
           tokens.push({
-            type: "dimension",
+            _t: "dimension",
             value: tokenTuple[1],
             unit: tokenTuple[2].toLowerCase(),
             flag: "number",
@@ -170,7 +170,7 @@ export const codepointsToTokens = (codepoints: number[], index = 0): LexerToken[
           });
         } else if (tokenTuple[0] === "number") {
           tokens.push({
-            type: tokenTuple[0],
+            _t: tokenTuple[0],
             value: tokenTuple[1],
             flag: tokenTuple[2],
             start,
@@ -178,7 +178,7 @@ export const codepointsToTokens = (codepoints: number[], index = 0): LexerToken[
           });
         } else {
           tokens.push({
-            type: tokenTuple[0],
+            _t: tokenTuple[0],
             value: tokenTuple[1],
             flag: "number",
             start,
@@ -193,7 +193,7 @@ export const codepointsToTokens = (codepoints: number[], index = 0): LexerToken[
         const ccc = codepoints.at(index + 2);
         if (cc === HYPHEN_CODEPOINT && ccc === RIGHT_ANGLE_CODEPOINT) {
           index += 2;
-          tokens.push({ type: "CDC", start, end: index });
+          tokens.push({ _t: "CDC", start, end: index });
           continue;
         }
       }
@@ -202,21 +202,21 @@ export const codepointsToTokens = (codepoints: number[], index = 0): LexerToken[
       if (result !== null) {
         const [lastIndex, value, type] = result;
         index = lastIndex;
-        tokens.push({ type, value, start, end: index });
+        tokens.push({ _t: type, value, start, end: index });
         continue;
       }
 
-      tokens.push({ type: "delim", value: c, start, end: index });
+      tokens.push({ _t: "delim", value: c, start, end: index });
     } else if (c === DOT_CODEPOINT) {
       const minusNumeric = consumeNumeric(codepoints, index);
       if (minusNumeric === null) {
-        tokens.push({ type: "delim", value: c, start, end: index });
+        tokens.push({ _t: "delim", value: c, start, end: index });
       } else {
         const [lastIndex, tokenTuple] = minusNumeric;
         index = lastIndex;
         if (tokenTuple[0] === "dimension") {
           tokens.push({
-            type: "dimension",
+            _t: "dimension",
             value: tokenTuple[1],
             unit: tokenTuple[2].toLowerCase(),
             flag: "number",
@@ -225,7 +225,7 @@ export const codepointsToTokens = (codepoints: number[], index = 0): LexerToken[
           });
         } else if (tokenTuple[0] === "number") {
           tokens.push({
-            type: tokenTuple[0],
+            _t: tokenTuple[0],
             value: tokenTuple[1],
             flag: tokenTuple[2],
             start,
@@ -233,7 +233,7 @@ export const codepointsToTokens = (codepoints: number[], index = 0): LexerToken[
           });
         } else {
           tokens.push({
-            type: tokenTuple[0],
+            _t: tokenTuple[0],
             value: tokenTuple[1],
             flag: "number",
             start,
@@ -243,9 +243,9 @@ export const codepointsToTokens = (codepoints: number[], index = 0): LexerToken[
         continue;
       }
     } else if (c === COLON_CODEPOINT) {
-      tokens.push({ type: "colon", start, end: index });
+      tokens.push({ _t: "colon", start, end: index });
     } else if (c === SEMICOLON_CODEPOINT) {
-      tokens.push({ type: "semicolon", start, end: index });
+      tokens.push({ _t: "semicolon", start, end: index });
     } else if (c === LEFT_ANGLE_CODEPOINT) {
       // if CDO
       if (index + 3 < codepoints.length) {
@@ -254,12 +254,12 @@ export const codepointsToTokens = (codepoints: number[], index = 0): LexerToken[
         const cccc = codepoints.at(index + 3);
         if (cc === EXCLAMATION_CODEPOINT && ccc === HYPHEN_CODEPOINT && cccc === HYPHEN_CODEPOINT) {
           index += 3;
-          tokens.push({ type: "CDO", start, end: index });
+          tokens.push({ _t: "CDO", start, end: index });
           continue;
         }
       }
 
-      tokens.push({ type: "delim", value: c, start, end: index });
+      tokens.push({ _t: "delim", value: c, start, end: index });
     } else if (c === AT_SIGN_CODEPOINT) {
       // if at keyword
       const result = consumeIdent(codepoints, index + 1);
@@ -267,7 +267,7 @@ export const codepointsToTokens = (codepoints: number[], index = 0): LexerToken[
         const [lastIndex, value] = result;
         index = lastIndex;
         tokens.push({
-          type: "at-keyword",
+          _t: "at-keyword",
           value: value.toLowerCase(),
           start,
           end: index,
@@ -275,15 +275,15 @@ export const codepointsToTokens = (codepoints: number[], index = 0): LexerToken[
         continue;
       }
 
-      tokens.push({ type: "delim", value: c, start, end: index });
+      tokens.push({ _t: "delim", value: c, start, end: index });
     } else if (c === LEFT_SQUARE_CODEPOINT) {
-      tokens.push({ type: "[", start, end: index });
+      tokens.push({ _t: "[", start, end: index });
     } else if (c === RIGHT_SQUARE_CODEPOINT) {
-      tokens.push({ type: "]", start, end: index });
+      tokens.push({ _t: "]", start, end: index });
     } else if (c === LEFT_CURLY_CODEPOINT) {
-      tokens.push({ type: "{", start, end: index });
+      tokens.push({ _t: "{", start, end: index });
     } else if (c === RIGHT_CURLY_CODEPOINT) {
-      tokens.push({ type: "}", start, end: index });
+      tokens.push({ _t: "}", start, end: index });
     } else if (c >= ZERO_CODEPOINT && c <= NINE_CODEPOINT) {
       const result = consumeNumeric(codepoints, index) as NonNullable<
         ReturnType<typeof consumeNumeric>
@@ -292,7 +292,7 @@ export const codepointsToTokens = (codepoints: number[], index = 0): LexerToken[
       index = lastIndex;
       if (tokenTuple[0] === "dimension") {
         tokens.push({
-          type: "dimension",
+          _t: "dimension",
           value: tokenTuple[1],
           unit: tokenTuple[2].toLowerCase(),
           flag: "number",
@@ -301,7 +301,7 @@ export const codepointsToTokens = (codepoints: number[], index = 0): LexerToken[
         });
       } else if (tokenTuple[0] === "number") {
         tokens.push({
-          type: tokenTuple[0],
+          _t: tokenTuple[0],
           value: tokenTuple[1],
           flag: tokenTuple[2],
           start,
@@ -309,7 +309,7 @@ export const codepointsToTokens = (codepoints: number[], index = 0): LexerToken[
         });
       } else {
         tokens.push({
-          type: tokenTuple[0],
+          _t: tokenTuple[0],
           value: tokenTuple[1],
           flag: "number",
           start,
@@ -329,18 +329,18 @@ export const codepointsToTokens = (codepoints: number[], index = 0): LexerToken[
       // } else {
       const result = consumeIdentLike(codepoints, index);
       if (result === null) {
-        tokens.push({ type: "delim", value: c, start, end: index });
+        tokens.push({ _t: "delim", value: c, start, end: index });
       } else {
         const [lastIndex, value, type] = result;
         index = lastIndex;
-        tokens.push({ type, value, start, end: index });
+        tokens.push({ _t: type, value, start, end: index });
       }
       // }
     } else {
-      tokens.push({ type: "delim", value: c, start, end: index });
+      tokens.push({ _t: "delim", value: c, start, end: index });
     }
   }
-  tokens.push({ type: "EOF", start: index, end: index });
+  tokens.push({ _t: "EOF", start: index, end: index });
   return tokens;
 };
 

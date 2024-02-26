@@ -78,10 +78,10 @@ test("stringify", () => {
   expect(s(parseMediaQuery("( width < 10px )"))).toEqual("(width < 10px)");
   expect(s(parseMediaCondition("( width < 10px )"))).toEqual("(width < 10px)");
   expect(s(parseMediaFeature("( width < 10px )"))).toEqual("(width < 10px)");
-  expect(s({ n: "number", v: 1, isInt: true })).toEqual("1");
-  expect(s({ n: "dimension", v: 2, u: "px" })).toEqual("2px");
-  expect(s({ n: "ratio", l: 3, r: 4 })).toEqual("3/4");
-  expect(s({ n: "ident", v: "five" })).toEqual("five");
+  expect(s({ _t: "number", value: 1, flag: true })).toEqual("1");
+  expect(s({ _t: "dimension", value: 2, unit: "px" })).toEqual("2px");
+  expect(s({ _t: "ratio", left: 3, right: 4 })).toEqual("3/4");
+  expect(s({ _t: "ident", value: "five" })).toEqual("five");
 });
 
 test("coverage", () => {

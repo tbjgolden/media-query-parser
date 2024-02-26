@@ -5,7 +5,7 @@ export const convertToParserTokens = (cssTokens: LexerToken[]): ParserToken[] | 
 
   let isAfterSpace = false;
   for (const cssToken of cssTokens) {
-    switch (cssToken.type) {
+    switch (cssToken._t) {
       case "{": {
         return { errid: "NO_LCURLY", start: cssToken.start, end: cssToken.end };
       }

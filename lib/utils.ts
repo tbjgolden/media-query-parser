@@ -1,5 +1,7 @@
 import { Simplify } from "./internals.js";
 
+// Lexer
+
 type GenericToken = { start: number; end: number };
 
 export type LexerToken =
@@ -27,54 +29,66 @@ export type LexerToken =
   | RightCurlyToken
   | EOFToken;
 
-export type WhitespaceToken = Simplify<GenericToken & { type: "whitespace" }>;
-export type StringToken = Simplify<GenericToken & { type: "string"; value: string }>;
+export type WhitespaceToken = Simplify<{ _t: "whitespace" } & GenericToken>;
+export type StringToken = Simplify<{ _t: "string"; value: string } & GenericToken>;
 export type HashToken = Simplify<
-  GenericToken & { type: "hash"; value: string; flag: "id" | "unrestricted" }
+  { _t: "hash"; value: string; flag: "id" | "unrestricted" } & GenericToken
 >;
-export type DelimToken = Simplify<GenericToken & { type: "delim"; value: number }>;
-export type CommaToken = Simplify<GenericToken & { type: "comma" }>;
-export type LeftParenToken = Simplify<GenericToken & { type: "(" }>;
-export type RightParenToken = Simplify<GenericToken & { type: ")" }>;
+export type DelimToken = Simplify<{ _t: "delim"; value: number } & GenericToken>;
+export type CommaToken = Simplify<{ _t: "comma" } & GenericToken>;
+export type LeftParenToken = Simplify<{ _t: "(" } & GenericToken>;
+export type RightParenToken = Simplify<{ _t: ")" } & GenericToken>;
 export type DimensionToken = Simplify<
-  GenericToken & { type: "dimension"; value: number; unit: string; flag: "number" }
+  { _t: "dimension"; value: number; unit: string; flag: "number" } & GenericToken
 >;
 export type NumberToken = Simplify<
-  GenericToken & { type: "number"; value: number; flag: "number" | "integer" }
+  { _t: "number"; value: number; flag: "number" | "integer" } & GenericToken
 >;
 export type PercentageToken = Simplify<
-  GenericToken & { type: "percentage"; value: number; flag: "number" }
+  { _t: "percentage"; value: number; flag: "number" } & GenericToken
 >;
-export type CDCToken = Simplify<GenericToken & { type: "CDC" }>;
-export type ColonToken = Simplify<GenericToken & { type: "colon" }>;
-export type SemicolonToken = Simplify<GenericToken & { type: "semicolon" }>;
-export type CDOToken = Simplify<GenericToken & { type: "CDO" }>;
-export type AtKeywordToken = Simplify<GenericToken & { type: "at-keyword"; value: string }>;
-export type LeftBracketToken = Simplify<GenericToken & { type: "[" }>;
-export type RightBracketToken = Simplify<GenericToken & { type: "]" }>;
-export type LeftCurlyToken = Simplify<GenericToken & { type: "{" }>;
-export type RightCurlyToken = Simplify<GenericToken & { type: "}" }>;
-export type IdentToken = Simplify<GenericToken & { type: "ident"; value: string }>;
-export type FunctionToken = Simplify<GenericToken & { type: "function"; value: string }>;
-export type UrlToken = Simplify<GenericToken & { type: "url"; value: string }>;
-export type EOFToken = Simplify<GenericToken & { type: "EOF" }>;
+export type CDCToken = Simplify<{ _t: "CDC" } & GenericToken>;
+export type ColonToken = Simplify<{ _t: "colon" } & GenericToken>;
+export type SemicolonToken = Simplify<{ _t: "semicolon" } & GenericToken>;
+export type CDOToken = Simplify<{ _t: "CDO" } & GenericToken>;
+export type AtKeywordToken = Simplify<{ _t: "at-keyword"; value: string } & GenericToken>;
+export type LeftBracketToken = Simplify<{ _t: "[" } & GenericToken>;
+export type RightBracketToken = Simplify<{ _t: "]" } & GenericToken>;
+export type LeftCurlyToken = Simplify<{ _t: "{" } & GenericToken>;
+export type RightCurlyToken = Simplify<{ _t: "}" } & GenericToken>;
+export type IdentToken = Simplify<{ _t: "ident"; value: string } & GenericToken>;
+export type FunctionToken = Simplify<{ _t: "function"; value: string } & GenericToken>;
+export type UrlToken = Simplify<{ _t: "url"; value: string } & GenericToken>;
+export type EOFToken = Simplify<{ _t: "EOF" } & GenericToken>;
 
 export type ParserToken = Simplify<
   Exclude<LexerToken, WhitespaceToken | EOFToken> & { isAfterSpace: boolean }
 >;
 
-export type QueryListNode = { n: "query-list"; qs: Array<QueryNode | undefined> };
+// AST
+
+export type QueryListNode = { _t: "query-list"; nodes: Array<QueryNode | undefined> };
 export type QueryNode =
-  | { n: "query"; prefix?: undefined; type?: undefined; condition: ConditionNode }
-  | { n: "query"; prefix?: "not" | "only"; type: string; condition?: ConditionWithoutOrNode };
+  | { _t: "query"; prefix?: undefined; type?: undefined; condition: ConditionNode }
+  | { _t: "query"; prefix?: "not" | "only"; type: string; condition?: ConditionWithoutOrNode };
 export type FeatureNode = BooleanFeatureNode | PlainFeatureNode | RangeFeatureNode;
-export type BooleanFeatureNode = { n: "feature"; t: "boolean"; f: string };
-export type PlainFeatureNode = { n: "feature"; t: "value"; f: string; v: ValueNode };
-export type RangeFeatureNode = { n: "feature"; t: "range"; f: string; r: RangeNode };
-export type NumberNode = { n: "number"; v: number; isInt: boolean };
-export type DimensionNode = { n: "dimension"; v: number; u: string };
-export type RatioNode = { n: "ratio"; l: number; r: number };
-export type IdentNode = { n: "ident"; v: string };
+export type BooleanFeatureNode = { _t: "feature"; context: "boolean"; feature: string };
+export type PlainFeatureNode = {
+  _t: "feature";
+  context: "value";
+  feature: string;
+  value: ValueNode;
+};
+export type RangeFeatureNode = {
+  _t: "feature";
+  context: "range";
+  feature: string;
+  value: RangeNode;
+};
+export type NumberNode = { _t: "number"; value: number; flag: "number" | "integer" };
+export type DimensionNode = { _t: "dimension"; value: number; unit: string };
+export type RatioNode = { _t: "ratio"; left: number; right: number };
+export type IdentNode = { _t: "ident"; value: string };
 export type NumericValueNode = NumberNode | DimensionNode | RatioNode;
 export type ValueNode = NumericValueNode | IdentNode;
 export type Range1Node =
@@ -84,17 +98,22 @@ export type Range2Node =
   | { a: NumericValueNode; op: "<" | "<="; b: IdentNode; op2: "<" | "<="; c: NumericValueNode }
   | { a: NumericValueNode; op: ">" | ">="; b: IdentNode; op2: ">" | ">="; c: NumericValueNode };
 export type RangeNode = Simplify<Range1Node | Range2Node>;
-export type NotConditionNode = { n: "condition"; op: "not"; a: InParensNode; bs?: undefined };
-export type AndConditionNode = { n: "condition"; op: "and"; a: InParensNode; bs?: InParensNode[] };
-export type OrConditionNode = { n: "condition"; op: "or"; a: InParensNode; bs?: InParensNode[] };
+export type NotConditionNode = { _t: "condition"; op: "not"; a: InParensNode; bs?: undefined };
+export type AndConditionNode = { _t: "condition"; op: "and"; a: InParensNode; bs?: InParensNode[] };
+export type OrConditionNode = { _t: "condition"; op: "or"; a: InParensNode; bs?: InParensNode[] };
 export type ConditionNode = Simplify<NotConditionNode | AndConditionNode | OrConditionNode>;
 export type ConditionWithoutOrNode = Simplify<NotConditionNode | AndConditionNode>;
-export type GeneralEnclosedNode = { n: "general-enclosed" };
-export type InParensNode = { n: "in-parens"; v: ConditionNode | FeatureNode | GeneralEnclosedNode };
+export type GeneralEnclosedNode = {
+  _t: "general-enclosed";
+  tokens: Exclude<LexerToken, EOFToken>[];
+  raw: string;
+};
+export type InParensNode = {
+  _t: "in-parens";
+  node: ConditionNode | FeatureNode | GeneralEnclosedNode;
+};
 
-export type Match<T> = { n: T; i: number } | undefined;
-
-// ---
+// ParserError
 
 export type ParserErrId =
   | "INVALID_QUERY"
