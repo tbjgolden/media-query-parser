@@ -106,7 +106,6 @@ export type ConditionWithoutOrNode = Simplify<NotConditionNode | AndConditionNod
 export type GeneralEnclosedNode = {
   _t: "general-enclosed";
   tokens: Exclude<LexerToken, EOFToken>[];
-  raw: string;
 };
 export type InParensNode = {
   _t: "in-parens";

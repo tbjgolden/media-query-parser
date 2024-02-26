@@ -252,7 +252,7 @@ export const matchGeneralEnclosed = (ts: ParserToken[], i = 0): Match<GeneralEnc
       b = ts.at(++j);
     }
     if (stack.length === 0) {
-      return { t: { _t: "general-enclosed" }, i: j };
+      return { t: { _t: "general-enclosed", tokens: ts.slice(i, j) }, i: j };
     }
   }
 };
