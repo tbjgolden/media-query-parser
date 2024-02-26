@@ -2,7 +2,7 @@ import { Simplify } from "./internals.js";
 
 // Lexer
 
-type GenericToken = { start: number; end: number };
+type FileRange = { start: number; end: number };
 
 export type LexerToken =
   | WhitespaceToken
@@ -29,37 +29,37 @@ export type LexerToken =
   | RightCurlyToken
   | EOFToken;
 
-export type WhitespaceToken = Simplify<{ _t: "whitespace" } & GenericToken>;
-export type StringToken = Simplify<{ _t: "string"; value: string } & GenericToken>;
+export type WhitespaceToken = Simplify<{ _t: "whitespace" } & FileRange>;
+export type StringToken = Simplify<{ _t: "string"; value: string } & FileRange>;
 export type HashToken = Simplify<
-  { _t: "hash"; value: string; flag: "id" | "unrestricted" } & GenericToken
+  { _t: "hash"; value: string; flag: "id" | "unrestricted" } & FileRange
 >;
-export type DelimToken = Simplify<{ _t: "delim"; value: number } & GenericToken>;
-export type CommaToken = Simplify<{ _t: "comma" } & GenericToken>;
-export type LeftParenToken = Simplify<{ _t: "(" } & GenericToken>;
-export type RightParenToken = Simplify<{ _t: ")" } & GenericToken>;
+export type DelimToken = Simplify<{ _t: "delim"; value: number } & FileRange>;
+export type CommaToken = Simplify<{ _t: "comma" } & FileRange>;
+export type LeftParenToken = Simplify<{ _t: "(" } & FileRange>;
+export type RightParenToken = Simplify<{ _t: ")" } & FileRange>;
 export type DimensionToken = Simplify<
-  { _t: "dimension"; value: number; unit: string; flag: "number" } & GenericToken
+  { _t: "dimension"; value: number; unit: string; flag: "number" } & FileRange
 >;
 export type NumberToken = Simplify<
-  { _t: "number"; value: number; flag: "number" | "integer" } & GenericToken
+  { _t: "number"; value: number; flag: "number" | "integer" } & FileRange
 >;
 export type PercentageToken = Simplify<
-  { _t: "percentage"; value: number; flag: "number" } & GenericToken
+  { _t: "percentage"; value: number; flag: "number" } & FileRange
 >;
-export type CDCToken = Simplify<{ _t: "CDC" } & GenericToken>;
-export type ColonToken = Simplify<{ _t: "colon" } & GenericToken>;
-export type SemicolonToken = Simplify<{ _t: "semicolon" } & GenericToken>;
-export type CDOToken = Simplify<{ _t: "CDO" } & GenericToken>;
-export type AtKeywordToken = Simplify<{ _t: "at-keyword"; value: string } & GenericToken>;
-export type LeftBracketToken = Simplify<{ _t: "[" } & GenericToken>;
-export type RightBracketToken = Simplify<{ _t: "]" } & GenericToken>;
-export type LeftCurlyToken = Simplify<{ _t: "{" } & GenericToken>;
-export type RightCurlyToken = Simplify<{ _t: "}" } & GenericToken>;
-export type IdentToken = Simplify<{ _t: "ident"; value: string } & GenericToken>;
-export type FunctionToken = Simplify<{ _t: "function"; value: string } & GenericToken>;
-export type UrlToken = Simplify<{ _t: "url"; value: string } & GenericToken>;
-export type EOFToken = Simplify<{ _t: "EOF" } & GenericToken>;
+export type CDCToken = Simplify<{ _t: "CDC" } & FileRange>;
+export type ColonToken = Simplify<{ _t: "colon" } & FileRange>;
+export type SemicolonToken = Simplify<{ _t: "semicolon" } & FileRange>;
+export type CDOToken = Simplify<{ _t: "CDO" } & FileRange>;
+export type AtKeywordToken = Simplify<{ _t: "at-keyword"; value: string } & FileRange>;
+export type LeftBracketToken = Simplify<{ _t: "[" } & FileRange>;
+export type RightBracketToken = Simplify<{ _t: "]" } & FileRange>;
+export type LeftCurlyToken = Simplify<{ _t: "{" } & FileRange>;
+export type RightCurlyToken = Simplify<{ _t: "}" } & FileRange>;
+export type IdentToken = Simplify<{ _t: "ident"; value: string } & FileRange>;
+export type FunctionToken = Simplify<{ _t: "function"; value: string } & FileRange>;
+export type UrlToken = Simplify<{ _t: "url"; value: string } & FileRange>;
+export type EOFToken = Simplify<{ _t: "EOF" } & FileRange>;
 
 export type ParserToken = Simplify<
   Exclude<LexerToken, WhitespaceToken | EOFToken> & { isAfterSpace: boolean }
@@ -68,67 +68,89 @@ export type ParserToken = Simplify<
 // AST
 
 export type QueryListNode = { _t: "query-list"; nodes: Array<QueryNode | undefined> };
-export type QueryNode =
-  | { _t: "query"; prefix?: undefined; type?: undefined; condition: ConditionNode }
-  | { _t: "query"; prefix?: "not" | "only"; type: string; condition?: ConditionWithoutOrNode };
+export type QueryNode = Simplify<
+  (
+    | { _t: "query"; prefix?: undefined; type?: undefined; condition: ConditionNode }
+    | { _t: "query"; prefix?: "not" | "only"; type: string; condition?: ConditionWithoutOrNode }
+  ) &
+    FileRange
+>;
 export type FeatureNode =
   | BooleanFeatureNode
   | PlainFeatureNode
   | SingleRangeFeatureNode
   | DoubleRangeFeatureNode;
-export type BooleanFeatureNode = { _t: "feature"; context: "boolean"; feature: string };
-export type PlainFeatureNode = {
-  _t: "feature";
-  context: "value";
-  feature: string;
-  value: ValueNode;
-};
-export type SingleRangeFeatureNode = {
-  _t: "feature";
-  context: "range";
-  ops: 1;
-  feature: string;
-  op: ">" | ">=" | "<" | "<=" | "=";
-  value: NumericValueNode;
-};
-export type DoubleRangeFeatureNode = {
-  _t: "feature";
-  context: "range";
-  ops: 2;
-  feature: string;
-  minOp: "<" | "<=";
-  minValue: NumericValueNode;
-  maxOp: "<" | "<=";
-  maxValue: NumericValueNode;
-};
+export type BooleanFeatureNode = Simplify<
+  { _t: "feature"; context: "boolean"; feature: string } & FileRange
+>;
+export type PlainFeatureNode = Simplify<
+  {
+    _t: "feature";
+    context: "value";
+    feature: string;
+    value: ValueNode;
+  } & FileRange
+>;
+export type SingleRangeFeatureNode = Simplify<
+  {
+    _t: "feature";
+    context: "range";
+    ops: 1;
+    feature: string;
+    op: ">" | ">=" | "<" | "<=" | "=";
+    value: NumericValueNode;
+  } & FileRange
+>;
+export type DoubleRangeFeatureNode = Simplify<
+  {
+    _t: "feature";
+    context: "range";
+    ops: 2;
+    feature: string;
+    minOp: "<" | "<=";
+    minValue: NumericValueNode;
+    maxOp: "<" | "<=";
+    maxValue: NumericValueNode;
+  } & FileRange
+>;
 export type RangeFeatureNode = SingleRangeFeatureNode | DoubleRangeFeatureNode;
-export type NumberNode = { _t: "number"; value: number; flag: "number" | "integer" };
-export type DimensionNode = { _t: "dimension"; value: number; unit: string };
-export type RatioNode = { _t: "ratio"; left: number; right: number };
-export type IdentNode = { _t: "ident"; value: string };
+export type NumberNode = Simplify<
+  { _t: "number"; value: number; flag: "number" | "integer" } & FileRange
+>;
+export type DimensionNode = Simplify<{ _t: "dimension"; value: number; unit: string } & FileRange>;
+export type RatioNode = Simplify<{ _t: "ratio"; left: number; right: number } & FileRange>;
+export type IdentNode = Simplify<{ _t: "ident"; value: string } & FileRange>;
 export type NumericValueNode = NumberNode | DimensionNode | RatioNode;
 export type ValueNode = NumericValueNode | IdentNode;
-export type NotConditionNode = { _t: "condition"; op: "not"; nodes: [InParensNode] };
-export type AndConditionNode = {
-  _t: "condition";
-  op: "and";
-  nodes: [InParensNode, ...InParensNode[]];
-};
-export type OrConditionNode = {
-  _t: "condition";
-  op: "or";
-  nodes: [InParensNode, ...InParensNode[]];
-};
+export type NotConditionNode = Simplify<
+  { _t: "condition"; op: "not"; nodes: [InParensNode] } & FileRange
+>;
+export type AndConditionNode = Simplify<
+  {
+    _t: "condition";
+    op: "and";
+    nodes: [InParensNode, ...InParensNode[]];
+  } & FileRange
+>;
+export type OrConditionNode = Simplify<
+  {
+    _t: "condition";
+    op: "or";
+    nodes: [InParensNode, ...InParensNode[]];
+  } & FileRange
+>;
 export type ConditionNode = Simplify<NotConditionNode | AndConditionNode | OrConditionNode>;
 export type ConditionWithoutOrNode = Simplify<NotConditionNode | AndConditionNode>;
-export type GeneralEnclosedNode = {
-  _t: "general-enclosed";
-  tokens: Exclude<LexerToken, EOFToken>[];
-};
-export type InParensNode = {
+export type GeneralEnclosedNode = Simplify<
+  {
+    _t: "general-enclosed";
+    tokens: Exclude<LexerToken, EOFToken>[];
+  } & FileRange
+>;
+export type InParensNode = Simplify<{
   _t: "in-parens";
   node: ConditionNode | FeatureNode | GeneralEnclosedNode;
-};
+}>;
 
 // ParserError
 
