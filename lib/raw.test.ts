@@ -3,7 +3,7 @@ import path from "node:path";
 import { isParserError, parseMediaQueryList } from "./index.js";
 
 test("parseMediaQueryList", () => {
-  const testQueryLists: string[] = JSON.parse(
+  const testQueryListStrings: string[] = JSON.parse(
     fs.readFileSync(path.join(process.cwd(), "lib/__fixtures__/raw.json"), "utf8"),
   );
   const errorsMap: [string, number[]][] = JSON.parse(
@@ -28,7 +28,7 @@ test("parseMediaQueryList", () => {
 
   const mqlErrorIndexMap = new Map<string, number[]>(errorsMap);
 
-  for (const testQueryList of testQueryLists) {
+  for (const testQueryList of testQueryListStrings) {
     const mql = parseMediaQueryList(testQueryList);
     expect(isParserError(mql)).toBe(shouldBeErrorSet.has(testQueryList));
     if (!isParserError(mql)) {
