@@ -10,7 +10,8 @@
 - **Create a CSS media query from a JS object**
 - **Returns a ParserError for invalid CSS media queries**
 - **Spec-compliant** - https://www.w3.org/TR/mediaqueries-5/
-  - **All valid queries parsed; e.g. `(100px < width < 200px)`**
+  - **All valid queries parsed  
+    e.g. `(100px < width < 200px)`**
 - **Zero-dependencies**
 - **Well tested** - every single line
 - **TypeScript friendly**
@@ -19,7 +20,8 @@
 >
 > `media-query-fns` uses this library internally to achieve common use-cases.
 
-![banner](banner.svg)
+![demo](demo.png)  
+[Try it!](https://tbjgolden.github.io/media-query-parser/playground/)
 
 ## Why?
 
@@ -40,7 +42,7 @@ These are valid media queries that this library supports:
 @media not (not (not (((hover) or ((not (color)))))));
 @media (🐈: 😸 /* if cat happy */) {
   /* this query has valid syntax, but is clearly not a real feature 😿 */
-  /* For this, check out "Libraries that use this" at the bottom of this README */
+  /* For extensions to this project, check out "Libraries that use this" at the bottom of this README */
 }
 ```
 
@@ -49,7 +51,7 @@ These are invalid media queries that this library will detect:
 ```css
 @media (color) or (hover); /* or cannot be at top level */
 @media (min-width: calc(50vw + 10px)); /* functions aren't valid values */
-@media not((color)); /* operators need whitespace */
+@media not((color)); /* whitespace must follow `not` */
 @media (768px < = width < 1200px); /* cannot have a space between `<` and `=` */
 ```
 
@@ -72,22 +74,30 @@ const mediaQuery = parseMediaQuery("screen and (min-width: 768px)");
 if (!isParserError(mediaQuery)) {
   console.log(mediaQuery);
   // {
-  //   n: 'query',
-  //   type: 'screen',
+  //   _t: "query",
+  //   type: "screen",
   //   condition: {
-  //     n: 'condition',
-  //     op: 'and',
-  //     a: {
-  //       n: 'in-parens',
-  //       v: {
-  //         n: 'feature',
-  //         t: 'value',
-  //         f: 'min-width',
-  //         v: { n: 'dimension', v: 768, u: 'px' }
-  //       }
-  //     }
-  //   }
+  //     _t: "condition",
+  //     op: "and",
+  //     nodes: [
+  //       {
+  //         _t: "in-parens",
+  //         node: {
+  //           _t: "feature",
+  //           context: "value",
+  //           feature: "min-width",
+  //           value: {
+  //             _t: "dimension",
+  //             value: 768,
+  //             unit: "px",
+  //           },
+  //         },
+  //       },
+  //     ],
+  //   },
   // }
+  // // start/end omitted for brevity
+
   console.log(stringify(mediaQuery.condition));
   // "(min-width: 768px)"
 }
@@ -97,7 +107,7 @@ Can also be imported via `require("media-query-parser")`.
 
 ### [**v3 (Current) Docs**](https://tbjgolden.github.io/media-query-parser/)
 
-#### [_v2 API docs_](https://github.com/tbjgolden/media-query-parser/tree/v2.0.2/docs/api#functions)
+###### [_v2 API docs_](https://github.com/tbjgolden/media-query-parser/tree/v2.0.2/docs/api#functions)
 
 ## Libraries that use this
 
