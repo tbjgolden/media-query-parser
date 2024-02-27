@@ -181,21 +181,27 @@ https://prismjs.com/download.html#themes=prism&languages=json */
           <span>&nbsp;{ ... }</span>
         </span>
       </label>
-      <div style="font-size: 14px; max-width: 66ch">
-        <p>
-          Depending on the input, the function below will switch to the most specific match for the
-          input string (i.e. that doesn't resolve in a ParserError).
-        </p>
-        <p>
-          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;parseMediaFeature
-          <span style="color: #777">(most specific)</span><br />
-          &nbsp;&nbsp;&nbsp;&nbsp;parseMediaCondition<br />
-          &nbsp;&nbsp;parseMediaQuery<br />
-          parseMediaQueryList <span style="color: #777">(least specific)</span>
-        </p>
-        <p>All parse functions can result in a parser error (e.g. <code>@media ' { ... }</code>)</p>
-      </div>
-      <h3 style="margin: 24px 0 8px">
+      <details>
+        <summary style="margin-top: 8px; user-select: none">Help</summary>
+        <div style="font-size: 14px; max-width: 66ch; padding-left: 1em; border: 2px solid #eee">
+          <p>
+            Depending on the input, the function below will switch to the most specific match for
+            the input string (i.e. that doesn't resolve in a ParserError).
+          </p>
+          <p>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;parseMediaFeature
+            <span style="color: #777">(most specific)</span><br />
+            &nbsp;&nbsp;&nbsp;&nbsp;parseMediaCondition<br />
+            &nbsp;&nbsp;parseMediaQuery<br />
+            parseMediaQueryList <span style="color: #777">(least specific)</span>
+          </p>
+          <p>
+            All parse functions can result in a parser error (e.g. <code>@media ' { ... }</code>)
+          </p>
+        </div>
+      </details>
+
+      <h3 style="margin: 16px 0 8px">
         <code class="token punctuation"
           ><span class="token function bold" data-parse-func></span>(<span
             class="token string"

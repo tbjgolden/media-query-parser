@@ -1,13 +1,9 @@
 # `media-query-parser`
 
-> This package's v3 (currently in beta) involves a complete overhaul from v2 to a more sustainable
-> shape.
-> [See v2 API docs instead](https://github.com/tbjgolden/media-query-parser/tree/v2.0.2/docs/api#functions)
-
 [![npm](https://img.shields.io/npm/v/media-query-parser)](https://www.npmjs.com/package/media-query-parser)
 [![npm type definitions](https://img.shields.io/npm/types/media-query-parser)](#)
 [![license](https://img.shields.io/npm/l/media-query-parser)](#)
-[![npm downloads](https://img.shields.io/npm/dw/media-query-parser)](#)
+[![npm downloads](https://img.shields.io/npm/dw/media-query-parser)](https://www.npmjs.com/package/media-query-parser)
 [![install size](https://packagephobia.com/badge?p=media-query-parser)](https://packagephobia.com/result?p=media-query-parser)
 
 - **Create a JS object from a CSS media queries**
@@ -43,8 +39,8 @@ These are valid media queries that this library supports:
 @media only print and (color);
 @media not (not (not (((hover) or ((not (color)))))));
 @media (🐈: 😸 /* if cat happy */) {
-  /* this query has valid syntax, but is clearly not a real feature.
-     (see `media-query-fns` for feature checking) */
+  /* this query has valid syntax, but is clearly not a real feature 😿 */
+  /* For this, check out "Libraries that use this" at the bottom of this README */
 }
 ```
 
@@ -99,7 +95,13 @@ if (!isParserError(mediaQuery)) {
 
 Can also be imported via `require("media-query-parser")`.
 
-### [**Full Docs**](https://tbjgolden.github.io/media-query-parser/)
+### [**v3 (Current) Docs**](https://tbjgolden.github.io/media-query-parser/)
+
+#### [_v2 API docs_](https://github.com/tbjgolden/media-query-parser/tree/v2.0.2/docs/api#functions)
+
+## Libraries that use this
+
+- (See GitHub for dynamically updated list)
 
 ## Contributing
 
