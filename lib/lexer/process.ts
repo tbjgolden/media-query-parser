@@ -7,10 +7,10 @@ export const convertToParserTokens = (cssTokens: LexerToken[]): ParserToken[] | 
   for (const cssToken of cssTokens) {
     switch (cssToken._t) {
       case "{": {
-        return { errid: "NO_LCURLY", start: cssToken.start, end: cssToken.end };
+        return { _errid: "NO_LCURLY", start: cssToken.start, end: cssToken.end };
       }
       case "semicolon": {
-        return { errid: "NO_SEMICOLON", start: cssToken.start, end: cssToken.end };
+        return { _errid: "NO_SEMICOLON", start: cssToken.start, end: cssToken.end };
       }
       case "whitespace": {
         isAfterSpace = true;

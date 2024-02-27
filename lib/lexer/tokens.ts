@@ -71,7 +71,7 @@ export const codepointsToTokens = (codepoints: number[], index = 0): LexerToken[
     } else if (c === DOUBLE_QUOTE_CODEPOINT) {
       const result = consumeString(codepoints, index);
       if (result === null) {
-        return { errid: "INVALID_STRING", start: index, end: index };
+        return { _errid: "INVALID_STRING", start: index, end: index };
       }
       const [lastIndex, value] = result;
       index = lastIndex;
@@ -109,7 +109,7 @@ export const codepointsToTokens = (codepoints: number[], index = 0): LexerToken[
     } else if (c === SINGLE_QUOTE_CODEPOINT) {
       const result = consumeString(codepoints, index);
       if (result === null) {
-        return { errid: "INVALID_STRING", start: index, end: index };
+        return { _errid: "INVALID_STRING", start: index, end: index };
       }
       const [lastIndex, value] = result;
       index = lastIndex;

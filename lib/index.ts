@@ -87,7 +87,7 @@ export const parseMediaQuery = (str: string): QueryNode | ParserError => {
     return query && query.i === tokens.length
       ? query.t
       : {
-          errid: "INVALID_QUERY",
+          _errid: "INVALID_QUERY",
           start: tokens.at(0)?.start ?? 0,
           end: tokens.at(-1)?.end ?? 0,
         };
@@ -141,7 +141,7 @@ export const parseMediaCondition = (str: string): ConditionNode | ParserError =>
     return condition && condition.i === tokens.length
       ? condition.t
       : {
-          errid: "INVALID_CONDITION",
+          _errid: "INVALID_CONDITION",
           start: tokens.at(0)?.start ?? 0,
           end: tokens.at(-1)?.end ?? 0,
         };
@@ -171,7 +171,7 @@ export const parseMediaFeature = (str: string): FeatureNode | ParserError => {
     return feature && feature.i === tokens.length
       ? feature.t
       : {
-          errid: "INVALID_FEATURE",
+          _errid: "INVALID_FEATURE",
           start: tokens.at(0)?.start ?? 0,
           end: tokens.at(-1)?.end ?? 0,
         };
