@@ -4,10 +4,10 @@
 > shape.
 > [See v2 API docs instead](https://github.com/tbjgolden/media-query-parser/tree/v2.0.2/docs/api#functions)
 
-![npm](https://img.shields.io/npm/v/media-query-parser)
-![npm type definitions](https://img.shields.io/npm/types/media-query-parser)
-![license](https://img.shields.io/npm/l/media-query-parser)
-![npm downloads](https://img.shields.io/npm/dw/media-query-parser)
+[![npm](https://img.shields.io/npm/v/media-query-parser)](https://www.npmjs.com/package/media-query-parser)
+[![npm type definitions](https://img.shields.io/npm/types/media-query-parser)](#)
+[![license](https://img.shields.io/npm/l/media-query-parser)](#)
+[![npm downloads](https://img.shields.io/npm/dw/media-query-parser)](#)
 [![install size](https://packagephobia.com/badge?p=media-query-parser)](https://packagephobia.com/result?p=media-query-parser)
 
 - **Create a JS object from a CSS media queries**

@@ -30,10 +30,12 @@
     "node": ">=16.0.0 || ^14.13.1"
   },
   "scripts": {
-    "build": "xnr ./.scripts/build.ts",
+    "build": "xnr ./.scripts/build.ts && npm run build-docs && npm run build-playground",
     "check-build": "xnr ./.scripts/checkBuild.ts",
     "test": "NODE_OPTIONS='--experimental-vm-modules --no-warnings' npx jest",
-    "prepare": "simple-git-hooks"
+    "prepare": "simple-git-hooks",
+    "build-docs": "npx typedoc --out docs/api lib/index.ts",
+    "build-playground": "xnr ./.scripts/copyBuildToPlayground.ts"
   },
   "devDependencies": {
     "@types/eslint": "^8.56.3",
@@ -74,7 +76,7 @@
     ],
     [
       "*.{ts,js,cjs,mjs,json}",
-      "npx prettier --ignore-path .gitignore --write"
+      "npx prettier --write"
     ]
   ],
   "jest": {

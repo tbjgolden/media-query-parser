@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -14,11 +14,22 @@
       body {
         padding: 0;
         margin: 0;
+        background: #fff;
       }
       body {
         padding: 18px;
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-          Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+        font-family:
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          Oxygen,
+          Ubuntu,
+          Cantarell,
+          "Open Sans",
+          "Helvetica Neue",
+          sans-serif;
       }
       code,
       .code {
@@ -26,94 +37,114 @@
           "Oxygen Mono", "Ubuntu Monospace", "Source Code Pro", "Fira Mono", "Droid Sans Mono",
           "Courier New", monospace;
       }
+      h3 {
+        font-size: 16px;
+      }
     </style>
+    <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <div style="text-align: center">
-      <label class="code" style="font-size: 24px">
-        <span style="display: block">
-          @media
+    <div>
+      <label class="code" style="font-size: 18px">
+        <span style="display: flex; align-items: baseline">
+          <span>@media&nbsp;</span>
           <input
             id="input"
             type="text"
-            style="font: inherit; padding: 2px 4px; background: #f9f9f9; border: 1px solid #888"
+            style="
+              font: inherit;
+              flex: 1 0 200px;
+              padding: 6px 8px;
+              background: #f9f9f9;
+              border: 1px solid #888;
+            "
           />
-          { ... }
+          <span>&nbsp;{ ... }</span>
         </span>
       </label>
       <h3 style="margin: 24px 0 8px">
-        <code>stringify(parseMediaQueryList(...))</code>
+        <code>parseMediaQuery(<span data-val></span>)</code>
       </h3>
       <div
         style="
           display: inline-block;
           border: 4px dashed #ddd;
-          font-size: 18px;
-          line-height: 24px;
+          font-size: 16px;
+          line-height: 22px;
           padding: 24px;
           min-height: 80px;
           width: 100%;
-          max-width: 80ch;
         "
       >
-        <pre style="margin: 0; text-align: left"><code id="stringify">"all"</code></pre>
+        <pre
+          style="margin: 0; text-align: left"
+        ><code id="parse" class="language-json"></code></pre>
       </div>
-      <div>
-        <p
-          style="
-            font-size: 12px;
-            margin: 8px 0 0;
-            max-width: 66ch;
-            display: inline-block;
-            width: 100%;
-          "
-        >
-          <code>parseMediaQueryList</code>, unlike <code>parseMediaQuery</code> does not return an
-          error when one of the comma-separated media queries is invalid (even if it contains a
-          syntax error within it). Instead, it treats the individual media query as
-          <code>not all</code>, as the spec expects.
-        </p>
-      </div>
-      <h3 style="margin: 24px 0 8px">
-        <code>parseMediaQueryList(...)</code>
-      </h3>
-      <div
-        style="
-          display: inline-block;
-          border: 4px dashed #ddd;
-          font-size: 18px;
-          line-height: 24px;
-          padding: 24px;
-          min-height: 80px;
-          width: 100%;
-          max-width: 80ch;
-        "
-      >
-        <pre style="margin: 0; text-align: left"><code id="parse">{
-  "type": "query-list",
-  "mediaQueries": [
-    {
-      "type": "query"
-    }
-  ]
-}</code></pre>
-      </div>
+    </div>
+    <h3 style="margin: 24px 0 8px">
+      <code>stringify(parseMediaQuery(<span data-val></span>))</code>
+    </h3>
+    <div
+      style="
+        display: inline-block;
+        border: 4px dashed #ddd;
+        font-size: 16px;
+        line-height: 22px;
+        padding: 24px;
+        min-height: 80px;
+        width: 100%;
+      "
+    >
+      <pre
+        style="margin: 0; text-align: left"
+      ><code id="stringify" class="language-json"></code></pre>
     </div>
 
     <script type="module">
-      import { parseMediaQueryList, stringify, isParserError } from "./mqp_2.0.0-beta.1/index.js";
+      import { parseMediaQuery, stringify, isParserError } from "./mqp/index.js";
       const inputEl = document.querySelector("#input");
       const parseEl = document.querySelector("#parse");
       const stringifyEl = document.querySelector("#stringify");
+      const dataValEls = document.querySelectorAll("[data-val]");
 
-      inputEl.addEventListener("input", (event) => {
-        const value = event.target.value;
-        const ast = parseMediaQueryList(value);
+      const onChange = (value) => {
+        const valueStr = JSON.stringify(value);
+        dataValEls.forEach((el) => {
+          el.textContent = valueStr;
+        });
+        const ast = parseMediaQuery(value);
         parseEl.textContent = JSON.stringify(ast, null, 2);
+
         stringifyEl.textContent = isParserError(ast)
           ? "parser error: invalid strings invalidate the whole expression"
           : JSON.stringify(stringify(ast), null, 2);
+
+        if (globalThis.Prism) {
+          globalThis.Prism.highlightAll();
+          setTimeout(() => {
+            document.querySelectorAll("code .token.property").forEach((propEl) => {
+              if (propEl.textContent === '"_t"') {
+                const valueEl = propEl.nextSibling?.nextSibling?.nextSibling;
+                if (valueEl.nodeType === 1) {
+                  propEl.classList.add("node-type");
+                  valueEl.classList.add("node-type");
+                }
+              }
+            });
+          }, 100);
+        }
+      };
+
+      inputEl.addEventListener("input", (event) => {
+        onChange(event.target.value);
       });
+
+      inputEl.value =
+        "only screen and ((not (color)) or (prefers-color-scheme: dark) or (1 <= monochrome <= 2))";
+      onChange(
+        "only screen and ((not (color)) or (prefers-color-scheme: dark) or (1 <= monochrome <= 2))",
+      );
     </script>
+    <script src="./scripts.js"></script>
   </body>
 </html>
