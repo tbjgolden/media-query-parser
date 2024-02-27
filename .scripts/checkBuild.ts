@@ -28,12 +28,21 @@ if (await isDirectory("lib")) {
   const { parseMediaQuery } = await import(process.cwd() + "/" + entrypoint);
   const result = JSON.stringify(parseMediaQuery("(monochrome)"));
   const expected = JSON.stringify({
-    n: "query",
+    _t: "query",
     condition: {
-      n: "condition",
+      _t: "condition",
       op: "and",
-      a: { n: "in-parens", v: { n: "feature", t: "boolean", f: "monochrome" } },
+      nodes: [
+        {
+          _t: "in-parens",
+          node: { _t: "feature", context: "boolean", feature: "monochrome", start: 1, end: 10 },
+        },
+      ],
+      start: 0,
+      end: 11,
     },
+    start: 0,
+    end: 11,
   });
   if (result !== expected) {
     console.log("expected:");

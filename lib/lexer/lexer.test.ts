@@ -248,7 +248,7 @@ test("old bugs", () => {
 
   expect(l(".dropdown-item:hover{color:#1e2125;background-color:#e9ecef}")).toEqual({
     end: 20,
-    errid: "NO_LCURLY",
+    _errid: "NO_LCURLY",
     start: 20,
   });
   expect(l("(1/2 < aspect-ratio < 1/1)")).toEqual([
@@ -267,8 +267,8 @@ test("old bugs", () => {
 });
 
 test("missing coverage", () => {
-  expect(l('"\n"')).toEqual({ end: 0, errid: "INVALID_STRING", start: 0 });
-  expect(l("'\n'")).toEqual({ end: 0, errid: "INVALID_STRING", start: 0 });
+  expect(l('"\n"')).toEqual({ end: 0, _errid: "INVALID_STRING", start: 0 });
+  expect(l("'\n'")).toEqual({ end: 0, _errid: "INVALID_STRING", start: 0 });
   expect(l("#")).toEqual([{ _t: "delim", value: 35 }]);
   expect(l("+3% +4 +2px")).toEqual([
     { flag: "number", _t: "percentage", value: 3 },
