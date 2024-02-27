@@ -2,20 +2,21 @@ import {
   BooleanFeatureNode,
   ConditionNode,
   ConditionWithoutOrNode,
+  DoubleRangeFeatureNode,
   FeatureNode,
   GeneralEnclosedNode,
   InParensNode,
-  Match,
   NumericValueNode,
   ParserToken,
   PlainFeatureNode,
   QueryListNode,
   QueryNode,
-  Range1Node,
-  RangeFeatureNode,
   RatioNode,
+  SingleRangeFeatureNode,
   ValueNode,
 } from "../utils.js";
+
+export type Match<T> = { t: T; i: number } | undefined;
 
 const LT = "<".codePointAt(0);
 const GT = ">".codePointAt(0);
@@ -25,28 +26,28 @@ const SLASH = "/".codePointAt(0);
 type Eq = { t: "eq" };
 const matchEq = (ts: ParserToken[], i = 0): Match<Eq> => {
   const a = ts.at(i);
-  if (a?.type === "delim" && a.value === EQ) {
-    return { n: { t: "eq" }, i: i + 1 };
+  if (a?._t === "delim" && a.value === EQ) {
+    return { t: { t: "eq" }, i: i + 1 };
   }
 };
 
 type Lt = { t: "lt"; isIncl: boolean };
 const matchLt = (ts: ParserToken[], i = 0): Match<Lt> => {
   const a = ts.at(i);
-  if (a?.type === "delim" && a.value === LT) {
+  if (a?._t === "delim" && a.value === LT) {
     const b = ts.at(i + 1);
-    const isIncl = b?.type === "delim" && b.value === EQ && !b.isAfterSpace;
-    return { n: { t: "lt", isIncl }, i: i + (isIncl ? 2 : 1) };
+    const isIncl = b?._t === "delim" && b.value === EQ && !b.isAfterSpace;
+    return { t: { t: "lt", isIncl }, i: i + (isIncl ? 2 : 1) };
   }
 };
 
 type Gt = { t: "gt"; isIncl: boolean };
 const matchGt = (ts: ParserToken[], i = 0): Match<Gt> => {
   const a = ts.at(i);
-  if (a?.type === "delim" && a.value === GT) {
+  if (a?._t === "delim" && a.value === GT) {
     const b = ts.at(i + 1);
-    const isIncl = b?.type === "delim" && b.value === EQ && !b.isAfterSpace;
-    return { n: { t: "gt", isIncl }, i: i + (isIncl ? 2 : 1) };
+    const isIncl = b?._t === "delim" && b.value === EQ && !b.isAfterSpace;
+    return { t: { t: "gt", isIncl }, i: i + (isIncl ? 2 : 1) };
   }
 };
 
@@ -55,13 +56,13 @@ const matchComparison = (ts: ParserToken[], i = 0): Match<Lt | Gt | Eq> =>
 
 const matchRatio = (ts: ParserToken[], i = 0): Match<RatioNode> => {
   const a = ts.at(i);
-  if (a?.type === "number" && a.value >= 0) {
+  if (a?._t === "number" && a.value >= 0) {
     const b = ts.at(i + 1);
-    if (b?.type === "delim" && b.value === SLASH) {
+    if (b?._t === "delim" && b.value === SLASH) {
       const c = ts.at(i + 2);
-      if (c?.type === "number" && c.value >= 0) {
+      if (c?._t === "number" && c.value >= 0) {
         return {
-          n: { n: "ratio", l: a.value, r: c.value },
+          t: { _t: "ratio", left: a.value, right: c.value, start: a.start, end: c.end },
           i: i + 3,
         };
       }
@@ -74,13 +75,13 @@ const matchNumericValue = (ts: ParserToken[], i = 0): Match<NumericValueNode> =>
   if (a) return a;
 
   const b = ts.at(i);
-  if (b && (b.type === "number" || b.type === "dimension")) {
+  if (b && (b._t === "number" || b._t === "dimension")) {
     const n: NumericValueNode =
-      b.type === "number"
-        ? { n: "number", v: b.value, isInt: b.flag === "integer" }
-        : { n: "dimension", v: b.value, u: b.unit };
+      b._t === "number"
+        ? { _t: "number", value: b.value, flag: b.flag, start: b.start, end: b.end }
+        : { _t: "dimension", value: b.value, unit: b.unit, start: b.start, end: b.end };
 
-    return { n, i: i + 1 };
+    return { t: n, i: i + 1 };
   }
 };
 
@@ -89,12 +90,15 @@ const matchValue = (ts: ParserToken[], i = 0): Match<ValueNode> => {
   if (a) return a;
 
   const b = ts.at(i);
-  if (b?.type === "ident") {
-    return { n: { n: "ident", v: b.value }, i: i + 1 };
+  if (b?._t === "ident") {
+    return { t: { _t: "ident", value: b.value, start: b.start, end: b.end }, i: i + 1 };
   }
 };
 
-const matchRange = (ts: ParserToken[], i = 0): Match<RangeFeatureNode> => {
+const matchRange = (
+  ts: ParserToken[],
+  i = 0,
+): Match<SingleRangeFeatureNode | DoubleRangeFeatureNode> => {
   const a = matchValue(ts, i);
   if (a) {
     const b = matchComparison(ts, a.i);
@@ -104,37 +108,37 @@ const matchRange = (ts: ParserToken[], i = 0): Match<RangeFeatureNode> => {
         const d = matchLt(ts, c.i) ?? matchGt(ts, c.i);
         if (d) {
           const e = matchValue(ts, d.i);
-          if (e && c.n.n === "ident" && a.n.n !== "ident" && e.n.n !== "ident") {
-            if (b.n.t === "lt" && d.n.t === "lt") {
+          if (e && c.t._t === "ident" && a.t._t !== "ident" && e.t._t !== "ident") {
+            if (b.t.t === "lt" && d.t.t === "lt") {
               return {
-                n: {
-                  n: "feature",
-                  t: "range",
-                  f: c.n.v,
-                  r: {
-                    a: a.n,
-                    op: b.n.isIncl ? "<=" : "<",
-                    b: c.n,
-                    op2: d.n.isIncl ? "<=" : "<",
-                    c: e.n,
-                  },
+                t: {
+                  _t: "feature",
+                  context: "range",
+                  ops: 2,
+                  feature: c.t.value,
+                  minValue: a.t,
+                  minOp: b.t.isIncl ? "<=" : "<",
+                  maxOp: d.t.isIncl ? "<=" : "<",
+                  maxValue: e.t,
+                  start: a.t.start,
+                  end: e.t.end,
                 },
                 i: e.i,
               };
             }
-            if (b.n.t === "gt" && d.n.t === "gt") {
+            if (b.t.t === "gt" && d.t.t === "gt") {
               return {
-                n: {
-                  n: "feature",
-                  t: "range",
-                  f: c.n.v,
-                  r: {
-                    a: a.n,
-                    op: b.n.isIncl ? ">=" : ">",
-                    b: c.n,
-                    op2: d.n.isIncl ? ">=" : ">",
-                    c: e.n,
-                  },
+                t: {
+                  _t: "feature",
+                  context: "range",
+                  ops: 2,
+                  feature: c.t.value,
+                  minValue: e.t,
+                  minOp: d.t.isIncl ? "<=" : "<",
+                  maxOp: b.t.isIncl ? "<=" : "<",
+                  maxValue: a.t,
+                  start: a.t.start,
+                  end: e.t.end,
                 },
                 i: e.i,
               };
@@ -142,22 +146,46 @@ const matchRange = (ts: ParserToken[], i = 0): Match<RangeFeatureNode> => {
           }
         }
 
-        let op: Range1Node["op"] = "=";
-        if (b.n.t === "lt") {
-          op = b.n.isIncl ? "<=" : "<";
-        } else if (b.n.t === "gt") {
-          op = b.n.isIncl ? ">=" : ">";
+        let op: "=" | "<" | "<=" | ">" | ">=" = "=";
+        if (b.t.t === "lt") {
+          op = b.t.isIncl ? "<=" : "<";
+        } else if (b.t.t === "gt") {
+          op = b.t.isIncl ? ">=" : ">";
         }
 
-        if (a.n.n === "ident" && c.n.n !== "ident") {
+        if (a.t._t === "ident" && c.t._t !== "ident") {
           return {
-            n: { n: "feature", t: "range", f: a.n.v, r: { a: a.n, op, b: c.n } },
+            t: {
+              _t: "feature",
+              context: "range",
+              feature: a.t.value,
+              ops: 1,
+              op,
+              value: c.t,
+              start: a.t.start,
+              end: c.t.end,
+            },
             i: c.i,
           };
         }
-        if (c.n.n === "ident" && a.n.n !== "ident") {
+        if (c.t._t === "ident" && a.t._t !== "ident") {
+          let flippedOp: typeof op = "=";
+          if (op === "<") flippedOp = ">";
+          else if (op === "<=") flippedOp = ">=";
+          else if (op === ">") flippedOp = "<";
+          else if (op === ">=") flippedOp = "<=";
+
           return {
-            n: { n: "feature", t: "range", f: c.n.v, r: { a: a.n, op, b: c.n } },
+            t: {
+              _t: "feature",
+              context: "range",
+              feature: c.t.value,
+              ops: 1,
+              op: flippedOp,
+              value: a.t,
+              start: a.t.start,
+              end: c.t.end,
+            },
             i: c.i,
           };
         }
@@ -168,12 +196,22 @@ const matchRange = (ts: ParserToken[], i = 0): Match<RangeFeatureNode> => {
 
 export const matchPlain = (ts: ParserToken[], i = 0): Match<PlainFeatureNode> => {
   const a = ts.at(i);
-  if (a?.type === "ident") {
+  if (a?._t === "ident") {
     const b = ts.at(i + 1);
-    if (b?.type === "colon") {
+    if (b?._t === "colon") {
       const c = matchValue(ts, i + 2);
       if (c) {
-        return { n: { n: "feature", t: "value", f: a.value, v: c.n }, i: c.i };
+        return {
+          t: {
+            _t: "feature",
+            context: "value",
+            feature: a.value,
+            value: c.t,
+            start: a.start,
+            end: c.t.end,
+          },
+          i: c.i,
+        };
       }
     }
   }
@@ -181,31 +219,34 @@ export const matchPlain = (ts: ParserToken[], i = 0): Match<PlainFeatureNode> =>
 
 export const matchBoolean = (ts: ParserToken[], i = 0): Match<BooleanFeatureNode> => {
   const a = ts.at(i);
-  if (a?.type === "ident") {
-    return { n: { n: "feature", t: "boolean", f: a.value }, i: i + 1 };
+  if (a?._t === "ident") {
+    return {
+      t: { _t: "feature", context: "boolean", feature: a.value, start: a.start, end: a.end },
+      i: i + 1,
+    };
   }
 };
 
 export const matchFeature = (ts: ParserToken[], i = 0): Match<FeatureNode> => {
   const a = ts.at(i);
-  if (a?.type === "(") {
+  if (a?._t === "(") {
     const b = matchPlain(ts, i + 1) ?? matchRange(ts, i + 1) ?? matchBoolean(ts, i + 1);
     if (b) {
       const c = ts.at(b.i);
-      if (c?.type === ")") {
-        return { n: b.n, i: b.i + 1 };
+      if (c?._t === ")") {
+        return { t: b.t, i: b.i + 1 };
       }
     }
   }
 };
 export const matchGeneralEnclosed = (ts: ParserToken[], i = 0): Match<GeneralEnclosedNode> => {
   const a = ts.at(i);
-  if (a && (a.type === "function" || a.type === "(")) {
+  if (a && (a._t === "function" || a._t === "(")) {
     const stack: Array<"(" | "[" | "{"> = ["("];
     let j = i + 1;
     let b = ts.at(j);
     cycle: while (b) {
-      switch (b.type) {
+      switch (b._t) {
         case "function":
         case "(": {
           stack.push("(");
@@ -213,7 +254,7 @@ export const matchGeneralEnclosed = (ts: ParserToken[], i = 0): Match<GeneralEnc
         }
         case "{":
         case "[": {
-          stack.push(b.type);
+          stack.push(b._t);
           break;
         }
         case ")": {
@@ -241,7 +282,15 @@ export const matchGeneralEnclosed = (ts: ParserToken[], i = 0): Match<GeneralEnc
       b = ts.at(++j);
     }
     if (stack.length === 0) {
-      return { n: { n: "general-enclosed" }, i: j };
+      return {
+        t: {
+          _t: "general-enclosed",
+          tokens: ts.slice(i, j),
+          start: a.start,
+          end: (ts.at(j) ?? ts[j - 1]).end,
+        },
+        i: j,
+      };
     }
   }
 };
@@ -249,50 +298,50 @@ export const matchGeneralEnclosed = (ts: ParserToken[], i = 0): Match<GeneralEnc
 export const matchInParens = (ts: ParserToken[], i = 0): Match<InParensNode> => {
   const a = matchFeature(ts, i);
   if (a) {
-    return { n: { n: "in-parens", v: a.n }, i: a.i };
+    return { t: { _t: "in-parens", node: a.t }, i: a.i };
   }
 
   const b = ts.at(i);
-  if (b?.type === "(") {
+  if (b?._t === "(") {
     const c = matchCondition(ts, i + 1);
     if (c) {
       const d = ts.at(c.i);
-      if (d?.type === ")") {
-        return { n: { n: "in-parens", v: c.n }, i: c.i + 1 };
+      if (d?._t === ")") {
+        return { t: { _t: "in-parens", node: c.t }, i: c.i + 1 };
       }
     }
   }
 
   const e = matchGeneralEnclosed(ts, i);
   if (e) {
-    return { n: { n: "in-parens", v: e.n }, i: e.i };
+    return { t: { _t: "in-parens", node: e.t }, i: e.i };
   }
 };
 
 export const matchOr = (ts: ParserToken[], i = 0): Match<InParensNode> => {
   const a = ts.at(i);
-  if (a?.type === "ident" && a.value === "or") {
+  if (a?._t === "ident" && a.value === "or") {
     const b = matchInParens(ts, i + 1);
     if (b) {
-      return { n: b.n, i: b.i };
+      return { t: b.t, i: b.i };
     }
   }
 };
 export const matchAnd = (ts: ParserToken[], i = 0): Match<InParensNode> => {
   const a = ts.at(i);
-  if (a?.type === "ident" && a.value === "and") {
+  if (a?._t === "ident" && a.value === "and") {
     const b = matchInParens(ts, i + 1);
     if (b) {
-      return { n: b.n, i: b.i };
+      return { t: b.t, i: b.i };
     }
   }
 };
 export const matchNot = (ts: ParserToken[], i = 0): Match<InParensNode> => {
   const a = ts.at(i);
-  if (a?.type === "ident" && a.value === "not") {
+  if (a?._t === "ident" && a.value === "not") {
     const b = matchInParens(ts, i + 1);
     if (b) {
-      return { n: b.n, i: b.i };
+      return { t: b.t, i: b.i };
     }
   }
 };
@@ -300,62 +349,108 @@ export const matchNot = (ts: ParserToken[], i = 0): Match<InParensNode> => {
 export const matchCondition = (ts: ParserToken[], i = 0): Match<ConditionNode> => {
   const a = matchNot(ts, i);
   if (a) {
-    return { n: { n: "condition", op: "not", a: a.n }, i: a.i };
+    return {
+      // eslint-disable-next-line security/detect-object-injection
+      t: { _t: "condition", op: "not", nodes: [a.t], start: ts[i].start, end: ts[a.i - 1].end },
+      i: a.i,
+    };
   } else {
     const b = matchInParens(ts, i);
     if (b) {
       const c = matchAnd(ts, b.i);
       if (c) {
-        const expressions: InParensNode[] = [c.n];
+        const expressions: InParensNode[] = [c.t];
         let lastI = c.i;
         let next = matchAnd(ts, c.i);
         while (next) {
-          expressions.push(next.n);
+          expressions.push(next.t);
           lastI = next.i;
           next = matchAnd(ts, next.i);
         }
-        return { n: { n: "condition", op: "and", a: b.n, bs: expressions }, i: lastI };
+        return {
+          t: {
+            _t: "condition",
+            op: "and",
+            nodes: [b.t, ...expressions],
+            // eslint-disable-next-line security/detect-object-injection
+            start: ts[i].start,
+            end: ts[lastI - 1].end,
+          },
+          i: lastI,
+        };
       }
       const d = matchOr(ts, b.i);
       if (d) {
-        const expressions: InParensNode[] = [d.n];
+        const expressions: InParensNode[] = [d.t];
         let lastI = d.i;
         let next = matchOr(ts, d.i);
         while (next) {
-          expressions.push(next.n);
+          expressions.push(next.t);
           lastI = next.i;
           next = matchOr(ts, next.i);
         }
-        return { n: { n: "condition", op: "or", a: b.n, bs: expressions }, i: lastI };
+        return {
+          t: {
+            _t: "condition",
+            op: "or",
+            nodes: [b.t, ...expressions],
+            // eslint-disable-next-line security/detect-object-injection
+            start: ts[i].start,
+            end: ts[lastI - 1].end,
+          },
+          i: lastI,
+        };
       }
-      return { n: { n: "condition", op: "and", a: b.n }, i: b.i };
+      return {
+        // eslint-disable-next-line security/detect-object-injection
+        t: { _t: "condition", op: "and", nodes: [b.t], start: ts[i].start, end: ts[b.i - 1].end },
+        i: b.i,
+      };
     }
   }
 };
 
 export const matchConditionWithoutOr = (
   ts: ParserToken[],
-  i = 0
+  i = 0,
 ): Match<ConditionWithoutOrNode> => {
   const a = matchNot(ts, i);
   if (a) {
-    return { n: { n: "condition", op: "not", a: a.n }, i: a.i };
+    return {
+      // eslint-disable-next-line security/detect-object-injection
+      t: { _t: "condition", op: "not", nodes: [a.t], start: ts[i].start, end: ts[a.i - 1].end },
+      i: a.i,
+    };
   } else {
     const b = matchInParens(ts, i);
     if (b) {
       const c = matchAnd(ts, b.i);
       if (c) {
-        const expressions: InParensNode[] = [c.n];
+        const expressions: InParensNode[] = [c.t];
         let lastI = c.i;
         let next = matchAnd(ts, c.i);
         while (next) {
-          expressions.push(next.n);
+          expressions.push(next.t);
           lastI = next.i;
           next = matchAnd(ts, next.i);
         }
-        return { n: { n: "condition", op: "and", a: b.n, bs: expressions }, i: lastI };
+        return {
+          t: {
+            _t: "condition",
+            op: "and",
+            nodes: [b.t, ...expressions],
+            // eslint-disable-next-line security/detect-object-injection
+            start: ts[i].start,
+            end: ts[lastI - 1].end,
+          },
+          i: lastI,
+        };
       }
-      return { n: { n: "condition", op: "and", a: b.n }, i: b.i };
+      return {
+        // eslint-disable-next-line security/detect-object-injection
+        t: { _t: "condition", op: "and", nodes: [b.t], start: ts[i].start, end: ts[b.i - 1].end },
+        i: b.i,
+      };
     }
   }
 };
@@ -363,35 +458,45 @@ export const matchConditionWithoutOr = (
 export const matchQuery = (ts: ParserToken[]): Match<QueryNode> => {
   const a = matchCondition(ts, 0);
   if (a) {
-    return { n: { n: "query", condition: a.n }, i: a.i };
+    return { t: { _t: "query", condition: a.t, start: 0, end: ts[a.i - 1].end }, i: a.i };
   } else {
     const b = ts.at(0);
-    if (b?.type === "ident") {
+    if (b?._t === "ident") {
       if (b.value === "not" || b.value === "only") {
         const c = ts.at(1);
-        if (c?.type === "ident") {
+        if (c?._t === "ident") {
           const d = ts.at(2);
-          if (d?.type === "ident" && d.value === "and") {
+          if (d?._t === "ident" && d.value === "and") {
             const e = matchConditionWithoutOr(ts, 3);
             if (e) {
               return {
-                n: { n: "query", condition: e.n, type: c.value, prefix: b.value },
+                t: {
+                  _t: "query",
+                  condition: e.t,
+                  type: c.value,
+                  prefix: b.value,
+                  start: 0,
+                  end: ts[e.i - 1].end,
+                },
                 i: e.i,
               };
             }
           }
-          return { n: { n: "query", type: c.value, prefix: b.value }, i: 2 };
+          return { t: { _t: "query", type: c.value, prefix: b.value, start: 0, end: c.end }, i: 2 };
         }
       }
 
       const f = ts.at(1);
-      if (f?.type === "ident" && f.value === "and") {
+      if (f?._t === "ident" && f.value === "and") {
         const g = matchConditionWithoutOr(ts, 2);
         if (g) {
-          return { n: { n: "query", condition: g.n, type: b.value }, i: g.i };
+          return {
+            t: { _t: "query", condition: g.t, type: b.value, start: 0, end: ts[g.i - 1].end },
+            i: g.i,
+          };
         }
       }
-      return { n: { n: "query", type: b.value }, i: 1 };
+      return { t: { _t: "query", type: b.value, start: 0, end: b.end }, i: 1 };
     }
   }
 };
@@ -401,19 +506,19 @@ export const matchQueryList = (parsingTokens: ParserToken[]): QueryListNode => {
 
   if (mediaQueriesParserTokens.length === 1 && mediaQueriesParserTokens[0].length === 0) {
     // '@media {' is fine, treat as all
-    return { n: "query-list", qs: [{ n: "query", type: "all" }] };
+    return { _t: "query-list", nodes: [{ _t: "query", type: "all", start: 0, end: 0 }] };
   } else {
     const qs: Array<QueryNode | undefined> = [];
     for (const mediaQueryParserTokens of mediaQueriesParserTokens) {
       const a = matchQuery(mediaQueryParserTokens);
       if (a && a.i === mediaQueryParserTokens.length) {
-        qs.push(a.n);
+        qs.push(a.t);
       } else {
         qs.push(undefined);
       }
     }
 
-    return { n: "query-list", qs };
+    return { _t: "query-list", nodes: qs };
   }
 };
 
@@ -421,10 +526,10 @@ export const splitMediaQueryList = (tokens: ParserToken[]): Array<ParserToken[]>
   const mediaQueriesParserTokens: ParserToken[][] = [[]];
   const stack: Array<")" | "]" | "}"> = [];
   for (const token of tokens) {
-    if (token.type === "comma" && stack.length === 0) {
+    if (token._t === "comma" && stack.length === 0) {
       mediaQueriesParserTokens.push([]);
     } else {
-      switch (token.type) {
+      switch (token._t) {
         case "function":
         case "(": {
           stack.push(")");
@@ -442,7 +547,7 @@ export const splitMediaQueryList = (tokens: ParserToken[]): Array<ParserToken[]>
         case "]":
         case "}": {
           const topOfStack = stack.at(-1);
-          if (topOfStack === token.type) {
+          if (topOfStack === token._t) {
             stack.pop();
           }
           break;

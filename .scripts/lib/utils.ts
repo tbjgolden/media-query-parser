@@ -96,7 +96,7 @@ const expectToBeAStringMapMap = expecter((value) => {
         element !== null &&
         typeof element === "object" &&
         !Array.isArray(element) &&
-        Object.values(element).every((element) => typeof element === "string")
+        Object.values(element).every((element) => typeof element === "string"),
     )
   );
 });

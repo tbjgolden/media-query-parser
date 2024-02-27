@@ -14,7 +14,7 @@ import {
 } from "./index.js";
 
 const s = (
-  ast: QueryListNode | QueryNode | ConditionNode | FeatureNode | ValueNode | ParserError
+  ast: QueryListNode | QueryNode | ConditionNode | FeatureNode | ValueNode | ParserError,
 ): string | false => {
   return isParserError(ast) ? false : stringify(ast);
 };
@@ -22,28 +22,28 @@ const s = (
 test("parseMediaQueryList", () => {
   expect(s(parseMediaQueryList("[a, b], {c, d}"))).toEqual(false);
   expect(s(parseMediaQuery("screen\0 and (max-width:599px)"))).toEqual(
-    "screen� and (max-width: 599px)"
+    "screen� and (max-width: 599px)",
   );
   expect(s(parseMediaQuery("screen\\0 and (max-width:599px)"))).toEqual(false);
   expect(s(parseMediaQueryList("(((((hover)) and (((color ) ) )  )))"))).toEqual(
-    "(((((hover)) and (((color))))))"
+    "(((((hover)) and (((color))))))",
   );
   expect(
     s(
       parseMediaQueryList(
-        "not screen /* :D */ and ((not ((min-width: 1000px) and (orientation: landscape))) or (color))"
-      )
-    )
+        "not screen /* :D */ and ((not ((min-width: 1000px) and (orientation: landscape))) or (color))",
+      ),
+    ),
   ).toEqual("not screen and ((not ((min-width: 1000px) and (orientation: landscape))) or (color))");
   expect(s(parseMediaQueryList("invalid (color-index <= 128)"))).toEqual("not all");
   expect(s(parseMediaQueryList("not print and (110px <= width <= 220px)"))).toEqual(
-    "not print and (110px <= width <= 220px)"
+    "not print and (110px <= width <= 220px)",
   );
   expect(s(parseMediaQueryList("not ((min-width: 100px) and (max-width: 200px))"))).toEqual(
-    "not ((min-width: 100px) and (max-width: 200px))"
+    "not ((min-width: 100px) and (max-width: 200px))",
   );
   expect(s(parseMediaQueryList("not (min-width: 100px) and (max-width: 200px)"))).toEqual(
-    "not all"
+    "not all",
   );
   expect(s(parseMediaQueryList("not tty"))).toEqual("not tty");
   expect(s(parseMediaQueryList("(min-height: -100px)"))).toEqual("(min-height: -100px)");
@@ -53,7 +53,7 @@ test("parseMediaQuery", () => {
   expect(s(parseMediaQuery("((monochrome) and (100px < width > 200px))"))).toEqual(false);
   expect(s(parseMediaQuery("( width < 10px )"))).toEqual("(width < 10px)");
   expect(s(parseMediaQuery("vr and (orientation: landscape)"))).toEqual(
-    "vr and (orientation: landscape)"
+    "vr and (orientation: landscape)",
   );
   expect(s(parseMediaQuery("vr and '\n"))).toEqual(false);
 });
@@ -78,22 +78,28 @@ test("stringify", () => {
   expect(s(parseMediaQuery("( width < 10px )"))).toEqual("(width < 10px)");
   expect(s(parseMediaCondition("( width < 10px )"))).toEqual("(width < 10px)");
   expect(s(parseMediaFeature("( width < 10px )"))).toEqual("(width < 10px)");
-  expect(s({ n: "number", v: 1, isInt: true })).toEqual("1");
-  expect(s({ n: "dimension", v: 2, u: "px" })).toEqual("2px");
-  expect(s({ n: "ratio", l: 3, r: 4 })).toEqual("3/4");
-  expect(s({ n: "ident", v: "five" })).toEqual("five");
+  expect(s({ _t: "number", value: 1, flag: "integer", start: 0, end: 0 })).toEqual("1");
+  expect(s({ _t: "dimension", value: 2, unit: "px", start: 0, end: 0 })).toEqual("2px");
+  expect(s({ _t: "ratio", left: 3, right: 4, start: 0, end: 0 })).toEqual("3/4");
+  expect(s({ _t: "ident", value: "five", start: 0, end: 0 })).toEqual("five");
 });
 
 test("coverage", () => {
   expect(s(parseMediaQuery(`\\\n`))).toEqual(false);
   expect(s(parseMediaQueryList("(((((hover))and\n(((color))))))"))).toEqual(
-    "(((((hover)) and (((color))))))"
+    "(((((hover)) and (((color))))))",
   );
   expect(s(parseMediaQueryList("[,], {"))).toEqual(false);
   expect(s(parseMediaQuery("not ( width <  )"))).toEqual(false);
   expect(s(parseMediaQuery("only #"))).toEqual(false);
   expect(s(parseMediaQuery("((orientation) and (width < 100px) or (monochrome))"))).toEqual(false);
-  expect(s(parseMediaQuery("(100px > width)"))).toEqual("(100px > width)");
+  expect(s(parseMediaQuery("(width > 100px)"))).toEqual("(width > 100px)");
+  expect(s(parseMediaQuery("(100px > width)"))).toEqual("(width < 100px)");
+  expect(s(parseMediaQuery("(width >= 100px)"))).toEqual("(width >= 100px)");
+  expect(s(parseMediaQuery("(100px >= width)"))).toEqual("(width <= 100px)");
+  expect(s(parseMediaQuery("(200px > width > 100px)"))).toEqual("(100px < width < 200px)");
+  expect(s(parseMediaQuery("(50px < width <= 100px)"))).toEqual("(50px < width <= 100px)");
+  expect(s(parseMediaQuery("(100px <= width < 200px)"))).toEqual("(100px <= width < 200px)");
   expect(s(parseMediaCondition("width: 100px"))).toEqual(false);
   expect(s(parseMediaQuery("(boaty: #mcboatface)"))).toEqual(false);
   expect(s(parseMediaFeature(""))).toEqual(false);
@@ -112,6 +118,6 @@ test("coverage", () => {
   expect(s(parseMediaQuery(`screen and not (color)`))).toEqual("screen and not (color)");
   expect(s(parseMediaQuery(`SCREEN AND NOT (COLOR)`))).toEqual("screen and not (color)");
   expect(s(parseMediaQuery(`screen and (hover) and (color)`))).toEqual(
-    "screen and (hover) and (color)"
+    "screen and (hover) and (color)",
   );
 });

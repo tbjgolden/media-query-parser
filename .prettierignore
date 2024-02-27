@@ -1,0 +1,16 @@
+logs
+*.log
+npm-debug.log*
+node_modules
+.npm
+.*cache
+.temp
+.tmp
+dist
+.xnr
+/.build.*
+/coverage
+!.scripts
+tsconfig.tmp.json
+docs/api
+docs/playground/mqp

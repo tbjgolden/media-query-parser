@@ -1,0 +1,1 @@
+import{isParserError as o}from"../utils.js";import{readCodepoints as r}from"./codepoints.js";import{convertToParserTokens as s}from"./process.js";import{codepointsToTokens as e}from"./tokens.js";export const lexer=t=>{const n=e(r(t));return o(n)?n:s(n)};

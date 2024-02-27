@@ -1,7 +1,7 @@
 import { readFile, writeFile, rm, mkdir, readdir } from "node:fs/promises";
 import { spawn } from "node:child_process";
 import { join } from "node:path";
-import { checkDirectory, readJSON } from "./lib/utils.js";
+import { checkDirectory, getPackageJson, readJSON } from "./lib/utils.js";
 import { minify } from "terser";
 import { format } from "prettier";
 
@@ -9,6 +9,8 @@ checkDirectory();
 
 await rm("dist", { recursive: true, force: true });
 await mkdir("dist", { recursive: true });
+
+const pkgJson = await getPackageJson();
 
 type TSConfig = {
   compilerOptions: { [args: string]: unknown };
@@ -42,12 +44,18 @@ while ((directory = toSearch.pop())) {
       toSearch.push(join(directory, entry.name));
     } else if (entry.isFile() && entry.name.endsWith(".js")) {
       const filePath = join(directory, entry.name);
-      const code = await readFile(filePath, "utf8");
+      let code = await readFile(filePath, "utf8");
+      if (filePath === "dist/index.js") {
+        code =
+          `/*! @license media-query-parser${pkgJson.version ? ` v${pkgJson.version}` : ""} - MIT License - Tom Golden (github@tbjgolden.com) */\n` +
+          code;
+      }
+
       const result = await minify(code, { ecma: 2020, module: true });
       if (result.code) {
         await writeFile(
           filePath,
-          format(result.code, {
+          await format(result.code, {
             printWidth: 100,
             useTabs: true,
             parser: "babel",
@@ -59,7 +67,7 @@ while ((directory = toSearch.pop())) {
             arrowParens: "avoid",
             endOfLine: "lf",
             quoteProps: "as-needed",
-          })
+          }),
         );
       }
     }

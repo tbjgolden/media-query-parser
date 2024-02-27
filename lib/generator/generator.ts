@@ -5,7 +5,6 @@ import {
   FeatureNode,
   BooleanFeatureNode,
   PlainFeatureNode,
-  RangeFeatureNode,
   ValueNode,
   RatioNode,
   IdentNode,
@@ -13,10 +12,13 @@ import {
   ConditionWithoutOrNode,
   InParensNode,
   DimensionNode,
+  RangeFeatureNode,
+  DoubleRangeFeatureNode,
+  SingleRangeFeatureNode,
 } from "../utils.js";
 
 export const generateQueryList = (queryList: QueryListNode): string =>
-  queryList.qs.map((q) => (q ? generateQuery(q) : "not all")).join(", ");
+  queryList.nodes.map((q) => (q ? generateQuery(q) : "not all")).join(", ");
 export const generateQuery = (mediaQuery: QueryNode): string => {
   let str = "";
   if (mediaQuery.prefix) {
@@ -40,10 +42,10 @@ export const generateQuery = (mediaQuery: QueryNode): string => {
 };
 
 export const generateInParens = (inParens: InParensNode): string => {
-  if (inParens.v.n === "condition") {
-    return "(" + generateCondition(inParens.v) + ")";
-  } else if (inParens.v.n === "feature") {
-    return generateFeature(inParens.v);
+  if (inParens.node._t === "condition") {
+    return "(" + generateCondition(inParens.node) + ")";
+  } else if (inParens.node._t === "feature") {
+    return generateFeature(inParens.node);
   } else {
     return "(general enclosed)";
   }
@@ -51,15 +53,14 @@ export const generateInParens = (inParens: InParensNode): string => {
 
 export const generateCondition = (condition: ConditionNode | ConditionWithoutOrNode): string => {
   return condition.op === "not"
-    ? "not " + generateInParens(condition.a)
-    : generateInParens(condition.a) +
-        (condition.bs ?? []).map((b) => ` ${condition.op} ${generateInParens(b)}`).join("");
+    ? "not " + generateInParens(condition.nodes[0])
+    : (condition.nodes ?? []).map((b) => `${generateInParens(b)}`).join(` ${condition.op} `);
 };
 export const generateFeature = (feature: FeatureNode): string => {
   let str = "(";
-  if (feature.t === "boolean") {
+  if (feature.context === "boolean") {
     str += generateFeatureBoolean(feature);
-  } else if (feature.t === "value") {
+  } else if (feature.context === "value") {
     str += generateFeatureValue(feature);
   } else {
     str += generateFeatureRange(feature);
@@ -68,29 +69,37 @@ export const generateFeature = (feature: FeatureNode): string => {
   return str;
 };
 export const generateFeatureBoolean = (feature: BooleanFeatureNode): string => {
-  return feature.f;
+  return feature.feature;
 };
 export const generateFeatureValue = (feature: PlainFeatureNode): string => {
-  return feature.f + ": " + generateValue(feature.v);
+  return feature.feature + ": " + generateValue(feature.value);
 };
 export const generateFeatureRange = (feature: RangeFeatureNode): string => {
-  let str = `${generateValue(feature.r.a)} ${feature.r.op} ${generateValue(feature.r.b)}`;
-  if ("op2" in feature.r) str += ` ${feature.r.op2} ${generateValue(feature.r.c)}`;
-  return str;
+  return feature.ops === 1
+    ? generateFeatureSingleRange(feature)
+    : generateFeatureDoubleRange(feature);
+};
+export const generateFeatureSingleRange = (feature: SingleRangeFeatureNode): string => {
+  return `${feature.feature} ${feature.op} ${generateValue(feature.value)}`;
+};
+export const generateFeatureDoubleRange = (feature: DoubleRangeFeatureNode): string => {
+  return `${generateValue(feature.minValue)} ${feature.minOp} ${feature.feature} ${
+    feature.maxOp
+  } ${generateValue(feature.maxValue)}`;
 };
 export const generateValue = (value: ValueNode): string => {
-  if (value.n === "dimension") {
+  if (value._t === "dimension") {
     return generateDimension(value);
-  } else if (value.n === "ident") {
+  } else if (value._t === "ident") {
     return generateIdent(value);
-  } else if (value.n === "ratio") {
+  } else if (value._t === "ratio") {
     return generateRatio(value);
   } else {
     return generateNumber(value);
   }
 };
-export const generateRatio = (ratio: RatioNode): string => `${ratio.l}/${ratio.r}`;
-export const generateNumber = (number: NumberNode): string => `${number.v}`;
+export const generateRatio = (ratio: RatioNode): string => `${ratio.left}/${ratio.right}`;
+export const generateNumber = (number: NumberNode): string => `${number.value}`;
 export const generateDimension = (dimension: DimensionNode): string =>
-  `${dimension.v}${dimension.u}`;
-export const generateIdent = (ident: IdentNode): string => ident.v;
+  `${dimension.value}${dimension.unit}`;
+export const generateIdent = (ident: IdentNode): string => ident.value;

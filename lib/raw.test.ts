@@ -3,11 +3,11 @@ import path from "node:path";
 import { isParserError, parseMediaQueryList } from "./index.js";
 
 test("parseMediaQueryList", () => {
-  const testQueryLists: string[] = JSON.parse(
-    fs.readFileSync(path.join(process.cwd(), "lib/__fixtures__/raw.json"), "utf8")
+  const testQueryListStrings: string[] = JSON.parse(
+    fs.readFileSync(path.join(process.cwd(), "lib/__fixtures__/raw.json"), "utf8"),
   );
   const errorsMap: [string, number[]][] = JSON.parse(
-    fs.readFileSync(path.join(process.cwd(), "lib/__fixtures__/errors.json"), "utf8")
+    fs.readFileSync(path.join(process.cwd(), "lib/__fixtures__/errors.json"), "utf8"),
   );
 
   const shouldBeErrorSet = new Set([
@@ -28,12 +28,12 @@ test("parseMediaQueryList", () => {
 
   const mqlErrorIndexMap = new Map<string, number[]>(errorsMap);
 
-  for (const testQueryList of testQueryLists) {
+  for (const testQueryList of testQueryListStrings) {
     const mql = parseMediaQueryList(testQueryList);
     expect(isParserError(mql)).toBe(shouldBeErrorSet.has(testQueryList));
     if (!isParserError(mql)) {
       const neverQueries: number[] = [];
-      for (const [i, mq] of mql.qs.entries()) {
+      for (const [i, mq] of mql.nodes.entries()) {
         if (!mq || (mq.prefix === "not" && mq.type === "all" && mq.condition === undefined)) {
           neverQueries.push(i);
         }
