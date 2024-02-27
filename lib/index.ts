@@ -30,27 +30,35 @@ import {
  * ```ts
  * console.log(parseMediaQueryList(`print, #invalid, (min-width: 1000px)`));
  * // {
- * //   n: 'query-list',
- * //   qs: [
- * //     { n: 'query', type: 'print' },
+ * //   _t: "query-list",
+ * //   nodes: [
+ * //     { _t: "query", type: "print", start: 0, end: 4 },
  * //     undefined,
  * //     {
- * //       n: 'query',
+ * //       _t: "query",
  * //       condition: {
- * //         n: 'condition',
- * //         op: 'and',
- * //         a: {
- * //           n: 'in-parens',
- * //           v: {
- * //             n: 'feature',
- * //             t: 'value',
- * //             f: 'min-width',
- * //             v: { n: 'dimension', v: 1000, u: 'px' }
- * //           }
- * //         }
- * //       }
- * //     }
- * //   ]
+ * //         _t: "condition",
+ * //         op: "and",
+ * //         nodes: [
+ * //           {
+ * //             _t: "in-parens",
+ * //             node: {
+ * //               _t: "feature",
+ * //               context: "value",
+ * //               feature: "min-width",
+ * //               value: { _t: "dimension", value: 1000, unit: "px", start: 29, end: 34 },
+ * //               start: 18,
+ * //               end: 34,
+ * //             },
+ * //           },
+ * //         ],
+ * //         start: 17,
+ * //         end: 35,
+ * //       },
+ * //       start: 0,
+ * //       end: 35,
+ * //     },
+ * //   ],
  * // }
  * ```
  */
@@ -65,16 +73,22 @@ export const parseMediaQueryList = (str: string): QueryListNode | ParserError =>
  * ```ts
  * console.log(parseMediaQuery(`screen and (monochrome)`));
  * // {
- * //   n: 'query',
- * //   type: 'screen',
+ * //   _t: "query",
  * //   condition: {
- * //     n: 'condition',
- * //     op: 'and',
- * //     a: {
- * //       n: 'in-parens',
- * //       v: { n: 'feature', t: 'boolean', f: 'monochrome' }
- * //     }
- * //   }
+ * //     _t: "condition",
+ * //     op: "and",
+ * //     nodes: [
+ * //       {
+ * //         _t: "in-parens",
+ * //         node: { _t: "feature", context: "boolean", feature: "monochrome", start: 12, end: 21 },
+ * //       },
+ * //     ],
+ * //     start: 11,
+ * //     end: 22,
+ * //   },
+ * //   type: "screen",
+ * //   start: 0,
+ * //   end: 22,
  * // }
  * ```
  */
@@ -101,34 +115,40 @@ export const parseMediaQuery = (str: string): QueryNode | ParserError => {
  * ```ts
  * console.log(parseMediaCondition(`((aspect-ratio > 1/2) or (monochrome))`));
  * // {
- * //   n: 'condition',
- * //   op: 'and',
- * //   a: {
- * //     n: 'in-parens',
- * //     v: {
- * //       n: 'condition',
- * //       op: 'or',
- * //       a: {
- * //         n: 'in-parens',
- * //         v: {
- * //           n: 'feature',
- * //           t: 'range',
- * //           f: 'aspect-ratio',
- * //           r: {
- * //             a: { n: 'ident', v: 'aspect-ratio' },
- * //             op: '>',
- * //             b: { n: 'ratio', l: 1, r: 2 }
- * //           }
- * //         }
+ * //   _t: "condition",
+ * //   op: "and",
+ * //   nodes: [
+ * //     {
+ * //       _t: "in-parens",
+ * //       node: {
+ * //         _t: "condition",
+ * //         op: "or",
+ * //         nodes: [
+ * //           {
+ * //             _t: "in-parens",
+ * //             node: {
+ * //               _t: "feature",
+ * //               context: "range",
+ * //               feature: "aspect-ratio",
+ * //               ops: 1,
+ * //               op: ">",
+ * //               value: { _t: "ratio", left: 1, right: 2, start: 17, end: 19 },
+ * //               start: 2,
+ * //               end: 19,
+ * //             },
+ * //           },
+ * //           {
+ * //             _t: "in-parens",
+ * //             node: { _t: "feature", context: "boolean", feature: "monochrome", start: 26, end: 35 },
+ * //           },
+ * //         ],
+ * //         start: 1,
+ * //         end: 36,
  * //       },
- * //       bs: [
- * //         {
- * //           n: 'in-parens',
- * //           v: { n: 'feature', t: 'boolean', f: 'monochrome' }
- * //         }
- * //       ]
- * //     }
- * //   }
+ * //     },
+ * //   ],
+ * //   start: 0,
+ * //   end: 37,
  * // }
  * ```
  */
@@ -155,10 +175,12 @@ export const parseMediaCondition = (str: string): ConditionNode | ParserError =>
  * ```ts
  * console.log(parseMediaFeature(`(min-width: 768px)`));
  * // {
- * //   n: 'feature',
- * //   t: 'value',
- * //   f: 'min-width',
- * //   v: { n: 'dimension', v: 768, u: 'px' }
+ * //   _t: "feature",
+ * //   context: "value",
+ * //   feature: "min-width",
+ * //   value: { _t: "dimension", value: 768, unit: "px", start: 12, end: 16 },
+ * //   start: 1,
+ * //   end: 16,
  * // }
  * ```
  */
@@ -183,18 +205,26 @@ export const parseMediaFeature = (str: string): FeatureNode | ParserError => {
  *
  * @example
  * ```ts
- * console.log(stringify({
- *   n: 'query',
- *   type: 'screen',
- *   condition: {
- *     n: 'condition',
- *     op: 'and',
- *     a: {
- *       n: 'in-parens',
- *       v: { n: 'feature', t: 'boolean', f: 'monochrome' }
- *     }
- *   }
- * }));
+ * console.log(
+ *   stringify({
+ *     "_t": "query",
+ *     "condition": {
+ *       "_t": "condition",
+ *       "op": "and",
+ *       "nodes": [
+ *         {
+ *           "_t": "in-parens",
+ *           "node": {
+ *             "_t": "feature",
+ *             "context": "boolean",
+ *             "feature": "monochrome",
+ *           }
+ *         }
+ *       ],
+ *     },
+ *     "type": "screen",
+ *   })
+ * );
  * // 'screen and (monochrome)'
  * ```
  */
