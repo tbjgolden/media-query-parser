@@ -16,10 +16,6 @@
 - **Well tested** - every single line
 - **TypeScript friendly**
 
-> This repo/package contains only the parser, stringify and isParserError.
->
-> `media-query-fns` uses this library internally to achieve common use-cases.
-
 ![demo](demo.png)  
 [Try it!](https://tbjgolden.github.io/media-query-parser/playground/)
 

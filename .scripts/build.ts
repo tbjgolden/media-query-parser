@@ -46,9 +46,7 @@ while ((directory = toSearch.pop())) {
       const filePath = join(directory, entry.name);
       let code = await readFile(filePath, "utf8");
       if (filePath === "dist/index.js") {
-        code =
-          `/*! @license media-query-parser${pkgJson.version ? ` v${pkgJson.version}` : ""} - MIT License - Tom Golden (github@tbjgolden.com) */\n` +
-          code;
+        code = `/*! v${pkgJson.version} */\n` + code;
       }
 
       const result = await minify(code, { ecma: 2020, module: true });
