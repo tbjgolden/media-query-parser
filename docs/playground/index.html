@@ -163,44 +163,42 @@ https://prismjs.com/download.html#themes=prism&languages=json */
     </style>
   </head>
   <body>
-    <div>
-      <label class="code" style="font-size: 18px">
-        <span style="display: flex; align-items: baseline">
-          <span>@media&nbsp;</span>
-          <input
-            id="input"
-            type="text"
-            style="
-              font: inherit;
-              flex: 1 0 200px;
-              padding: 6px 8px;
-              background: #f9f9f9;
-              border: 1px solid #888;
-            "
-          />
-          <span>&nbsp;{ ... }</span>
-        </span>
-      </label>
-      <details>
-        <summary style="margin-top: 8px; user-select: none">Help</summary>
-        <div style="font-size: 14px; max-width: 66ch; padding-left: 1em; border: 2px solid #eee">
-          <p>
-            Depending on the input, the function below will switch to the most specific match for
-            the input string (i.e. that doesn't resolve in a ParserError).
-          </p>
-          <p>
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;parseMediaFeature
-            <span style="color: #777">(most specific)</span><br />
-            &nbsp;&nbsp;&nbsp;&nbsp;parseMediaCondition<br />
-            &nbsp;&nbsp;parseMediaQuery<br />
-            parseMediaQueryList <span style="color: #777">(least specific)</span>
-          </p>
-          <p>
-            All parse functions can result in a parser error (e.g. <code>@media ' { ... }</code>)
-          </p>
-        </div>
-      </details>
+    <label class="code" style="font-size: 18px">
+      <span style="display: flex; align-items: baseline">
+        <span>@media&nbsp;</span>
+        <input
+          id="input"
+          type="text"
+          style="
+            font: inherit;
+            flex: 1 0 200px;
+            padding: 6px 8px;
+            background: #f9f9f9;
+            border: 1px solid #888;
+          "
+        />
+        <span>&nbsp;{ ... }</span>
+      </span>
+    </label>
+    <details>
+      <summary style="margin-top: 8px; user-select: none">Help</summary>
+      <div style="font-size: 14px; max-width: 66ch; padding-left: 1em; border: 2px solid #eee">
+        <p>
+          Depending on the input, the function below will switch to the most specific match for the
+          input string (i.e. that doesn't resolve in a ParserError).
+        </p>
+        <p>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;parseMediaFeature
+          <span style="color: #777">(most specific)</span><br />
+          &nbsp;&nbsp;&nbsp;&nbsp;parseMediaCondition<br />
+          &nbsp;&nbsp;parseMediaQuery<br />
+          parseMediaQueryList <span style="color: #777">(least specific)</span>
+        </p>
+        <p>All parse functions can result in a parser error (e.g. <code>@media ' { ... }</code>)</p>
+      </div>
+    </details>
 
+    <main id="results" style="display: none">
       <h3 style="margin: 16px 0 8px">
         <code class="token punctuation"
           ><span class="token function bold" data-parse-func></span>(<span
@@ -225,31 +223,31 @@ https://prismjs.com/download.html#themes=prism&languages=json */
           style="margin: 0; text-align: left"
         ><code id="parse" class="language-json"></code></pre>
       </div>
-    </div>
-    <h3 style="margin: 24px 0 8px">
-      <code class="token punctuation"
-        ><span class="token function bold">stringify</span>(<span
-          class="token function bold"
-          data-parse-func
-        ></span
-        >(<span class="token string" data-val></span>))</code
+      <h3 style="margin: 24px 0 8px">
+        <code class="token punctuation"
+          ><span class="token function bold">stringify</span>(<span
+            class="token function bold"
+            data-parse-func
+          ></span
+          >(<span class="token string" data-val></span>))</code
+        >
+      </h3>
+      <div
+        style="
+          display: inline-block;
+          border: 4px dashed #ddd;
+          font-size: 16px;
+          line-height: 22px;
+          padding: 24px;
+          min-height: 80px;
+          width: 100%;
+        "
       >
-    </h3>
-    <div
-      style="
-        display: inline-block;
-        border: 4px dashed #ddd;
-        font-size: 16px;
-        line-height: 22px;
-        padding: 24px;
-        min-height: 80px;
-        width: 100%;
-      "
-    >
-      <pre
-        style="margin: 0; text-align: left"
-      ><code id="stringify" class="language-json"></code></pre>
-    </div>
+        <pre
+          style="margin: 0; text-align: left"
+        ><code id="stringify" class="language-json"></code></pre>
+      </div>
+    </main>
 
     <script>
       /* PrismJS 1.29.0
@@ -678,6 +676,7 @@ https://prismjs.com/download.html#themes=prism&languages=json */
       } from "./mqp/index.js";
       const inputEl = document.querySelector("#input");
       const parseEl = document.querySelector("#parse");
+      const resultsEl = document.querySelector("#results");
       const stringifyEl = document.querySelector("#stringify");
       const dataValEls = document.querySelectorAll("[data-val]");
       const dataParseFuncEls = document.querySelectorAll("[data-parse-func]");
@@ -698,6 +697,7 @@ https://prismjs.com/download.html#themes=prism&languages=json */
             }
           }
         });
+        resultsEl.style.display = "block";
       });
 
       const onChange = (value) => {
