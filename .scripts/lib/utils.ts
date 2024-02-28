@@ -36,7 +36,7 @@ export type PackageJson = Partial<{
   license: string;
   main: string;
   module: string;
-  exports: string;
+  exports: string | Record<string, string | undefined>;
   types: string;
   browser: string;
   keywords: string[];
@@ -123,7 +123,6 @@ export const getPackageJson = async (): Promise<PackageJson> => {
       "license",
       "main",
       "module",
-      "exports",
       "types",
       "browser",
     ]) {
@@ -150,7 +149,7 @@ export const getPackageJson = async (): Promise<PackageJson> => {
     for (key of ["peerDependenciesMeta"]) {
       expectToBeAStringMapMap(obj[key]);
     }
-    for (key of ["author", "funding", "repository"]) {
+    for (key of ["author", "funding", "repository", "exports"]) {
       expectToBeStringOrStringMap(obj[key]);
     }
   } catch {
