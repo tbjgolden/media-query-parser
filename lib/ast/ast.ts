@@ -472,9 +472,9 @@ export const matchQuery = (ts: ParserToken[]): Match<QueryNode> => {
               return {
                 t: {
                   _t: "query",
-                  condition: e.t,
-                  type: c.value,
                   prefix: b.value,
+                  type: c.value,
+                  condition: e.t,
                   start: 0,
                   end: ts[e.i - 1].end,
                 },
