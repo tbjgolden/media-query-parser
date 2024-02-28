@@ -109,6 +109,12 @@ Can also be imported via `require("media-query-parser")`.
 
 - (See GitHub for dynamically updated list)
 
+## Node versions
+
+This source code of this library supports `node >=6.5.0` via `require()` and
+`node >=16.0.0 || ^14.13.1` via import. (Below v6.5.0 is possible but you'd need to transpile the
+CommonJS code from ES6 yourself)
+
 ## Contributing
 
 - PRs welcome and accepted, simply fork and create
