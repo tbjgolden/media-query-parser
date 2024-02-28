@@ -16,7 +16,7 @@
 - **Well tested** - every single line
 - **TypeScript friendly**
 
-![demo](demo.png)  
+[![demo](demo.png)](https://tbjgolden.github.io/media-query-parser/playground/)  
 [Try it!](https://tbjgolden.github.io/media-query-parser/playground/)
 
 ## Why?
