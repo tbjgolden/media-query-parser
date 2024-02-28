@@ -8,7 +8,7 @@ checkDirectory();
 await rm("docs/playground/mqp", { recursive: true, force: true });
 await mkdir("docs/playground/mqp", { recursive: true });
 
-const toSearch = ["dist"];
+const toSearch = ["dist/esm"];
 let directory: string | undefined;
 while ((directory = toSearch.pop())) {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -20,7 +20,7 @@ while ((directory = toSearch.pop())) {
       const code = await readFile(filePath, "utf8");
       const result = await minify(code, { ecma: 2020, module: true });
       if (result.code) {
-        const newFilePath = join("docs/playground/mqp", filePath.slice(5));
+        const newFilePath = join("docs/playground/mqp", filePath.slice(9));
         await mkdir(join(newFilePath, ".."), { recursive: true });
         await writeFile(newFilePath, result.code);
       }
