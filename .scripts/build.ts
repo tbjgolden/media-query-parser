@@ -43,7 +43,7 @@ await writeFile(
   "tsconfig.cjs.json",
   JSON.stringify({
     ...buildTsconfig,
-    compilerOptions: { ...buildTsconfig.compilerOptions, outDir: "dist/cjs" },
+    compilerOptions: { ...buildTsconfig.compilerOptions, outDir: "dist/cjs", target: "es6" },
   }),
 );
 await writeFile("package.json", JSON.stringify({ ...pkgJson, type: "commonjs" }));
