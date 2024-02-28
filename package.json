@@ -30,9 +30,6 @@
     "email": "oss@tom.bio",
     "url": "https://tom.bio"
   },
-  "engines": {
-    "node": ">=16.0.0 || ^14.13.1"
-  },
   "scripts": {
     "build": "xnr ./.scripts/build.ts && npm run build-docs && npm run build-playground",
     "check-build": "xnr ./.scripts/checkBuild.ts",
