@@ -107,7 +107,8 @@ Can also be imported via `require("media-query-parser")`.
 
 ## Libraries that use this
 
-- (See GitHub for dynamically updated list)
+- [`media-query-solver`](https://github.com/tbjgolden/media-query-solver) - Solve media queries (and
+  detect useless ones!)
 
 ## Node versions
 
