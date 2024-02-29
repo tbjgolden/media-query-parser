@@ -30,19 +30,19 @@ is specific to postcss and doesn't parse newer syntax like range expressions (i.
 This package is a spec-compliant media query parser that can be used in Node/Deno/etc, or on the
 client that precisely matches the spec right down to the quirks.
 
-These are valid media queries that this library supports:
+These are media queries that this library can parse:
 
 ```css
 @media (768px <= width < 1200px);
 @media only print and (color);
 @media not (not (not (((hover) or ((not (color)))))));
 @media (🐈: 😸 /* if cat happy */) {
-  /* this query has valid syntax, but is clearly not a real feature 😿 */
-  /* For extensions to this project, check out "Libraries that use this" at the bottom of this README */
+  /* this query has valid syntax, but isn't a current browser feature 😿 (yet) */
+  /* see "Libraries that use this" at the bottom of this README */
 }
 ```
 
-These are invalid media queries that this library will detect:
+These are unparseable media queries that this library can detect:
 
 ```css
 @media (color) or (hover); /* or cannot be at top level */
